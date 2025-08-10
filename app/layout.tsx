@@ -7,6 +7,42 @@ export const metadata: Metadata = {
     template: '%s | Red Jitsu Training',
   },
   description: 'Track workouts, volume, trends, and more.',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Red Jitsu Training',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'Red Jitsu Training',
+    title: {
+      default: 'Red Jitsu Training',
+      template: '%s | Red Jitsu Training',
+    },
+    description: 'Track workouts, volume, trends, and more.',
+  },
+  twitter: {
+    card: 'summary',
+    title: {
+      default: 'Red Jitsu Training',
+      template: '%s | Red Jitsu Training',
+    },
+    description: 'Track workouts, volume, trends, and more.',
+  },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+  },
+  icons: {
+    icon: '/icons/icon-192.png',
+    shortcut: '/icons/icon-192.png',
+    apple: '/apple-touch-icon.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

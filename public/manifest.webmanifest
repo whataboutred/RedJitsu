@@ -1,12 +1,35 @@
 {
   "name": "Red Jitsu Training",
   "short_name": "Red Jitsu",
+  "description": "Complete training companion for strength training and Brazilian Jiu-Jitsu",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#000000",
   "theme_color": "#dc2626",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
+    { 
+      "src": "/icons/icon-192.png", 
+      "sizes": "192x192", 
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    { 
+      "src": "/icons/icon-512.png", 
+      "sizes": "512x512", 
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    { 
+      "src": "/apple-touch-icon.png", 
+      "sizes": "180x180", 
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["fitness", "health", "sports"],
+  "display_override": ["standalone", "minimal-ui"]
 }
