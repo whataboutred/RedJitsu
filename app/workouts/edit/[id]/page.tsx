@@ -98,8 +98,8 @@ export default function EditWorkoutPage() {
       const exerciseGroups: Record<string, any> = {}
       
       for (const set of existingSets || []) {
-        const exerciseId = set.workout_exercises.exercise_id
-        const displayName = set.workout_exercises.display_name
+        const exerciseId = (set as any).workout_exercises.exercise_id
+        const displayName = (set as any).workout_exercises.display_name
         
         if (!exerciseGroups[exerciseId]) {
           exerciseGroups[exerciseId] = {
