@@ -365,7 +365,7 @@ export default function NewWorkoutPage() {
                 <div className="font-medium">{it.name}</div>
                 <button className="toggle" onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))}>Remove</button>
               </div>
-              <div className="grid grid-cols-12 gap-3 px-1 text-sm font-medium text-white/70">
+              <div className="hidden md:grid grid-cols-12 gap-3 px-1 text-sm font-medium text-white/70">
                 <div className="col-span-5">Weight ({unit})</div>
                 <div className="col-span-3">Reps</div>
                 <div className="col-span-3">Set type</div>

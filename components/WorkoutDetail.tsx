@@ -158,9 +158,9 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
   )
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={onClose}>
-      <div className="card max-w-lg w-full mx-4 space-y-4" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={onClose}>
+      <div className="card max-w-lg w-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
           <div>
             <div className="font-medium">{workout.title || 'Untitled workout'}</div>
             <div className="text-sm text-white/70">{new Date(workout.performed_at).toLocaleString()}</div>
@@ -187,25 +187,27 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
           </div>
         </div>
 
-        {Object.entries(groupedSets).map(([exerciseId, exerciseSets]) => (
-          <div key={exerciseId} className="bg-black/30 rounded-xl p-3 space-y-2">
-            <div className="font-medium text-white/90">{getExerciseName(exerciseId)}</div>
-            {exerciseSets.map((set, i) => (
-              <div key={set.id} className="text-white/70 text-sm pl-2">
-                <span className="text-white/50">Set {set.set_index}:</span>{' '}
-                {set.weight && `${set.weight} lb`}
-                {set.weight && set.reps && ' × '}
-                {set.reps && `${set.reps} reps`}
-                {!set.weight && !set.reps && 'No details recorded'}
-                {set.set_type === 'warmup' && <span className="text-yellow-400 ml-1">(warmup)</span>}
-              </div>
-            ))}
-          </div>
-        ))}
+        <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+          {Object.entries(groupedSets).map(([exerciseId, exerciseSets]) => (
+            <div key={exerciseId} className="bg-black/30 rounded-xl p-3 space-y-2">
+              <div className="font-medium text-white/90">{getExerciseName(exerciseId)}</div>
+              {exerciseSets.map((set, i) => (
+                <div key={set.id} className="text-white/70 text-sm pl-2">
+                  <span className="text-white/50">Set {set.set_index}:</span>{' '}
+                  {set.weight && `${set.weight} lb`}
+                  {set.weight && set.reps && ' × '}
+                  {set.reps && `${set.reps} reps`}
+                  {!set.weight && !set.reps && 'No details recorded'}
+                  {set.set_type === 'warmup' && <span className="text-yellow-400 ml-1">(warmup)</span>}
+                </div>
+              ))}
+            </div>
+          ))}
 
-        {!sets.length && (
-          <div className="text-white/60">No sets recorded for this workout.</div>
-        )}
+          {!sets.length && (
+            <div className="text-white/60">No sets recorded for this workout.</div>
+          )}
+        </div>
       </div>
     </div>
   )
