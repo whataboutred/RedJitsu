@@ -10,6 +10,8 @@ type WorkoutSet = {
   exercise_id: string
   weight: number | null
   reps: number | null
+  set_type: string
+  set_index: number
 }
 
 type Exercise = {
@@ -44,6 +46,8 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
           id,
           weight,
           reps,
+          set_type,
+          set_index,
           workout_exercises!inner(
             exercise_id,
             workout_id
@@ -57,7 +61,9 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         id: set.id,
         exercise_id: set.workout_exercises.exercise_id,
         weight: set.weight,
-        reps: set.reps
+        reps: set.reps,
+        set_type: set.set_type,
+        set_index: set.set_index
       }))
       setSets(transformedSets)
 
@@ -74,6 +80,15 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
   function getExerciseName(exerciseId: string) {
     return exercises.find(e => e.id === exerciseId)?.name || 'Unknown exercise'
   }
+
+  // Group sets by exercise
+  const groupedSets = sets.reduce((acc, set) => {
+    if (!acc[set.exercise_id]) {
+      acc[set.exercise_id] = []
+    }
+    acc[set.exercise_id].push(set)
+    return acc
+  }, {} as Record<string, WorkoutSet[]>)
 
   if (loading) return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
@@ -114,15 +129,19 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
           </button>
         </div>
 
-        {sets.map((set, i) => (
-          <div key={set.id} className="bg-black/30 rounded-xl p-3">
-            <div className="font-medium text-white/90">{getExerciseName(set.exercise_id)}</div>
-            <div className="text-white/70">
-              {set.weight && `${set.weight} ${/*unit*/`lb`}`}
-              {set.weight && set.reps && ' × '}
-              {set.reps && `${set.reps} reps`}
-              {!set.weight && !set.reps && 'No details recorded'}
-            </div>
+        {Object.entries(groupedSets).map(([exerciseId, exerciseSets]) => (
+          <div key={exerciseId} className="bg-black/30 rounded-xl p-3 space-y-2">
+            <div className="font-medium text-white/90">{getExerciseName(exerciseId)}</div>
+            {exerciseSets.map((set, i) => (
+              <div key={set.id} className="text-white/70 text-sm pl-2">
+                <span className="text-white/50">Set {set.set_index}:</span>{' '}
+                {set.weight && `${set.weight} lb`}
+                {set.weight && set.reps && ' × '}
+                {set.reps && `${set.reps} reps`}
+                {!set.weight && !set.reps && 'No details recorded'}
+                {set.set_type === 'warmup' && <span className="text-yellow-400 ml-1">(warmup)</span>}
+              </div>
+            ))}
           </div>
         ))}
 
