@@ -3,7 +3,6 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import BackgroundLogo from '@/components/BackgroundLogo'
 import LoginForm from '@/components/LoginForm'
 
 export default function LoginPage() {
@@ -17,9 +16,7 @@ export default function LoginPage() {
   }, [router])
 
   return (
-    <div className="relative min-h-screen bg-black">
-      <BackgroundLogo />
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-6 bg-[radial-gradient(1200px_circle_at_50%_0%,rgba(239,68,68,0.15),transparent)]">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-[radial-gradient(1200px_circle_at_50%_0%,rgba(239,68,68,0.15),transparent)]">
         <div className="w-full max-w-md space-y-6">
         {/* Logo + title */}
         <div className="flex flex-col items-center gap-3">
@@ -37,7 +34,6 @@ export default function LoginPage() {
         {/* Auth card */}
         <div className="card p-4">
           <LoginForm />
-        </div>
         </div>
       </div>
     </div>
