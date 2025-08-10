@@ -176,8 +176,8 @@ export default function Dashboard() {
   return (
     <div className="relative min-h-screen bg-black">
       {/* Background Logo */}
-      <div className="fixed inset-0 flex items-center justify-center pointer-events-none overflow-hidden" style={{ zIndex: -1 }}>
-        <div className="relative w-[800px] h-[800px] opacity-[0.07] mix-blend-lighten">
+      <div className="fixed inset-0 flex items-center justify-center pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+        <div className="relative w-[600px] h-[600px] md:w-[800px] md:h-[800px] opacity-[0.15] mix-blend-screen">
           <Image
             src="/red-jitsu-logo.png"
             alt=""
@@ -190,7 +190,7 @@ export default function Dashboard() {
       </div>
       
       <Nav />
-      <main className="max-w-4xl mx-auto p-4 space-y-6 pb-24 md:pb-6">
+      <main className="relative z-10 max-w-4xl mx-auto p-4 space-y-6 pb-24 md:pb-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl">Dashboard</h1>
           {/* Top CTAs: visible on md+, hidden on phones */}

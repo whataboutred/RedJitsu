@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId } from '@/lib/activeUser'
 import { useSearchParams, useRouter } from 'next/navigation'
 import WorkoutDetail from '@/components/WorkoutDetail'
+import BJJDetail from '@/components/BJJDetail'
 
 type Workout = { id:string; performed_at:string; title:string|null }
 type BJJ = { id:string; performed_at:string; duration_min:number; kind:'class'|'drilling'|'open_mat'; intensity:string|null; notes:string|null }
@@ -31,8 +32,9 @@ function HistoryClient(){
   const params = useSearchParams()
   const router = useRouter()
   const highlightId = params.get('highlight')
+  const highlightType = params.get('type') || 'workout' // default to workout for backward compatibility
 
-  const closeWorkout = () => {
+  const closeModal = () => {
     router.push('/history')
   }
 
@@ -63,7 +65,12 @@ function HistoryClient(){
     <main className="max-w-4xl mx-auto p-4 space-y-6">
       <h1 className="text-2xl">History</h1>
       
-      {highlightId && <WorkoutDetail workoutId={highlightId} onClose={closeWorkout} />}
+      {highlightId && highlightType === 'workout' && (
+        <WorkoutDetail workoutId={highlightId} onClose={closeModal} />
+      )}
+      {highlightId && highlightType === 'bjj' && (
+        <BJJDetail sessionId={highlightId} onClose={closeModal} />
+      )}
 
       {/* Strength Training */}
       <div className="card">
@@ -90,12 +97,13 @@ function HistoryClient(){
         <div className="font-medium mb-2">Jiu Jitsu</div>
         <div className="grid gap-2">
           {bjj.map(s=>(
-            <div key={s.id} className="flex items-start justify-between bg-black/30 rounded-xl p-3">
+            <div key={s.id} className={`flex items-start justify-between rounded-xl p-3 ${highlightId===s.id && highlightType==='bjj' ? 'border border-brand-red bg-brand-red/10' : 'bg-black/30'}`}>
               <div>
                 <div className="text-white/90">{new Date(s.performed_at).toLocaleString()}</div>
                 <div className="text-white/80">{s.kind.replace('_',' ')} • {s.duration_min} min {s.intensity ? `• ${s.intensity}` : ''}</div>
                 {s.notes && <div className="text-white/70 text-sm mt-1 line-clamp-2">{s.notes}</div>}
               </div>
+              <button onClick={() => router.push(`/history?highlight=${s.id}&type=bjj`)} className="toggle self-center">Open</button>
             </div>
           ))}
           {!bjj.length && <div className="text-white/60">No Jiu Jitsu sessions yet.</div>}
