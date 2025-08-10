@@ -45,14 +45,15 @@ export default function QuickStartSection({ onAddExercise, unit }: QuickStartSec
 
     if (recentData) {
       // Process and aggregate the data
-      const exerciseMap = new Map<string, {
+      type ExerciseData = {
         id: string
         name: string
         lastUsed: string
         weights: number[]
         reps: number[]
         count: number
-      }>()
+      }
+      const exerciseMap = new Map<string, ExerciseData>()
 
       recentData.forEach((item: any) => {
         const exerciseId = item.exercise_id
@@ -60,8 +61,8 @@ export default function QuickStartSection({ onAddExercise, unit }: QuickStartSec
           id: exerciseId,
           name: item.display_name,
           lastUsed: item.workouts.performed_at,
-          weights: [],
-          reps: [],
+          weights: [] as number[],
+          reps: [] as number[],
           count: 0
         }
 
