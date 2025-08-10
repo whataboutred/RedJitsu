@@ -50,15 +50,33 @@ export default function SettingsPage(){
 
   async function save(){
     const userId = await getActiveUserId()
-    if(!userId){ return }
-    await supabase.from('profiles').update({
-      unit,
-      weekly_goal: Math.min(14, Math.max(1, weeklyGoal||4)),
-      target_weeks: targetWeeks === '' ? null : targetWeeks,
-      goal_start: goalStart || null,
-      bjj_weekly_goal: Math.min(14, Math.max(1, bjjWeeklyGoal||2))
-    }).eq('id', userId)
-    router.push('/dashboard') // Redirect to dashboard to refresh goals
+    if(!userId){ alert('Please sign in again'); return }
+    
+    try {
+      const { error } = await supabase.from('profiles').upsert({
+        id: userId,
+        unit,
+        weekly_goal: Math.min(14, Math.max(1, weeklyGoal||4)),
+        target_weeks: targetWeeks === '' ? null : targetWeeks,
+        goal_start: goalStart || null,
+        bjj_weekly_goal: Math.min(14, Math.max(1, bjjWeeklyGoal||2))
+      }, { 
+        onConflict: 'id',
+        ignoreDuplicates: false 
+      })
+      
+      if (error) {
+        console.error('Save error:', error)
+        alert('Failed to save settings: ' + error.message)
+        return
+      }
+      
+      alert('Settings saved successfully!')
+      router.push('/dashboard') // Redirect to dashboard to refresh goals
+    } catch (err) {
+      console.error('Save error:', err)
+      alert('Failed to save settings')
+    }
   }
 
   if (loading) return (<div><Nav/><main className="max-w-3xl mx-auto p-4">Loading…</main></div>)

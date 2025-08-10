@@ -1,10 +1,31 @@
 /* public/sw.js */
 // Bump this to force clients to fetch the latest assets
-const CACHE = 'rjt-v24';
+const CACHE = 'rjt-v25';
 
-self.addEventListener('install', () => {
+self.addEventListener('install', (event) => {
   // Take control immediately
   self.skipWaiting();
+  
+  // Pre-cache critical resources
+  event.waitUntil(
+    caches.open(CACHE).then(cache => {
+      return cache.addAll([
+        '/',
+        '/dashboard',
+        '/workouts/new',
+        '/history'
+      ]).catch(() => {
+        // Ignore cache failures, they're not critical
+      });
+    })
+  );
+});
+
+// Handle messages from client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', (event) => {
@@ -36,7 +57,18 @@ self.addEventListener('fetch', (event) => {
   if (accept.includes('text/html')) {
     event.respondWith((async () => {
       try {
-        const fresh = await fetch(req);
+        // Add cache-busting parameter to force fresh content
+        const freshReq = new Request(req.url + (req.url.includes('?') ? '&' : '?') + '_sw_bust=' + Date.now(), {
+          method: req.method,
+          headers: req.headers,
+          body: req.body,
+          mode: req.mode,
+          credentials: req.credentials,
+          cache: 'no-store', // Force bypass cache
+          redirect: req.redirect
+        });
+        
+        const fresh = await fetch(freshReq);
         const copy = fresh.clone();
         const cache = await caches.open(CACHE);
         cache.put(req, copy);

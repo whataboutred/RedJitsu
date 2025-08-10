@@ -2,6 +2,10 @@ create extension if not exists "uuid-ossp";
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   unit text not null default 'lb',
+  weekly_goal int default 4,
+  target_weeks int,
+  goal_start date,
+  bjj_weekly_goal int default 2,
   created_at timestamptz default now()
 );
 alter table public.profiles enable row level security;

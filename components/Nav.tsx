@@ -116,28 +116,57 @@ export default function Nav() {
   const router = useRouter()
   const [addOpen, setAddOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [updateAvailable, setUpdateAvailable] = useState(false)
   const addRef = useRef<HTMLDivElement | null>(null)
 
   // Register SW + auto-update + auto-reload when new code is active
   useEffect(() => {
     if ('serviceWorker' in navigator && process.env.NEXT_PUBLIC_SW !== 'off') {
       navigator.serviceWorker.register('/sw.js').then((reg) => {
-        // Check now and every 5 minutes
+        // Force immediate update check
         reg.update()
-        const id = setInterval(() => reg.update(), 5 * 60 * 1000)
+        
+        // Check for updates more frequently - every 2 minutes
+        const updateInterval = setInterval(() => {
+          reg.update()
+        }, 2 * 60 * 1000)
 
-        // Reload as soon as the new worker activates
+        // Also check when app becomes visible (user switches back to tab)
+        const handleVisibilityChange = () => {
+          if (!document.hidden) {
+            reg.update()
+          }
+        }
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+
+        // Reload immediately when new worker activates
         navigator.serviceWorker.addEventListener('message', (e) => {
           if (e.data?.type === 'SW_UPDATED') {
-            window.location.reload()
+            console.log('New version available, reloading...')
+            setUpdateAvailable(true)
+            // Small delay to show the update indicator before reload
+            setTimeout(() => window.location.reload(), 1000)
           }
         })
+        
         navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('Service worker changed, reloading...')
           window.location.reload()
         })
 
-        return () => clearInterval(id)
-      }).catch(() => {})
+        // Check if there's an update waiting
+        if (reg.waiting) {
+          console.log('Update ready, activating...')
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' })
+        }
+
+        return () => {
+          clearInterval(updateInterval)
+          document.removeEventListener('visibilitychange', handleVisibilityChange)
+        }
+      }).catch(err => {
+        console.warn('Service worker registration failed:', err)
+      })
     }
   }, [])
 
@@ -169,8 +198,14 @@ export default function Nav() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 bg-black/40 backdrop-blur border-b border-white/10">
-      <div className="max-w-4xl mx-auto flex items-center justify-between p-3">
+    <>
+      {updateAvailable && (
+        <div className="fixed top-0 left-0 right-0 z-[60] bg-green-600 text-white text-center py-2 text-sm font-medium">
+          ✨ Update available! Refreshing app...
+        </div>
+      )}
+      <nav className={`sticky top-0 z-50 bg-black/40 backdrop-blur border-b border-white/10 ${updateAvailable ? 'mt-10' : ''}`}>
+        <div className="max-w-4xl mx-auto flex items-center justify-between p-3">
         {/* Brand */}
         <Link href="/dashboard" className="flex items-center gap-2">
           <Image
@@ -254,6 +289,7 @@ export default function Nav() {
       {mobileOpen && (
         <MobileMenu onClose={() => setMobileOpen(false)} signOut={signOut} />
       )}
-    </nav>
+      </nav>
+    </>
   )
 }
