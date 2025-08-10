@@ -177,7 +177,7 @@ export default function Dashboard() {
     <div className="relative min-h-screen bg-black">
       {/* Background Logo */}
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-        <div className="relative w-[600px] h-[600px] md:w-[800px] md:h-[800px] opacity-[0.15] mix-blend-screen">
+        <div className="relative w-[600px] h-[600px] md:w-[800px] md:h-[800px] opacity-[0.35] mix-blend-screen">
           <Image
             src="/red-jitsu-logo.png"
             alt=""

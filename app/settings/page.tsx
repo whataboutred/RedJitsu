@@ -28,6 +28,12 @@ export default function SettingsPage(){
   // BJJ goal
   const [bjjWeeklyGoal, setBjjWeeklyGoal] = useState<number>(2)
 
+  // Password change
+  const [currentPassword, setCurrentPassword] = useState<string>('')
+  const [newPassword, setNewPassword] = useState<string>('')
+  const [confirmPassword, setConfirmPassword] = useState<string>('')
+  const [changingPassword, setChangingPassword] = useState<boolean>(false)
+
   useEffect(()=>{(async()=>{
     const userId = await getActiveUserId()
     if(!userId){ window.location.href='/login'; return }
@@ -79,6 +85,58 @@ export default function SettingsPage(){
     } catch (err) {
       console.error('Save error:', err)
       alert('Failed to save settings')
+    }
+  }
+
+  async function changePassword(){
+    if (!currentPassword || !newPassword) {
+      alert('Please fill in all password fields')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      alert('New passwords do not match')
+      return
+    }
+
+    if (newPassword.length < 6) {
+      alert('New password must be at least 6 characters long')
+      return
+    }
+
+    setChangingPassword(true)
+    try {
+      // First verify current password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: (await supabase.auth.getUser()).data.user?.email || '',
+        password: currentPassword
+      })
+
+      if (signInError) {
+        alert('Current password is incorrect')
+        return
+      }
+
+      // Update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      })
+
+      if (updateError) {
+        console.error('Password update error:', updateError)
+        alert('Failed to change password: ' + updateError.message)
+        return
+      }
+
+      alert('Password changed successfully!')
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (err) {
+      console.error('Password change error:', err)
+      alert('Failed to change password')
+    } finally {
+      setChangingPassword(false)
     }
   }
 
@@ -175,6 +233,53 @@ export default function SettingsPage(){
         </div>
 
         <button className="btn" onClick={save}>Save</button>
+
+        {/* Change Password section */}
+        <div className="card space-y-3">
+          <div className="font-medium">Change Password</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <label className="block">
+              <div className="mb-1 text-sm text-white/80">Current password</div>
+              <input
+                type="password"
+                className="input w-full"
+                value={currentPassword}
+                onChange={e => setCurrentPassword(e.target.value)}
+                placeholder="Enter current password"
+              />
+            </label>
+            <label className="block">
+              <div className="mb-1 text-sm text-white/80">New password</div>
+              <input
+                type="password"
+                className="input w-full"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                placeholder="At least 6 characters"
+              />
+            </label>
+            <label className="block">
+              <div className="mb-1 text-sm text-white/80">Confirm new password</div>
+              <input
+                type="password"
+                className="input w-full"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="Repeat new password"
+              />
+            </label>
+          </div>
+          <button 
+            className="btn disabled:opacity-50" 
+            onClick={changePassword}
+            disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
+          >
+            {changingPassword ? 'Changing...' : 'Change Password'}
+          </button>
+          <div className="text-xs text-white/60">
+            Enter your current password and choose a new password with at least 6 characters.
+          </div>
+        </div>
 
         {/* Delete all data section */}
         <DeleteAllData />
