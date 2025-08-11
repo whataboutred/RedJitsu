@@ -306,6 +306,217 @@ export default function ProgramsPage() {
     setMode('manual')
   }
 
+  // Program creation helper functions
+  function addDay() {
+    setDays(prev => [...prev, { name: '', dows: [], items: [] }])
+  }
+
+  function removeDay(dayIndex: number) {
+    setDays(prev => prev.filter((_, idx) => idx !== dayIndex))
+  }
+
+  function updateDayName(dayIndex: number, name: string) {
+    setDays(prev => prev.map((day, idx) => 
+      idx === dayIndex ? { ...day, name } : day
+    ))
+  }
+
+  function toggleDayOfWeek(dayIndex: number, dow: number) {
+    setDays(prev => prev.map((day, idx) => {
+      if (idx !== dayIndex) return day
+      const has = day.dows.includes(dow)
+      return { 
+        ...day, 
+        dows: has ? day.dows.filter(d => d !== dow) : [...day.dows, dow]
+      }
+    }))
+  }
+
+  function addExerciseToDay(dayIndex: number, exercise: Exercise) {
+    setDays(prev => prev.map((day, idx) => 
+      idx === dayIndex 
+        ? { 
+            ...day, 
+            items: [...day.items, {
+              exercise_id: exercise.id,
+              display_name: exercise.name,
+              default_sets: 3,
+              default_reps: 0
+            }]
+          }
+        : day
+    ))
+    setSearch('')
+  }
+
+  function removeExerciseFromDay(dayIndex: number, exerciseIndex: number) {
+    setDays(prev => prev.map((day, idx) => 
+      idx === dayIndex 
+        ? { ...day, items: day.items.filter((_, eIdx) => eIdx !== exerciseIndex) }
+        : day
+    ))
+  }
+
+  function updateExerciseSets(dayIndex: number, exerciseIndex: number, sets: number) {
+    setDays(prev => prev.map((day, idx) => 
+      idx === dayIndex 
+        ? {
+            ...day,
+            items: day.items.map((item, eIdx) => 
+              eIdx === exerciseIndex ? { ...item, default_sets: Math.max(1, sets) } : item
+            )
+          }
+        : day
+    ))
+  }
+
+  function updateExerciseReps(dayIndex: number, exerciseIndex: number, reps: number) {
+    setDays(prev => prev.map((day, idx) => 
+      idx === dayIndex 
+        ? {
+            ...day,
+            items: day.items.map((item, eIdx) => 
+              eIdx === exerciseIndex ? { ...item, default_reps: Math.max(0, reps) } : item
+            )
+          }
+        : day
+    ))
+  }
+
+  function moveExercise(dayIndex: number, exerciseIndex: number, direction: 'up' | 'down') {
+    setDays(prev => prev.map((day, idx) => {
+      if (idx !== dayIndex) return day
+      
+      const items = [...day.items]
+      const newIndex = direction === 'up' ? exerciseIndex - 1 : exerciseIndex + 1
+      
+      if (newIndex < 0 || newIndex >= items.length) return day
+      
+      const [movedItem] = items.splice(exerciseIndex, 1)
+      items.splice(newIndex, 0, movedItem)
+      
+      return { ...day, items }
+    }))
+  }
+
+  async function addCustomExerciseToDay(dayIndex: number) {
+    const exerciseName = search.trim()
+    if (!exerciseName) {
+      alert('Enter an exercise name first')
+      return
+    }
+
+    const newExercise = await createCustomExercise(exerciseName, selectedCategory === 'all' ? 'other' : selectedCategory)
+    if (newExercise) {
+      addExerciseToDay(dayIndex, newExercise)
+    } else {
+      alert('Failed to create exercise')
+    }
+  }
+
+  async function saveProgram() {
+    const userId = await getActiveUserId()
+    if (!userId) return
+
+    if (!pName.trim()) {
+      alert('Please enter a program name')
+      return
+    }
+
+    if (days.length === 0) {
+      alert('Please add at least one training day')
+      return
+    }
+
+    const validDays = days.filter(day => day.items.length > 0)
+    if (validDays.length === 0) {
+      alert('Please add exercises to at least one training day')
+      return
+    }
+
+    try {
+      if (selected) {
+        // Update existing program
+        await supabase.from('programs').update({ name: pName }).eq('id', selected.id)
+
+        // Delete existing days and exercises
+        const { data: pd } = await supabase.from('program_days').select('id').eq('program_id', selected.id)
+        const oldDayIds = (pd || []).map(r => r.id)
+        if (oldDayIds.length) {
+          await supabase.from('template_exercises').delete().in('program_day_id', oldDayIds)
+        }
+        await supabase.from('program_days').delete().eq('program_id', selected.id)
+
+        // Create new days and exercises
+        for (let i = 0; i < validDays.length; i++) {
+          const day = validDays[i]
+          const { data: insDay } = await supabase.from('program_days').insert({
+            program_id: selected.id,
+            name: day.name || `Day ${i + 1}`,
+            dows: day.dows,
+            order_index: i
+          }).select('id').single()
+
+          if (insDay) {
+            for (let j = 0; j < day.items.length; j++) {
+              const item = day.items[j]
+              await supabase.from('template_exercises').insert({
+                program_day_id: insDay.id,
+                exercise_id: item.exercise_id,
+                display_name: item.display_name,
+                default_sets: item.default_sets,
+                default_reps: item.default_reps,
+                set_type: 'working',
+                order_index: j
+              })
+            }
+          }
+        }
+      } else {
+        // Create new program
+        const { data: prog } = await supabase.from('programs').insert({
+          user_id: userId,
+          name: pName,
+          is_active: programs.length === 0
+        }).select('id').single()
+
+        if (prog) {
+          for (let i = 0; i < validDays.length; i++) {
+            const day = validDays[i]
+            const { data: insDay } = await supabase.from('program_days').insert({
+              program_id: prog.id,
+              name: day.name || `Day ${i + 1}`,
+              dows: day.dows,
+              order_index: i
+            }).select('id').single()
+
+            if (insDay) {
+              for (let j = 0; j < day.items.length; j++) {
+                const item = day.items[j]
+                await supabase.from('template_exercises').insert({
+                  program_day_id: insDay.id,
+                  exercise_id: item.exercise_id,
+                  display_name: item.display_name,
+                  default_sets: item.default_sets,
+                  default_reps: item.default_reps,
+                  set_type: 'working',
+                  order_index: j
+                })
+              }
+            }
+          }
+        }
+      }
+
+      alert('Program saved successfully!')
+      await reloadPrograms()
+      backToList()
+    } catch (error) {
+      console.error('Save error:', error)
+      alert('Failed to save program')
+    }
+  }
+
   // List Mode
   if (mode === 'list') {
     return (
@@ -449,12 +660,12 @@ export default function ProgramsPage() {
     )
   }
 
-  // Manual/Edit Mode - Simplified placeholder for now
+  // Manual/Edit Mode - Full program creation interface
   return (
     <div className="relative min-h-screen bg-black">
       <BackgroundLogo />
       <Nav />
-      <main className="relative z-10 max-w-6xl mx-auto p-4">
+      <main className="relative z-10 max-w-6xl mx-auto p-4 space-y-6">
         <div className="flex items-center gap-4 mb-6">
           <button className="toggle" onClick={backToList}>
             ← Back to Programs
@@ -463,28 +674,241 @@ export default function ProgramsPage() {
             {selected ? 'Edit Program' : 'Create Program'}
           </h1>
         </div>
-        
+
+        {/* Program Name */}
         <div className="card">
-          <div className="font-medium mb-4">Program Builder</div>
-          <div className="text-white/70 mb-6">
-            Enhanced program creation interface would be implemented here with the same
-            mobile-first UX as the workout and BJJ session pages.
-          </div>
-          
-          <div className="bg-brand-red/10 border border-brand-red/20 rounded-xl p-4">
-            <div className="font-medium text-brand-red/90 mb-2">🚧 Coming Soon</div>
-            <div className="text-sm text-white/80">
-              The enhanced program creation interface is being developed to match
-              the improved UX of the workout and BJJ session pages.
-            </div>
+          <div className="font-medium mb-4">📋 Program Details</div>
+          <label className="block">
+            <div className="mb-2 text-sm text-white/80 font-medium">Program Name</div>
+            <input
+              type="text"
+              className="input w-full"
+              value={pName}
+              onChange={e => setPName(e.target.value)}
+              placeholder="e.g., Upper/Lower 4-Day Split"
+            />
+          </label>
+        </div>
+
+        {/* Training Days */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-6">
+            <div className="font-medium">🗓️ Training Days</div>
+            <button className="btn" onClick={addDay}>
+              + Add Day
+            </button>
           </div>
 
-          <div className="mt-6 flex gap-3">
-            <button className="btn" onClick={backToList}>
-              Back to Programs
+          <div className="space-y-6">
+            {days.map((day, dayIdx) => (
+              <div key={dayIdx} className="bg-black/30 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <label className="block">
+                      <div className="mb-1 text-sm text-white/80 font-medium">Day Name</div>
+                      <input
+                        type="text"
+                        className="input w-full max-w-xs"
+                        value={day.name}
+                        onChange={e => updateDayName(dayIdx, e.target.value)}
+                        placeholder={`Day ${dayIdx + 1}`}
+                      />
+                    </label>
+                  </div>
+                  {days.length > 1 && (
+                    <button
+                      className="toggle text-sm px-3 py-2 text-red-400 hover:bg-red-500/20"
+                      onClick={() => removeDay(dayIdx)}
+                    >
+                      Remove Day
+                    </button>
+                  )}
+                </div>
+
+                {/* Days of Week Selector */}
+                <div>
+                  <div className="mb-2 text-sm text-white/80 font-medium">Training Days</div>
+                  <div className="flex flex-wrap gap-2">
+                    {DOWS.map((dowName, dowIdx) => (
+                      <button
+                        key={dowIdx}
+                        type="button"
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                          day.dows.includes(dowIdx)
+                            ? 'bg-brand-red/20 border-brand-red text-white border'
+                            : 'bg-black/40 border border-white/10 text-white/70 hover:bg-black/60'
+                        }`}
+                        onClick={() => toggleDayOfWeek(dayIdx, dowIdx)}
+                      >
+                        {dowName}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Exercise Selection */}
+                <div>
+                  <div className="mb-3 text-sm text-white/80 font-medium">Add Exercises</div>
+                  
+                  {/* Search and Category Filter */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <input
+                        type="text"
+                        className="input w-full"
+                        placeholder="Search exercises..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <select
+                        className="input w-full"
+                        value={selectedCategory}
+                        onChange={e => setSelectedCategory(e.target.value as typeof CATEGORIES[number])}
+                      >
+                        <option value="all">All Categories</option>
+                        <option value="barbell">Barbell</option>
+                        <option value="dumbbell">Dumbbell</option>
+                        <option value="machine">Machine</option>
+                        <option value="cable">Cable</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Exercise List and Current Exercises */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Available Exercises */}
+                    <div>
+                      <div className="text-xs text-white/60 mb-2 font-medium">Available Exercises</div>
+                      <div className="max-h-48 overflow-y-auto bg-black/20 rounded-xl p-3 space-y-2">
+                        {filteredExercises.slice(0, 50).map(exercise => (
+                          <button
+                            key={exercise.id}
+                            className="w-full text-left bg-black/30 hover:bg-black/50 rounded-lg p-3 text-sm transition-all duration-200 group"
+                            onClick={() => addExerciseToDay(dayIdx, exercise)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium text-white/90">{exercise.name}</div>
+                                <div className="text-xs text-white/60 capitalize">{exercise.category}</div>
+                              </div>
+                              <span className="text-brand-red/70 group-hover:text-brand-red opacity-0 group-hover:opacity-100 transition-opacity">
+                                +
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                        
+                        {search.trim() && (
+                          <button
+                            className="w-full bg-brand-red/10 hover:bg-brand-red/20 border border-brand-red/30 rounded-lg p-3 text-sm transition-all duration-200"
+                            onClick={() => addCustomExerciseToDay(dayIdx)}
+                          >
+                            <div className="text-brand-red font-medium">
+                              + Create "{search.trim()}"
+                            </div>
+                            <div className="text-xs text-white/60 mt-1">
+                              Add as new {selectedCategory === 'all' ? 'other' : selectedCategory} exercise
+                            </div>
+                          </button>
+                        )}
+                        
+                        {filteredExercises.length === 0 && !search.trim() && (
+                          <div className="text-white/60 text-center py-4 text-sm">
+                            No exercises found
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Current Day Exercises */}
+                    <div>
+                      <div className="text-xs text-white/60 mb-2 font-medium">Day {dayIdx + 1} Exercises ({day.items.length})</div>
+                      <div className="space-y-3">
+                        {day.items.map((item, itemIdx) => (
+                          <div key={itemIdx} className="bg-black/20 rounded-xl p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="font-medium text-white/90">{item.display_name}</div>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  className="toggle text-xs p-1"
+                                  onClick={() => moveExercise(dayIdx, itemIdx, 'up')}
+                                  disabled={itemIdx === 0}
+                                >
+                                  ↑
+                                </button>
+                                <button
+                                  className="toggle text-xs p-1"
+                                  onClick={() => moveExercise(dayIdx, itemIdx, 'down')}
+                                  disabled={itemIdx === day.items.length - 1}
+                                >
+                                  ↓
+                                </button>
+                                <button
+                                  className="toggle text-xs p-1 text-red-400 hover:bg-red-500/20"
+                                  onClick={() => removeExerciseFromDay(dayIdx, itemIdx)}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block">
+                                  <div className="text-xs text-white/70 mb-1">Sets</div>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    max={20}
+                                    className="input w-full text-center"
+                                    value={item.default_sets}
+                                    onChange={e => updateExerciseSets(dayIdx, itemIdx, Number(e.target.value) || 1)}
+                                  />
+                                </label>
+                              </div>
+                              <div>
+                                <label className="block">
+                                  <div className="text-xs text-white/70 mb-1">Reps (optional)</div>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    className="input w-full text-center"
+                                    value={item.default_reps === 0 ? '' : item.default_reps}
+                                    onChange={e => updateExerciseReps(dayIdx, itemIdx, Number(e.target.value) || 0)}
+                                    placeholder="varies"
+                                  />
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {day.items.length === 0 && (
+                          <div className="text-white/60 text-center py-8 text-sm bg-black/20 rounded-xl">
+                            No exercises added yet
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Save Button */}
+        <div className="sticky bottom-4 bg-black/90 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+          <div className="flex gap-3">
+            <button className="btn flex-1" onClick={saveProgram}>
+              {selected ? 'Update Program' : 'Create Program'}
             </button>
-            <button className="toggle">
-              Save Program (Demo)
+            <button className="toggle px-6" onClick={backToList}>
+              Cancel
             </button>
           </div>
         </div>
