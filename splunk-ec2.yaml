@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Splunk Enterprise on EC2 for IronLog application logging'
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t3.medium
+    AllowedValues:
+      - t3.medium
+      - t3.large
+      - t3.xlarge
+    Description: EC2 instance type for Splunk
+  
+  MyIPAddress:
+    Type: String
+    Description: Your IP address for security group access (get from whatismyip.com)
+    Default: "0.0.0.0/32"
+
+Resources:
+  SplunkSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Splunk EC2 instance
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref MyIPAddress
+          Description: SSH access
+        - IpProtocol: tcp
+          FromPort: 8000
+          ToPort: 8000
+          CidrIp: !Ref MyIPAddress
+          Description: Splunk Web UI
+        - IpProtocol: tcp
+          FromPort: 8088
+          ToPort: 8088
+          CidrIp: !Ref MyIPAddress
+          Description: HTTP Event Collector
+        - IpProtocol: tcp
+          FromPort: 8089
+          ToPort: 8089
+          CidrIp: !Ref MyIPAddress
+          Description: Splunk Management Port
+
+  SplunkInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0e001c9271cf7f3b9  # Ubuntu 22.04 LTS (us-east-1)
+      InstanceType: !Ref InstanceType
+      SecurityGroups:
+        - !Ref SplunkSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 30
+            VolumeType: gp3
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          apt update && apt upgrade -y
+          apt install -y wget curl
+          
+          # Download and install Splunk
+          cd /opt
+          wget -O splunk.deb 'https://download.splunk.com/products/splunk/releases/9.1.2/linux/splunk-9.1.2-b6b9c8185839-linux-2.6-amd64.deb'
+          dpkg -i splunk.deb
+          
+          # Setup Splunk
+          useradd -r -m -s /bin/bash splunk
+          chown -R splunk:splunk /opt/splunk
+          
+          # Start Splunk
+          sudo -u splunk /opt/splunk/bin/splunk start --accept-license --answer-yes --no-prompt --seed-passwd changeme123
+          /opt/splunk/bin/splunk enable boot-start -user splunk --accept-license --answer-yes --no-prompt
+          
+          # Enable HEC
+          sudo -u splunk /opt/splunk/bin/splunk http-event-collector enable -auth admin:changeme123
+          
+          echo "Splunk installation complete!" > /var/log/splunk-install.log
+
+Outputs:
+  SplunkWebURL:
+    Description: Splunk Web Interface URL
+    Value: !Sub 'http://${SplunkInstance.PublicIp}:8000'
+  
+  SplunkHECURL:
+    Description: HTTP Event Collector URL
+    Value: !Sub 'https://${SplunkInstance.PublicIp}:8088'
+  
+  InstanceIP:
+    Description: EC2 Instance Public IP
+    Value: !Ref SplunkInstance
+  
+  SSHCommand:
+    Description: SSH command to connect to instance
+    Value: !Sub 'ssh -i your-key.pem ubuntu@${SplunkInstance.PublicIp}'
