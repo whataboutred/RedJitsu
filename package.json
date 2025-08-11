@@ -12,14 +12,12 @@
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "0.1.8",
     "@supabase/supabase-js": "^2.45.1",
-    "dotenv": "^17.2.1",
     "localforage": "^1.10.0",
     "lucide-react": "^0.453.0",
     "next": "14.2.5",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "recharts": "^2.12.7",
-    "splunk-logging": "^0.11.1"
+    "recharts": "^2.12.7"
   },
   "devDependencies": {
     "@types/react": "^18.3.23",

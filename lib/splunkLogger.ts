@@ -34,23 +34,10 @@ export interface LogEvent {
   user_agent?: string
 }
 
-// Main logging function - sends to API route
+// Main logging function - simplified console logging only
 export function logToSplunk(event: LogEvent) {
-  // In development, also log to console for debugging
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Logging event:', event)
-  }
-
-  // Send to our API route (which handles server-side Splunk logging)
-  fetch('/api/log', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(event),
-  }).catch((error) => {
-    console.error('Failed to send log to API:', error)
-  })
+  // Just log to console for now (Splunk disabled)
+  console.log(`[${event.level}] ${event.event_type}: ${event.message}`, event.data)
 }
 
 // Convenience functions for common log types
