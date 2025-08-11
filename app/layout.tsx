@@ -41,11 +41,6 @@ export const metadata: Metadata = {
     },
     description: 'Track workouts, volume, trends, and more.',
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
   icons: {
     icon: '/icons/icon-192.png',
     shortcut: '/icons/icon-192.png',
