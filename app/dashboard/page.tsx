@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId } from '@/lib/activeUser'
+import { logger, EventType } from '@/lib/splunkLogger'
 
 type Workout = { id: string; performed_at: string; title: string | null }
 type BJJ = {
@@ -94,6 +95,9 @@ export default function Dashboard() {
       }
 
       await loadProfileData()
+
+      // Log dashboard page load
+      logger.info(EventType.API_REQUEST, 'Dashboard page loaded', { user_id: userId }, userId)
 
       const { data: w } = await supabase
         .from('workouts')
