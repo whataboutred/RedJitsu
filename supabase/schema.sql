@@ -152,3 +152,20 @@ create policy "cardio_sessions_select_own" on public.cardio_sessions for select 
 create policy "cardio_sessions_insert_own" on public.cardio_sessions for insert with check (auth.uid() = user_id);
 create policy "cardio_sessions_update_own" on public.cardio_sessions for update using (auth.uid() = user_id);
 create policy "cardio_sessions_delete_own" on public.cardio_sessions for delete using (auth.uid() = user_id);
+
+-- BJJ sessions table
+create table if not exists public.bjj_sessions (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  kind text check (kind in ('class','drilling','open_mat')) not null default 'class',
+  duration_min int not null,
+  intensity text check (intensity in ('light','moderate','intense')),
+  notes text,
+  performed_at timestamptz not null default now(),
+  created_at timestamptz default now()
+);
+alter table public.bjj_sessions enable row level security;
+create policy "bjj_sessions_select_own" on public.bjj_sessions for select using (auth.uid() = user_id);
+create policy "bjj_sessions_insert_own" on public.bjj_sessions for insert with check (auth.uid() = user_id);
+create policy "bjj_sessions_update_own" on public.bjj_sessions for update using (auth.uid() = user_id);
+create policy "bjj_sessions_delete_own" on public.bjj_sessions for delete using (auth.uid() = user_id);
