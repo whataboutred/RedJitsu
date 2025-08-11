@@ -1,12 +1,19 @@
 import { Logger } from 'splunk-logging'
 
+// For localhost testing - disable SSL verification
+if (process.env.NODE_ENV === 'development') {
+  process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0"
+}
+
 // Splunk configuration - add these to your environment variables
 const SPLUNK_CONFIG = {
   token: process.env.SPLUNK_HEC_TOKEN || '',
   url: process.env.SPLUNK_URL || '',
   source: 'ironlog-app',
-  sourcetype: 'json',
-  index: 'main'
+  sourcetype: '_json',
+  index: 'main',
+  maxBatchCount: 1,
+  maxBatchSize: 0
 }
 
 // Create Splunk logger instance
