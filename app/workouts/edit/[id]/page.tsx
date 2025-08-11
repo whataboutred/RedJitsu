@@ -228,7 +228,9 @@ export default function EnhancedEditWorkoutPage() {
 
     setSaving(true)
     try {
-      // Update workout
+      console.log('Starting workout save process...')
+      
+      // Step 1: Update workout basic info only (safest operation first)
       const { error: workoutError } = await supabase
         .from('workouts')
         .update({
@@ -239,69 +241,23 @@ export default function EnhancedEditWorkoutPage() {
         .eq('id', workoutId)
         .eq('user_id', userId)
 
-      if (workoutError) throw workoutError
-
-      // Delete existing exercises and sets
-      const { data: existingExercises } = await supabase
-        .from('workout_exercises')
-        .select('id')
-        .eq('workout_id', workoutId)
-
-      if (existingExercises && existingExercises.length > 0) {
-        const exerciseIds = existingExercises.map(e => e.id)
-        
-        // Delete sets first
-        await supabase
-          .from('sets')
-          .delete()
-          .in('workout_exercise_id', exerciseIds)
-        
-        // Delete exercises
-        await supabase
-          .from('workout_exercises')
-          .delete()
-          .eq('workout_id', workoutId)
+      if (workoutError) {
+        console.error('Workout update error:', workoutError)
+        throw new Error(`Failed to update workout info: ${workoutError.message}`)
       }
 
-      // Insert updated exercises and sets
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i]
-        
-        const { data: we, error: weError } = await supabase
-          .from('workout_exercises')
-          .insert({
-            workout_id: workoutId,
-            exercise_id: item.id,
-            display_name: item.name,
-            order_index: i
-          })
-          .select('id')
-          .single()
-
-        if (weError) throw weError
-
-        // Insert sets
-        for (let j = 0; j < item.sets.length; j++) {
-          const set = item.sets[j]
-          const { error: setError } = await supabase
-            .from('sets')
-            .insert({
-              workout_exercise_id: we.id,
-              weight: set.weight || 0,
-              reps: set.reps || 0,
-              set_type: set.set_type,
-              set_index: j
-            })
-
-          if (setError) throw setError
-        }
-      }
-
-      alert('Workout updated successfully!')
-      router.push('/history')
+      console.log('Workout basic info updated successfully')
+      
+      // For now, only update basic workout info to prevent data loss
+      // TODO: Add safe exercise/set update functionality later
+      alert('Workout info updated successfully! (Exercise changes coming soon)')
+      
+      // Reload to show updated data
+      await loadWorkoutData()
+      
     } catch (error) {
       console.error('Save error:', error)
-      alert('Failed to update workout')
+      alert(`Failed to update workout: ${error.message}`)
     } finally {
       setSaving(false)
     }
