@@ -128,3 +128,23 @@ language sql security definer set search_path = public as $$
 $$;
 revoke all on function public.get_volume_by_dow() from public;
 grant execute on function public.get_volume_by_dow() to authenticated;
+
+-- Cardio sessions table
+create table if not exists public.cardio_sessions (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  activity text not null,
+  duration_minutes int,
+  distance numeric,
+  distance_unit text check (distance_unit in ('miles','km')) default 'miles',
+  intensity text check (intensity in ('low','moderate','high')) default 'moderate',
+  calories int,
+  notes text,
+  performed_at timestamptz not null default now(),
+  created_at timestamptz default now()
+);
+alter table public.cardio_sessions enable row level security;
+create policy "cardio_sessions_select_own" on public.cardio_sessions for select using (auth.uid() = user_id);
+create policy "cardio_sessions_insert_own" on public.cardio_sessions for insert with check (auth.uid() = user_id);
+create policy "cardio_sessions_update_own" on public.cardio_sessions for update using (auth.uid() = user_id);
+create policy "cardio_sessions_delete_own" on public.cardio_sessions for delete using (auth.uid() = user_id);

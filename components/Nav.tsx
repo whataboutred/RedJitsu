@@ -12,12 +12,14 @@ import {
   Activity,
   Menu,
   X,
+  Heart,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 import { DEMO, isDemoVisitor } from '@/lib/activeUser'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import SafeAutoRefresh from '@/components/SafeAutoRefresh'
 
 function DemoBadge() {
   const [isDemo, setIsDemo] = useState(false)
@@ -116,59 +118,14 @@ export default function Nav() {
   const router = useRouter()
   const [addOpen, setAddOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [updateAvailable, setUpdateAvailable] = useState(false)
+  // updateAvailable state removed - now handled by SafeAutoRefresh
   const addRef = useRef<HTMLDivElement | null>(null)
 
-  // Register SW + auto-update + auto-reload when new code is active
+  // Safe auto-refresh is now handled by SafeAutoRefresh component - removed aggressive refresh
   useEffect(() => {
+    // Basic service worker registration without aggressive refresh
     if ('serviceWorker' in navigator && process.env.NEXT_PUBLIC_SW !== 'off') {
-      navigator.serviceWorker.register('/sw.js').then((reg) => {
-        // Force immediate update check
-        reg.update()
-        
-        // Check for updates every 5 minutes (less aggressive)
-        const updateInterval = setInterval(() => {
-          reg.update()
-        }, 5 * 60 * 1000)
-
-        // Also check when app becomes visible (user switches back to tab)
-        const handleVisibilityChange = () => {
-          if (!document.hidden) {
-            reg.update()
-          }
-        }
-        document.addEventListener('visibilitychange', handleVisibilityChange)
-
-        // Show update notification but don't auto-reload
-        navigator.serviceWorker.addEventListener('message', (e) => {
-          if (e.data?.type === 'SW_UPDATED') {
-            console.log('New version available')
-            setUpdateAvailable(true)
-            // Auto-reload after 5 seconds, giving user time to finish what they're doing
-            setTimeout(() => {
-              if (document.visibilityState === 'visible') {
-                window.location.reload()
-              }
-            }, 5000)
-          }
-        })
-        
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          console.log('Service worker changed')
-          // Don't immediately reload on controller change
-        })
-
-        // Check if there's an update waiting
-        if (reg.waiting) {
-          console.log('Update ready, activating...')
-          reg.waiting.postMessage({ type: 'SKIP_WAITING' })
-        }
-
-        return () => {
-          clearInterval(updateInterval)
-          document.removeEventListener('visibilitychange', handleVisibilityChange)
-        }
-      }).catch(err => {
+      navigator.serviceWorker.register('/sw.js').catch(err => {
         console.warn('Service worker registration failed:', err)
       })
     }
@@ -203,12 +160,8 @@ export default function Nav() {
 
   return (
     <>
-      {updateAvailable && (
-        <div className="fixed top-0 left-0 right-0 z-[60] bg-green-600 text-white text-center py-2 text-sm font-medium">
-          ✨ Update available! Refreshing app...
-        </div>
-      )}
-      <nav className={`sticky top-0 z-50 bg-black/40 backdrop-blur border-b border-white/10 ${updateAvailable ? 'mt-10' : ''}`}>
+      <SafeAutoRefresh />
+      <nav className="sticky top-0 z-50 bg-black/40 backdrop-blur border-b border-white/10">
         <div className="max-w-4xl mx-auto flex items-center justify-between p-3">
         {/* Brand */}
         <Link href="/dashboard" className="flex items-center gap-2">
@@ -251,6 +204,10 @@ export default function Nav() {
                 <Link href="/jiu-jitsu" onClick={() => setAddOpen(false)} className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-white/5">
                   <Activity className="w-4 h-4" />
                   Jiu Jitsu session
+                </Link>
+                <Link href="/cardio" onClick={() => setAddOpen(false)} className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-white/5">
+                  <Heart className="w-4 h-4" />
+                  Cardio session
                 </Link>
               </div>
             )}
