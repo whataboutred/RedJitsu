@@ -37,7 +37,8 @@ export async function POST(request: NextRequest) {
           timestamp: logEvent.timestamp || new Date().toISOString(),
           app: 'ironlog-workout-tracker',
           environment: process.env.NODE_ENV || 'development'
-        }
+        },
+        message: logEvent.message
       }
 
       splunkLogger.send(logData, (err: any, resp: any, body: any) => {
