@@ -81,6 +81,9 @@ function MobileMenu({
           <Link href="/jiu-jitsu" onClick={onClose} className="block rounded-xl border border-white/10 px-4 py-3 text-center">
             Jiu Jitsu
           </Link>
+          <Link href="/cardio" onClick={onClose} className="block rounded-xl border border-white/10 px-4 py-3 text-center">
+            Cardio
+          </Link>
 
           <div className="text-white/60 text-xs pt-3">Navigation</div>
           <Link href="/history" onClick={onClose} className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-3">
@@ -88,6 +91,9 @@ function MobileMenu({
           </Link>
           <Link href="/programs" onClick={onClose} className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-3">
             <ListChecks className="w-4 h-4" /> Workout Programs
+          </Link>
+          <Link href="/cardio" onClick={onClose} className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-3">
+            <Heart className="w-4 h-4" /> Cardio
           </Link>
           <Link href="/settings" onClick={onClose} className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-3">
             <Settings className="w-4 h-4" /> Settings
@@ -221,6 +227,9 @@ export default function Nav() {
           </Link>
           <Link href="/jiu-jitsu" className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-2.5 py-1.5 text-sm text-white/80 hover:bg-blue-500/10 hover:border-blue-400/50 transition-all duration-200">
             <Activity className="w-4 h-4" /> Jiu Jitsu
+          </Link>
+          <Link href="/cardio" className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-2.5 py-1.5 text-sm text-white/80 hover:bg-pink-500/10 hover:border-pink-400/50 transition-all duration-200">
+            <Heart className="w-4 h-4" /> Cardio
           </Link>
           <Link href="/settings" className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-2.5 py-1.5 text-sm text-white/80 hover:bg-orange-500/10 hover:border-orange-400/50 transition-all duration-200">
             <Settings className="w-4 h-4" /> Settings
