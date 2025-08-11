@@ -454,6 +454,7 @@ export default function EnhancedEditWorkoutPage() {
               </div>
             )}
           </div>
+        </div>
 
         {/* Save Section */}
         {items.length > 0 && (
