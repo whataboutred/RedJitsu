@@ -5,6 +5,7 @@ import Disclaimer from '@/components/Disclaimer'
 import BackgroundLogo from '@/components/BackgroundLogo'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId } from '@/lib/activeUser'
 
@@ -45,6 +46,7 @@ function weekKey(d: Date) {
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [bjj, setBjj] = useState<BJJ[]>([])
   const [cardio, setCardio] = useState<Cardio[]>([])
@@ -59,6 +61,27 @@ export default function Dashboard() {
   const [showBjjGoal, setShowBjjGoal] = useState<boolean>(true)
   const [showCardioGoal, setShowCardioGoal] = useState<boolean>(false)
 
+  const loadProfileData = async () => {
+    const userId = await getActiveUserId()
+    if (!userId) return
+
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('weekly_goal,target_weeks,goal_start,bjj_weekly_goal,cardio_weekly_goal,show_strength_goal,show_bjj_goal,show_cardio_goal')
+      .eq('id', userId)
+      .maybeSingle()
+    if (prof) {
+      setWeeklyGoal(prof.weekly_goal ?? 4)
+      setBjjWeeklyGoal(prof.bjj_weekly_goal ?? 2)
+      setCardioWeeklyGoal(prof.cardio_weekly_goal ?? 3)
+      setTargetWeeks(prof.target_weeks ?? null)
+      setGoalStart(prof.goal_start ?? null)
+      setShowStrengthGoal(prof.show_strength_goal ?? true)
+      setShowBjjGoal(prof.show_bjj_goal ?? true)
+      setShowCardioGoal(prof.show_cardio_goal ?? false)
+    }
+  }
+
   useEffect(() => {
     ;(async () => {
       const userId = await getActiveUserId()
@@ -70,21 +93,7 @@ export default function Dashboard() {
         return
       }
 
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('weekly_goal,target_weeks,goal_start,bjj_weekly_goal,cardio_weekly_goal,show_strength_goal,show_bjj_goal,show_cardio_goal')
-        .eq('id', userId)
-        .maybeSingle()
-      if (prof) {
-        setWeeklyGoal(prof.weekly_goal ?? 4)
-        setBjjWeeklyGoal(prof.bjj_weekly_goal ?? 2)
-        setCardioWeeklyGoal(prof.cardio_weekly_goal ?? 3)
-        setTargetWeeks(prof.target_weeks ?? null)
-        setGoalStart(prof.goal_start ?? null)
-        setShowStrengthGoal(prof.show_strength_goal ?? true)
-        setShowBjjGoal(prof.show_bjj_goal ?? true)
-        setShowCardioGoal(prof.show_cardio_goal ?? false)
-      }
+      await loadProfileData()
 
       const { data: w } = await supabase
         .from('workouts')
@@ -112,6 +121,23 @@ export default function Dashboard() {
 
       setLoading(false)
     })()
+  }, [])
+
+  // Reload profile data when page becomes visible (returning from settings)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadProfileData()
+      }
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleVisibilityChange)
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleVisibilityChange)
+    }
   }, [])
 
   const now = new Date()
