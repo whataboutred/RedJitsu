@@ -365,13 +365,15 @@ export default function EnhancedEditWorkoutPage() {
         }
 
         // Delete all existing sets for this exercise
-        await supabase
-          .from('sets')
-          .delete()
-          .eq('workout_exercise_id', workoutExercise.id)
+        if (workoutExercise?.id) {
+          await supabase
+            .from('sets')
+            .delete()
+            .eq('workout_exercise_id', workoutExercise.id)
+        }
 
         // Insert all sets for this exercise
-        if (item.sets.length > 0) {
+        if (item.sets.length > 0 && workoutExercise?.id) {
           const setsToInsert = item.sets.map((set, setIndex) => ({
             workout_exercise_id: workoutExercise.id,
             weight: set.weight,
