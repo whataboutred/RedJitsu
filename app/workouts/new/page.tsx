@@ -71,49 +71,93 @@ export default function EnhancedNewWorkoutPage() {
   // Fetch last working set for an exercise from most recent workout
   async function getLastWorkingSet(exerciseId: string): Promise<{ weight: number; reps: number } | null> {
     const userId = await getActiveUserId()
-    if (!userId) return null
+    console.log('🔍 getLastWorkingSet called with:', { exerciseId, userId })
+    
+    if (!userId) {
+      console.log('❌ No userId, returning null')
+      return null
+    }
 
     try {
-      // Get the most recent workout exercises that match this exercise
+      console.log('🔎 Querying database for exercise:', exerciseId)
+      
+      // Try a different approach - get workout exercises first, then join with workouts
       const { data: workoutExercises, error } = await supabase
         .from('workout_exercises')
         .select(`
+          id,
           exercise_id,
           display_name,
           workout_id,
-          sets!inner(weight, reps, set_type, set_index),
           workouts!inner(performed_at, user_id)
         `)
         .eq('exercise_id', exerciseId)
         .eq('workouts.user_id', userId)
         .order('workouts.performed_at', { ascending: false })
+        .limit(5) // Get last 5 workouts to be safe
+
+      console.log('📊 Database query result (workout_exercises):', { 
+        workoutExercises, 
+        error, 
+        count: workoutExercises?.length 
+      })
 
       if (error) {
-        console.error('Error fetching last working set:', error)
+        console.error('❌ Supabase query error:', error)
         return null
       }
 
       if (workoutExercises && workoutExercises.length > 0) {
-        // Get the most recent workout exercise (first in the ordered list)
+        console.log('✅ Found workout exercises, now getting sets...')
+        
+        // Get the most recent workout exercise
         const mostRecentExercise = workoutExercises[0]
+        console.log('📋 Most recent exercise:', mostRecentExercise)
 
-        // Find all working sets with weight > 0, sorted by set_index (descending for most recent)
-        const workingSets = mostRecentExercise.sets
-          .filter((set: any) => set.set_type === 'working' && set.weight > 0)
-          .sort((a: any, b: any) => b.set_index - a.set_index)
+        // Now get the sets for this specific workout exercise (use the workout_exercises.id)
+        const { data: sets, error: setsError } = await supabase
+          .from('sets')
+          .select('weight, reps, set_type, set_index')
+          .eq('workout_exercise_id', mostRecentExercise.id)
+          .order('set_index', { ascending: false })
 
-        if (workingSets.length > 0) {
-          const lastWorkingSet = workingSets[0]
-          return {
-            weight: Number(lastWorkingSet.weight),
-            reps: Number(lastWorkingSet.reps)
-          }
+        console.log('🏋️ Sets query result:', { sets, setsError })
+
+        if (setsError) {
+          console.error('❌ Sets query error:', setsError)
+          return null
         }
+
+        if (sets && sets.length > 0) {
+          // Find working sets with weight > 0
+          const workingSets = sets
+            .filter((set: any) => set.set_type === 'working' && set.weight > 0)
+
+          console.log('🏋️ Working sets found:', workingSets)
+
+          if (workingSets.length > 0) {
+            const lastWorkingSet = workingSets[0] // Already sorted by set_index desc
+            console.log('🎯 Using last working set:', lastWorkingSet)
+            const result = {
+              weight: Number(lastWorkingSet.weight),
+              reps: Number(lastWorkingSet.reps)
+            }
+            console.log('✨ Returning weight suggestion:', result)
+            return result
+          } else {
+            console.log('⚠️ No working sets with weight > 0 found')
+          }
+        } else {
+          console.log('⚠️ No sets found for this workout exercise')
+        }
+      } else {
+        console.log('⚠️ No workout exercises found for this exercise')
       }
 
+      console.log('❌ No weight suggestion available, returning null')
       return null
     } catch (error) {
-      console.error('Error fetching last working set:', error)
+      console.error('💥 Error in getLastWorkingSet:', error)
       return null
     }
   }
@@ -161,34 +205,48 @@ export default function EnhancedNewWorkoutPage() {
   }, [])
 
   async function addExercise(id: string, avgWeight?: number, avgReps?: number) {
+    console.log('🏋️ addExercise called with:', { id, avgWeight, avgReps })
+    
     const ex = allExercises.find(e => e.id === id)
-    if (!ex) return
+    if (!ex) {
+      console.log('❌ Exercise not found in allExercises:', id)
+      return
+    }
+    
+    console.log('✅ Found exercise:', ex)
     
     // Try to get last working set data for this specific exercise
     let smartSets: Array<{ weight: number; reps: number; set_type: 'warmup' | 'working' }> = []
     
     // First priority: Use provided avgWeight/avgReps (from QuickStart)
     if (avgWeight && avgReps) {
+      console.log('📊 Using QuickStart data:', { avgWeight, avgReps })
       smartSets = [{ 
         weight: avgWeight, 
         reps: avgReps, 
         set_type: 'working' as const 
       }]
     } else {
+      console.log('🔍 No QuickStart data, fetching last working set...')
       // Second priority: Fetch from last workout's working set
       const lastWorkingSet = await getLastWorkingSet(ex.id)
+      console.log('🎯 getLastWorkingSet returned:', lastWorkingSet)
+      
       if (lastWorkingSet) {
+        console.log('✨ Using last working set for smart defaults')
         smartSets = [{ 
           weight: lastWorkingSet.weight, 
           reps: lastWorkingSet.reps, 
           set_type: 'working' as const 
         }]
       } else {
+        console.log('⚠️ No last working set found, using defaults')
         // Default: Empty set
         smartSets = [{ weight: 0, reps: 0, set_type: 'working' as const }]
       }
     }
     
+    console.log('🎪 Final smartSets for exercise:', smartSets)
     setItems(p => [...p, { id: ex.id, name: ex.name, sets: smartSets }])
     setIsExerciseSelectorCollapsed(true) // Collapse after adding
     // Auto-expand the new exercise and collapse others
