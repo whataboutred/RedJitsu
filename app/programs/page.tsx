@@ -74,6 +74,9 @@ export default function ProgramsPage() {
   // Enhanced search and filtering
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<typeof CATEGORIES[number]>('all')
+  
+  // Collapsible days state
+  const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set())
 
   const filteredExercises = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -306,13 +309,42 @@ export default function ProgramsPage() {
     setMode('manual')
   }
 
+  // Collapsible day helper functions
+  function toggleDayExpanded(dayIndex: number) {
+    setExpandedDays(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(dayIndex)) {
+        newSet.delete(dayIndex)
+      } else {
+        newSet.add(dayIndex)
+      }
+      return newSet
+    })
+  }
+
   // Program creation helper functions
   function addDay() {
+    const newDayIndex = days.length
     setDays(prev => [...prev, { name: '', dows: [], items: [] }])
+    // Auto-expand the new day
+    setExpandedDays(prev => new Set([...prev, newDayIndex]))
   }
 
   function removeDay(dayIndex: number) {
     setDays(prev => prev.filter((_, idx) => idx !== dayIndex))
+    // Update expanded state after removal
+    setExpandedDays(prev => {
+      const newSet = new Set<number>()
+      prev.forEach(index => {
+        if (index < dayIndex) {
+          newSet.add(index)
+        } else if (index > dayIndex) {
+          newSet.add(index - 1) // Shift indices down
+        }
+        // Skip the removed index
+      })
+      return newSet
+    })
   }
 
   function updateDayName(dayIndex: number, name: string) {
@@ -700,204 +732,238 @@ export default function ProgramsPage() {
           </div>
 
           <div className="space-y-6">
-            {days.map((day, dayIdx) => (
-              <div key={dayIdx} className="bg-black/30 rounded-2xl p-5 space-y-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <label className="block">
-                      <div className="mb-1 text-sm text-white/80 font-medium">Day Name</div>
-                      <input
-                        type="text"
-                        className="input w-full max-w-xs"
-                        value={day.name}
-                        onChange={e => updateDayName(dayIdx, e.target.value)}
-                        placeholder={`Day ${dayIdx + 1}`}
-                      />
-                    </label>
+            {days.map((day, dayIdx) => {
+              const isExpanded = expandedDays.has(dayIdx)
+              const dayName = day.name || `Day ${dayIdx + 1}`
+              const dowsText = day.dows.length > 0 ? day.dows.map(d => DOWS[d]).join(', ') : 'No days assigned'
+              
+              return (
+                <div key={dayIdx} className="bg-black/30 rounded-2xl overflow-hidden">
+                  {/* Collapsible Header */}
+                  <div 
+                    className="flex items-center justify-between p-5 cursor-pointer hover:bg-black/40 transition-colors"
+                    onClick={() => toggleDayExpanded(dayIdx)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="text-lg">
+                        {isExpanded ? '▼' : '▶'}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-white/90">
+                          {dayName}
+                        </div>
+                        <div className="text-sm text-white/60">
+                          {dowsText} • {day.items.length} exercise{day.items.length !== 1 ? 's' : ''}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {days.length > 1 && (
+                        <button
+                          className="toggle text-sm px-3 py-2 text-red-400 hover:bg-red-500/20"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removeDay(dayIdx)
+                          }}
+                        >
+                          Remove Day
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  {days.length > 1 && (
-                    <button
-                      className="toggle text-sm px-3 py-2 text-red-400 hover:bg-red-500/20"
-                      onClick={() => removeDay(dayIdx)}
-                    >
-                      Remove Day
-                    </button>
+
+                  {/* Expandable Content */}
+                  {isExpanded && (
+                    <div className="px-5 pb-5 space-y-4 border-t border-white/10">
+                      <div className="pt-4">
+                        <label className="block">
+                          <div className="mb-1 text-sm text-white/80 font-medium">Day Name</div>
+                          <input
+                            type="text"
+                            className="input w-full max-w-xs"
+                            value={day.name}
+                            onChange={e => updateDayName(dayIdx, e.target.value)}
+                            placeholder={`Day ${dayIdx + 1}`}
+                          />
+                        </label>
+                      </div>
+
+                      {/* Days of Week Selector */}
+                      <div>
+                        <div className="mb-2 text-sm text-white/80 font-medium">Training Days</div>
+                        <div className="flex flex-wrap gap-2">
+                          {DOWS.map((dowName, dowIdx) => (
+                            <button
+                              key={dowIdx}
+                              type="button"
+                              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                                day.dows.includes(dowIdx)
+                                  ? 'bg-brand-red/20 border-brand-red text-white border'
+                                  : 'bg-black/40 border border-white/10 text-white/70 hover:bg-black/60'
+                              }`}
+                              onClick={() => toggleDayOfWeek(dayIdx, dowIdx)}
+                            >
+                              {dowName}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Exercise Selection */}
+                      <div>
+                        <div className="mb-3 text-sm text-white/80 font-medium">Add Exercises</div>
+                        
+                        {/* Search and Category Filter */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <input
+                              type="text"
+                              className="input w-full"
+                              placeholder="Search exercises..."
+                              value={search}
+                              onChange={e => setSearch(e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <select
+                              className="input w-full"
+                              value={selectedCategory}
+                              onChange={e => setSelectedCategory(e.target.value as typeof CATEGORIES[number])}
+                            >
+                              <option value="all">All Categories</option>
+                              <option value="barbell">Barbell</option>
+                              <option value="dumbbell">Dumbbell</option>
+                              <option value="machine">Machine</option>
+                              <option value="cable">Cable</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Exercise List and Current Exercises */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {/* Available Exercises */}
+                          <div>
+                            <div className="text-xs text-white/60 mb-2 font-medium">Available Exercises</div>
+                            <div className="max-h-48 overflow-y-auto bg-black/20 rounded-xl p-3 space-y-2">
+                              {filteredExercises.slice(0, 50).map(exercise => (
+                                <button
+                                  key={exercise.id}
+                                  className="w-full text-left bg-black/30 hover:bg-black/50 rounded-lg p-3 text-sm transition-all duration-200 group"
+                                  onClick={() => addExerciseToDay(dayIdx, exercise)}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <div className="font-medium text-white/90">{exercise.name}</div>
+                                      <div className="text-xs text-white/60 capitalize">{exercise.category}</div>
+                                    </div>
+                                    <span className="text-brand-red/70 group-hover:text-brand-red opacity-0 group-hover:opacity-100 transition-opacity">
+                                      +
+                                    </span>
+                                  </div>
+                                </button>
+                              ))}
+                              
+                              {search.trim() && (
+                                <button
+                                  className="w-full bg-brand-red/10 hover:bg-brand-red/20 border border-brand-red/30 rounded-lg p-3 text-sm transition-all duration-200"
+                                  onClick={() => addCustomExerciseToDay(dayIdx)}
+                                >
+                                  <div className="text-brand-red font-medium">
+                                    + Create "{search.trim()}"
+                                  </div>
+                                  <div className="text-xs text-white/60 mt-1">
+                                    Add as new {selectedCategory === 'all' ? 'other' : selectedCategory} exercise
+                                  </div>
+                                </button>
+                              )}
+                              
+                              {filteredExercises.length === 0 && !search.trim() && (
+                                <div className="text-white/60 text-center py-4 text-sm">
+                                  No exercises found
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Current Day Exercises */}
+                          <div>
+                            <div className="text-xs text-white/60 mb-2 font-medium">Day {dayIdx + 1} Exercises ({day.items.length})</div>
+                            <div className="space-y-3">
+                              {day.items.map((item, itemIdx) => (
+                                <div key={itemIdx} className="bg-black/20 rounded-xl p-4">
+                                  <div className="flex items-start justify-between mb-3">
+                                    <div className="font-medium text-white/90">{item.display_name}</div>
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        className="toggle text-xs p-1"
+                                        onClick={() => moveExercise(dayIdx, itemIdx, 'up')}
+                                        disabled={itemIdx === 0}
+                                      >
+                                        ↑
+                                      </button>
+                                      <button
+                                        className="toggle text-xs p-1"
+                                        onClick={() => moveExercise(dayIdx, itemIdx, 'down')}
+                                        disabled={itemIdx === day.items.length - 1}
+                                      >
+                                        ↓
+                                      </button>
+                                      <button
+                                        className="toggle text-xs p-1 text-red-400 hover:bg-red-500/20"
+                                        onClick={() => removeExerciseFromDay(dayIdx, itemIdx)}
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                      <label className="block">
+                                        <div className="text-xs text-white/70 mb-1">Sets</div>
+                                        <input
+                                          type="number"
+                                          min={1}
+                                          max={20}
+                                          className="input w-full text-center"
+                                          value={item.default_sets}
+                                          onChange={e => updateExerciseSets(dayIdx, itemIdx, Number(e.target.value) || 1)}
+                                        />
+                                      </label>
+                                    </div>
+                                    <div>
+                                      <label className="block">
+                                        <div className="text-xs text-white/70 mb-1">Reps (optional)</div>
+                                        <input
+                                          type="number"
+                                          min={0}
+                                          max={100}
+                                          className="input w-full text-center"
+                                          value={item.default_reps === 0 ? '' : item.default_reps}
+                                          onChange={e => updateExerciseReps(dayIdx, itemIdx, Number(e.target.value) || 0)}
+                                          placeholder="varies"
+                                        />
+                                      </label>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                              
+                              {day.items.length === 0 && (
+                                <div className="text-white/60 text-center py-8 text-sm bg-black/20 rounded-xl">
+                                  No exercises added yet
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
-
-                {/* Days of Week Selector */}
-                <div>
-                  <div className="mb-2 text-sm text-white/80 font-medium">Training Days</div>
-                  <div className="flex flex-wrap gap-2">
-                    {DOWS.map((dowName, dowIdx) => (
-                      <button
-                        key={dowIdx}
-                        type="button"
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                          day.dows.includes(dowIdx)
-                            ? 'bg-brand-red/20 border-brand-red text-white border'
-                            : 'bg-black/40 border border-white/10 text-white/70 hover:bg-black/60'
-                        }`}
-                        onClick={() => toggleDayOfWeek(dayIdx, dowIdx)}
-                      >
-                        {dowName}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Exercise Selection */}
-                <div>
-                  <div className="mb-3 text-sm text-white/80 font-medium">Add Exercises</div>
-                  
-                  {/* Search and Category Filter */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <input
-                        type="text"
-                        className="input w-full"
-                        placeholder="Search exercises..."
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <select
-                        className="input w-full"
-                        value={selectedCategory}
-                        onChange={e => setSelectedCategory(e.target.value as typeof CATEGORIES[number])}
-                      >
-                        <option value="all">All Categories</option>
-                        <option value="barbell">Barbell</option>
-                        <option value="dumbbell">Dumbbell</option>
-                        <option value="machine">Machine</option>
-                        <option value="cable">Cable</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Exercise List and Current Exercises */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* Available Exercises */}
-                    <div>
-                      <div className="text-xs text-white/60 mb-2 font-medium">Available Exercises</div>
-                      <div className="max-h-48 overflow-y-auto bg-black/20 rounded-xl p-3 space-y-2">
-                        {filteredExercises.slice(0, 50).map(exercise => (
-                          <button
-                            key={exercise.id}
-                            className="w-full text-left bg-black/30 hover:bg-black/50 rounded-lg p-3 text-sm transition-all duration-200 group"
-                            onClick={() => addExerciseToDay(dayIdx, exercise)}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="font-medium text-white/90">{exercise.name}</div>
-                                <div className="text-xs text-white/60 capitalize">{exercise.category}</div>
-                              </div>
-                              <span className="text-brand-red/70 group-hover:text-brand-red opacity-0 group-hover:opacity-100 transition-opacity">
-                                +
-                              </span>
-                            </div>
-                          </button>
-                        ))}
-                        
-                        {search.trim() && (
-                          <button
-                            className="w-full bg-brand-red/10 hover:bg-brand-red/20 border border-brand-red/30 rounded-lg p-3 text-sm transition-all duration-200"
-                            onClick={() => addCustomExerciseToDay(dayIdx)}
-                          >
-                            <div className="text-brand-red font-medium">
-                              + Create "{search.trim()}"
-                            </div>
-                            <div className="text-xs text-white/60 mt-1">
-                              Add as new {selectedCategory === 'all' ? 'other' : selectedCategory} exercise
-                            </div>
-                          </button>
-                        )}
-                        
-                        {filteredExercises.length === 0 && !search.trim() && (
-                          <div className="text-white/60 text-center py-4 text-sm">
-                            No exercises found
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Current Day Exercises */}
-                    <div>
-                      <div className="text-xs text-white/60 mb-2 font-medium">Day {dayIdx + 1} Exercises ({day.items.length})</div>
-                      <div className="space-y-3">
-                        {day.items.map((item, itemIdx) => (
-                          <div key={itemIdx} className="bg-black/20 rounded-xl p-4">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="font-medium text-white/90">{item.display_name}</div>
-                              <div className="flex items-center gap-1">
-                                <button
-                                  className="toggle text-xs p-1"
-                                  onClick={() => moveExercise(dayIdx, itemIdx, 'up')}
-                                  disabled={itemIdx === 0}
-                                >
-                                  ↑
-                                </button>
-                                <button
-                                  className="toggle text-xs p-1"
-                                  onClick={() => moveExercise(dayIdx, itemIdx, 'down')}
-                                  disabled={itemIdx === day.items.length - 1}
-                                >
-                                  ↓
-                                </button>
-                                <button
-                                  className="toggle text-xs p-1 text-red-400 hover:bg-red-500/20"
-                                  onClick={() => removeExerciseFromDay(dayIdx, itemIdx)}
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <label className="block">
-                                  <div className="text-xs text-white/70 mb-1">Sets</div>
-                                  <input
-                                    type="number"
-                                    min={1}
-                                    max={20}
-                                    className="input w-full text-center"
-                                    value={item.default_sets}
-                                    onChange={e => updateExerciseSets(dayIdx, itemIdx, Number(e.target.value) || 1)}
-                                  />
-                                </label>
-                              </div>
-                              <div>
-                                <label className="block">
-                                  <div className="text-xs text-white/70 mb-1">Reps (optional)</div>
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    max={100}
-                                    className="input w-full text-center"
-                                    value={item.default_reps === 0 ? '' : item.default_reps}
-                                    onChange={e => updateExerciseReps(dayIdx, itemIdx, Number(e.target.value) || 0)}
-                                    placeholder="varies"
-                                  />
-                                </label>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                        
-                        {day.items.length === 0 && (
-                          <div className="text-white/60 text-center py-8 text-sm bg-black/20 rounded-xl">
-                            No exercises added yet
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 

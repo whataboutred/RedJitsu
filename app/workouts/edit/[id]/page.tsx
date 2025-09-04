@@ -42,7 +42,13 @@ export default function EnhancedEditWorkoutPage() {
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [templateName, setTemplateName] = useState('')
   const [selectedProgramId, setSelectedProgramId] = useState('')
-  const [programs, setPrograms] = useState<Array<{id: string; name: string}>>([])
+  const [programs, setPrograms] = useState<Array<{id: string; name: string}>([])
+
+  // Template loading state
+  const [showTemplateLoader, setShowTemplateLoader] = useState(false)
+  const [loadSelectedProgramId, setLoadSelectedProgramId] = useState('')
+  const [loadSelectedDayId, setLoadSelectedDayId] = useState('')
+  const [days, setDays] = useState<Array<{id: string; name: string; dows: number[]; order_index: number}>>([])
 
   const [loading, setLoading] = useState(true)
   const [demo, setDemo] = useState(false)
@@ -90,7 +96,7 @@ export default function EnhancedEditWorkoutPage() {
       const { data: ex } = await supabase.from('exercises').select('id,name,category').order('name')
       if (ex) setAllExercises(ex as Exercise[])
 
-      // Load programs for template saving
+      // Load programs for template saving and loading
       const { data: progs } = await supabase
         .from('programs')
         .select('id, name')
@@ -292,6 +298,48 @@ export default function EnhancedEditWorkoutPage() {
     newSets.splice(adjustedDropIndex, 0, draggedSet)
     
     updateSets(exerciseId, newSets)
+  }
+
+  // Load template functions
+  async function fetchDaysForProgram(programId: string) {
+    setDays([])
+    setLoadSelectedDayId('')
+    if (!programId) return
+    const { data } = await supabase.from('program_days')
+      .select('id,name,dows,order_index').eq('program_id', programId).order('order_index')
+    setDays((data||[]))
+  }
+
+  async function loadTemplate(programId: string, dayId: string) {
+    const { data: tex } = await supabase.from('template_exercises')
+      .select('exercise_id,display_name,default_sets,default_reps,set_type,order_index')
+      .eq('program_day_id', dayId).order('order_index')
+
+    if (!tex || tex.length === 0) { 
+      alert('This day has no exercises yet.')
+      return 
+    }
+
+    const ok = confirm('Replace the current exercises with this template?')
+    if (!ok) return
+
+    const built = tex.map((t) => ({
+      id: t.exercise_id,
+      name: t.display_name,
+      sets: Array.from({ length: Math.max(1, t.default_sets||1) }, () => ({
+        weight: 0,
+        reps: Math.max(0, t.default_reps||0),
+        set_type: (t.set_type as 'warmup'|'working') || 'working'
+      }))
+    }))
+    
+    setItems(built)
+    setShowTemplateLoader(false)
+    
+    // Auto-expand first exercise only
+    if (built.length > 0) {
+      setExpandedExercises(new Set([built[0].id]))
+    }
   }
 
   // Save workout as template
@@ -638,6 +686,70 @@ export default function EnhancedEditWorkoutPage() {
               placeholder="How did the workout feel? Any observations..."
             />
           </div>
+        </div>
+
+        {/* Template Loading */}
+        <div className="card">
+          <div 
+            className="flex items-center justify-between cursor-pointer mb-3"
+            onClick={() => setShowTemplateLoader(!showTemplateLoader)}
+          >
+            <div className="font-medium">📋 Load Template</div>
+            <div className="text-white/60">
+              {showTemplateLoader ? '▲' : '▼'}
+            </div>
+          </div>
+
+          {showTemplateLoader && (
+            <div className="space-y-4">
+              <div className="text-sm text-white/60">
+                Replace current exercises with a template from your programs.
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <select
+                  className="input"
+                  value={loadSelectedProgramId}
+                  onChange={async (e) => {
+                    const id = e.target.value
+                    setLoadSelectedProgramId(id)
+                    await fetchDaysForProgram(id)
+                  }}
+                >
+                  <option value="">Select program…</option>
+                  {programs.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  className="input"
+                  value={loadSelectedDayId}
+                  onChange={(e) => setLoadSelectedDayId(e.target.value)}
+                  disabled={!loadSelectedProgramId || days.length === 0}
+                >
+                  <option value="">{loadSelectedProgramId ? 'Select day…' : 'Pick a program first'}</option>
+                  {days.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
+
+                <button
+                  className="btn disabled:opacity-50"
+                  disabled={!loadSelectedProgramId || !loadSelectedDayId}
+                  onClick={() => {
+                    if (loadSelectedProgramId && loadSelectedDayId) {
+                      loadTemplate(loadSelectedProgramId, loadSelectedDayId)
+                    }
+                  }}
+                >
+                  Load Template
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Exercise Selection */}
