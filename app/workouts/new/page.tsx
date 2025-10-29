@@ -19,10 +19,11 @@ type Program = { id: string; name: string; is_active: boolean }
 type ProgramDay = { id: string; name: string; dows: number[]; order_index: number }
 
 export default function EnhancedNewWorkoutPage() {
-  const [unit, setUnit] = useState<'lb' | 'kg'>('lb')
+  const [unit, setUnit] = useState<'lb' | 'kg'>('lb') // Will be loaded from user profile
   const [note, setNote] = useState('')
-  const [presetTitle, setPresetTitle] = useState<PresetTitle>('Upper')
   const [customTitle, setCustomTitle] = useState('')
+  const [location, setLocation] = useState('')
+  const [savedLocations, setSavedLocations] = useState<string[]>([])
 
   const [performedAt, setPerformedAt] = useState<string>(() => {
     const d = new Date()
@@ -74,7 +75,7 @@ export default function EnhancedNewWorkoutPage() {
     setExpandedExercises(new Set([exerciseId]))
   }
 
-  // Fetch all sets from the last workout for an exercise
+  // Fetch all sets from the last workout for an exercise at the same location
   async function getLastWorkoutSets(exerciseId: string): Promise<Array<{ weight: number; reps: number; set_type: 'warmup' | 'working' }> | null> {
     const userId = await getActiveUserId()
 
@@ -83,11 +84,18 @@ export default function EnhancedNewWorkoutPage() {
     }
 
     try {
-      // Get recent workouts
-      const { data: workouts, error: workoutsError } = await supabase
+      // Get recent workouts at the same location
+      let query = supabase
         .from('workouts')
-        .select('id, performed_at')
+        .select('id, performed_at, location')
         .eq('user_id', userId)
+
+      // Filter by location if set
+      if (location) {
+        query = query.eq('location', location)
+      }
+
+      const { data: workouts, error: workoutsError } = await query
         .order('performed_at', { ascending: false })
         .limit(20)
 
@@ -166,6 +174,20 @@ export default function EnhancedNewWorkoutPage() {
         .select('id,name,is_active')
         .order('created_at', { ascending: false })
       setPrograms((progs||[]) as Program[])
+
+      // Load previously used locations
+      const { data: locations } = await supabase
+        .from('workouts')
+        .select('location')
+        .eq('user_id', userId)
+        .not('location', 'is', null)
+        .order('performed_at', { ascending: false })
+        .limit(100)
+
+      if (locations) {
+        const uniqueLocations = [...new Set(locations.map(l => l.location).filter(Boolean))]
+        setSavedLocations(uniqueLocations)
+      }
 
       // Don't auto-load templates - keep it blank by default
     })()
@@ -256,7 +278,6 @@ export default function EnhancedNewWorkoutPage() {
       }))
     }))
     setItems(built)
-    setPresetTitle('Other')
     setCustomTitle(day.name)
     setLoadedTemplate({ programName: program.name, dayName: day.name })
     // Auto-expand first exercise only
@@ -292,8 +313,7 @@ export default function EnhancedNewWorkoutPage() {
   }
 
   function resolveTitle(): string | null {
-    const fromPreset = presetTitle !== 'Other' ? presetTitle : customTitle.trim()
-    return fromPreset ? fromPreset : null
+    return customTitle.trim() || null
   }
 
   function toISO(dtLocal: string) {
@@ -311,9 +331,9 @@ export default function EnhancedNewWorkoutPage() {
     const title = resolveTitle()
     const iso = performedAt ? toISO(performedAt) : new Date().toISOString()
 
-    const { data: w, error } = await supabase
+    const { data: w, error} = await supabase
       .from('workouts')
-      .insert({ user_id: userId, performed_at: iso, title, note: note || null })
+      .insert({ user_id: userId, performed_at: iso, title, note: note || null, location: location || null })
       .select('id')
       .single()
     if (error || !w) { alert('Save failed'); return }
@@ -479,7 +499,7 @@ export default function EnhancedNewWorkoutPage() {
         {/* Workout Details */}
         <div className="card">
           <div className="font-medium mb-4">📝 Workout Details</div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm text-white/80 font-medium mb-2">
@@ -494,60 +514,41 @@ export default function EnhancedNewWorkoutPage() {
             </div>
             <div>
               <label className="block text-sm text-white/80 font-medium mb-2">
-                Units
+                Custom Title
               </label>
-              <div className="flex gap-2">
-                <button
-                  className={`toggle flex-1 ${unit === 'lb' ? 'bg-brand-red/20 border-brand-red text-white' : ''}`}
-                  onClick={() => setUnit('lb')}
-                >
-                  Pounds
-                </button>
-                <button
-                  className={`toggle flex-1 ${unit === 'kg' ? 'bg-brand-red/20 border-brand-red text-white' : ''}`}
-                  onClick={() => setUnit('kg')}
-                >
-                  Kilograms
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-white/80 font-medium mb-2">
-                Workout Type
-              </label>
-              <select
+              <input
+                type="text"
                 className="input w-full"
-                value={presetTitle}
-                onChange={e => setPresetTitle(e.target.value as PresetTitle)}
-              >
-                <option value="Upper">Upper Body</option>
-                <option value="Lower">Lower Body</option>
-                <option value="Push">Push Day</option>
-                <option value="Pull">Pull Day</option>
-                <option value="Legs">Leg Day</option>
-                <option value="Other">Custom</option>
-              </select>
+                value={customTitle}
+                onChange={e => setCustomTitle(e.target.value)}
+                placeholder="e.g., Upper Body, Leg Day"
+              />
             </div>
-            {presetTitle === 'Other' && (
-              <div>
-                <label className="block text-sm text-white/80 font-medium mb-2">
-                  Custom Title
-                </label>
-                <input
-                  type="text"
-                  className="input w-full"
-                  value={customTitle}
-                  onChange={e => setCustomTitle(e.target.value)}
-                  placeholder="Enter custom workout name"
-                />
-              </div>
-            )}
           </div>
 
-          <div className="mt-4">
+          <div className="mb-4">
+            <label className="block text-sm text-white/80 font-medium mb-2">
+              Location
+            </label>
+            <input
+              type="text"
+              list="location-options"
+              className="input w-full"
+              value={location}
+              onChange={e => setLocation(e.target.value)}
+              placeholder="e.g., Home Gym, LA Fitness, Office Gym"
+            />
+            <datalist id="location-options">
+              {savedLocations.map((loc, idx) => (
+                <option key={idx} value={loc} />
+              ))}
+            </datalist>
+            <div className="text-xs text-white/60 mt-1">
+              {savedLocations.length > 0 ? 'Select from previous locations or type a new one' : 'Suggestions will be based on this location'}
+            </div>
+          </div>
+
+          <div>
             <label className="block text-sm text-white/80 font-medium mb-2">
               Notes (Optional)
             </label>

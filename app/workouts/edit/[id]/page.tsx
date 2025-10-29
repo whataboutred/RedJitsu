@@ -20,12 +20,13 @@ export default function EnhancedEditWorkoutPage() {
   const params = useParams()
   const workoutId = params.id as string
 
-  const [unit, setUnit] = useState<'lb' | 'kg'>('lb')
+  const [unit, setUnit] = useState<'lb' | 'kg'>('lb') // Will be loaded from user profile
   const [note, setNote] = useState('')
-  const [presetTitle, setPresetTitle] = useState<PresetTitle>('Upper')
   const [customTitle, setCustomTitle] = useState('')
+  const [location, setLocation] = useState('')
+  const [savedLocations, setSavedLocations] = useState<string[]>([])
   const [performedAt, setPerformedAt] = useState<string>('')
-  
+
   const [allExercises, setAllExercises] = useState<Exercise[]>([])
   const [search, setSearch] = useState('')
 
@@ -76,7 +77,7 @@ export default function EnhancedEditWorkoutPage() {
     setExpandedExercises(new Set([exerciseId]))
   }
 
-  // Fetch all sets from the last workout for an exercise (excluding current workout)
+  // Fetch all sets from the last workout for an exercise at the same location (excluding current workout)
   async function getLastWorkoutSets(exerciseId: string): Promise<Array<{ weight: number; reps: number; set_type: 'warmup' | 'working' }> | null> {
     const userId = await getActiveUserId()
 
@@ -85,12 +86,19 @@ export default function EnhancedEditWorkoutPage() {
     }
 
     try {
-      // Get recent workouts (excluding the current one being edited)
-      const { data: workouts, error: workoutsError } = await supabase
+      // Get recent workouts at the same location (excluding the current one being edited)
+      let query = supabase
         .from('workouts')
-        .select('id, performed_at')
+        .select('id, performed_at, location')
         .eq('user_id', userId)
         .neq('id', workoutId) // Exclude current workout
+
+      // Filter by location if set
+      if (location) {
+        query = query.eq('location', location)
+      }
+
+      const { data: workouts, error: workoutsError } = await query
         .order('performed_at', { ascending: false })
         .limit(20)
 
@@ -177,6 +185,20 @@ export default function EnhancedEditWorkoutPage() {
         .order('name')
       if (progs) setPrograms(progs)
 
+      // Load previously used locations
+      const { data: locations } = await supabase
+        .from('workouts')
+        .select('location')
+        .eq('user_id', userId)
+        .not('location', 'is', null)
+        .order('performed_at', { ascending: false })
+        .limit(100)
+
+      if (locations) {
+        const uniqueLocations = [...new Set(locations.map(l => l.location).filter(Boolean))]
+        setSavedLocations(uniqueLocations)
+      }
+
       // Load existing workout data
       await loadWorkoutData()
       setLoading(false)
@@ -191,7 +213,7 @@ export default function EnhancedEditWorkoutPage() {
       // Load workout details
       const { data: workout } = await supabase
         .from('workouts')
-        .select('performed_at, title, note')
+        .select('performed_at, title, note, location')
         .eq('id', workoutId)
         .eq('user_id', userId)
         .single()
@@ -199,17 +221,8 @@ export default function EnhancedEditWorkoutPage() {
       if (workout) {
         setPerformedAt(new Date(workout.performed_at).toISOString().slice(0, 16))
         setNote(workout.note || '')
-        
-        if (workout.title) {
-          const presets: PresetTitle[] = ['Upper', 'Lower', 'Push', 'Pull', 'Legs', 'Other']
-          if (presets.includes(workout.title as PresetTitle)) {
-            setPresetTitle(workout.title as PresetTitle)
-            setCustomTitle('')
-          } else {
-            setPresetTitle('Other')
-            setCustomTitle(workout.title)
-          }
-        }
+        setLocation(workout.location || '')
+        setCustomTitle(workout.title || '')
       }
 
       // Load workout exercises and sets
@@ -309,7 +322,7 @@ export default function EnhancedEditWorkoutPage() {
 
   // ExerciseSelector component handles filtering internally
 
-  const title = customTitle.trim() || presetTitle
+  const title = customTitle.trim() || null
 
   async function addExercise(exerciseId: string) {
     const ex = allExercises.find(e => e.id === exerciseId)
@@ -580,7 +593,8 @@ export default function EnhancedEditWorkoutPage() {
         .update({
           performed_at: new Date(performedAt).toISOString(),
           title: title,
-          note: note.trim() || null
+          note: note.trim() || null,
+          location: location || null
         })
         .eq('id', workoutId)
         .eq('user_id', userId)
@@ -754,7 +768,7 @@ export default function EnhancedEditWorkoutPage() {
         {/* Workout Details */}
         <div className="card">
           <div className="font-medium mb-4">📝 Workout Details</div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm text-white/80 font-medium mb-2">
@@ -769,60 +783,41 @@ export default function EnhancedEditWorkoutPage() {
             </div>
             <div>
               <label className="block text-sm text-white/80 font-medium mb-2">
-                Units
+                Custom Title
               </label>
-              <div className="flex gap-2">
-                <button
-                  className={`toggle flex-1 ${unit === 'lb' ? 'bg-brand-red/20 border-brand-red text-white' : ''}`}
-                  onClick={() => setUnit('lb')}
-                >
-                  Pounds
-                </button>
-                <button
-                  className={`toggle flex-1 ${unit === 'kg' ? 'bg-brand-red/20 border-brand-red text-white' : ''}`}
-                  onClick={() => setUnit('kg')}
-                >
-                  Kilograms
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-white/80 font-medium mb-2">
-                Workout Type
-              </label>
-              <select
+              <input
+                type="text"
                 className="input w-full"
-                value={presetTitle}
-                onChange={e => setPresetTitle(e.target.value as PresetTitle)}
-              >
-                <option value="Upper">Upper Body</option>
-                <option value="Lower">Lower Body</option>
-                <option value="Push">Push Day</option>
-                <option value="Pull">Pull Day</option>
-                <option value="Legs">Leg Day</option>
-                <option value="Other">Custom</option>
-              </select>
+                value={customTitle}
+                onChange={e => setCustomTitle(e.target.value)}
+                placeholder="e.g., Upper Body, Leg Day"
+              />
             </div>
-            {presetTitle === 'Other' && (
-              <div>
-                <label className="block text-sm text-white/80 font-medium mb-2">
-                  Custom Title
-                </label>
-                <input
-                  type="text"
-                  className="input w-full"
-                  value={customTitle}
-                  onChange={e => setCustomTitle(e.target.value)}
-                  placeholder="Enter custom workout name"
-                />
-              </div>
-            )}
           </div>
 
-          <div className="mt-4">
+          <div className="mb-4">
+            <label className="block text-sm text-white/80 font-medium mb-2">
+              Location
+            </label>
+            <input
+              type="text"
+              list="location-options-edit"
+              className="input w-full"
+              value={location}
+              onChange={e => setLocation(e.target.value)}
+              placeholder="e.g., Home Gym, LA Fitness, Office Gym"
+            />
+            <datalist id="location-options-edit">
+              {savedLocations.map((loc, idx) => (
+                <option key={idx} value={loc} />
+              ))}
+            </datalist>
+            <div className="text-xs text-white/60 mt-1">
+              {savedLocations.length > 0 ? 'Select from previous locations or type a new one' : 'Suggestions will be based on this location'}
+            </div>
+          </div>
+
+          <div>
             <label className="block text-sm text-white/80 font-medium mb-2">
               Notes (Optional)
             </label>
