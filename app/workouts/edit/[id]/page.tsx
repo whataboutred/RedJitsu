@@ -903,6 +903,16 @@ export default function EnhancedEditWorkoutPage() {
                   
                   {isExpanded && (
                     <div className="space-y-3">
+                      {/* Temporary Debug Info */}
+                      <div className="bg-purple-500/20 border border-purple-500/50 rounded p-2 text-xs">
+                        <div>Exercise ID: {item.id}</div>
+                        <div>Total suggestions stored: {lastWorkoutSuggestions.size}</div>
+                        <div>Has suggestion for this exercise: {lastWorkoutSuggestions.has(item.id) ? '✅ YES' : '❌ NO'}</div>
+                        {lastWorkoutSuggestions.has(item.id) && (
+                          <div>Suggestion data: {JSON.stringify(lastWorkoutSuggestions.get(item.id))}</div>
+                        )}
+                      </div>
+
                       {/* Show last workout suggestion if available */}
                       {lastWorkoutSuggestions.has(item.id) && (
                         <LastWorkoutSuggestion
