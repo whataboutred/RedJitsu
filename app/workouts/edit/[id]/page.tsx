@@ -79,16 +79,12 @@ export default function EnhancedEditWorkoutPage() {
   // Fetch all sets from the last workout for an exercise (excluding current workout)
   async function getLastWorkoutSets(exerciseId: string): Promise<Array<{ weight: number; reps: number; set_type: 'warmup' | 'working' }> | null> {
     const userId = await getActiveUserId()
-    console.log('🔍 getLastWorkoutSets called with:', { exerciseId, userId, currentWorkoutId: workoutId })
 
     if (!userId) {
-      console.log('❌ No userId, returning null')
-      return null
+      throw new Error('No user ID found')
     }
 
     try {
-      console.log('🔎 Querying database for exercise:', exerciseId)
-
       // Get recent workouts (excluding the current one being edited)
       const { data: workouts, error: workoutsError } = await supabase
         .from('workouts')
@@ -98,11 +94,12 @@ export default function EnhancedEditWorkoutPage() {
         .order('performed_at', { ascending: false })
         .limit(20)
 
-      console.log('📊 Found workouts:', { count: workouts?.length, error: workoutsError })
+      if (workoutsError) {
+        throw new Error(`Failed to fetch workouts: ${workoutsError.message}`)
+      }
 
-      if (workoutsError || !workouts || workouts.length === 0) {
-        console.log('❌ No workouts found for user')
-        return null
+      if (!workouts || workouts.length === 0) {
+        return null // No workouts found - this is okay
       }
 
       // Look for this exercise in recent workouts
@@ -112,14 +109,16 @@ export default function EnhancedEditWorkoutPage() {
           .select('id')
           .eq('workout_id', workout.id)
           .eq('exercise_id', exerciseId)
-          .single()
+          .maybeSingle()
 
-        if (exerciseError || !workoutExercise) {
-          console.log(`⚠️ Exercise ${exerciseId} not found in workout ${workout.id}`)
+        if (exerciseError) {
+          console.warn('Error querying workout_exercises:', exerciseError)
           continue
         }
 
-        console.log('✅ Found exercise in workout:', workout.id)
+        if (!workoutExercise) {
+          continue // Exercise not in this workout
+        }
 
         // Get all sets for this exercise
         const { data: sets, error: setsError } = await supabase
@@ -128,11 +127,13 @@ export default function EnhancedEditWorkoutPage() {
           .eq('workout_exercise_id', workoutExercise.id)
           .order('set_index', { ascending: true })
 
-        console.log('🏋️ Sets found:', { count: sets?.length, error: setsError })
-
-        if (setsError || !sets || sets.length === 0) {
-          console.log('⚠️ No sets found, trying next workout')
+        if (setsError) {
+          console.warn('Error querying sets:', setsError)
           continue
+        }
+
+        if (!sets || sets.length === 0) {
+          continue // No sets in this workout
         }
 
         // Return all sets from the last workout
@@ -142,15 +143,13 @@ export default function EnhancedEditWorkoutPage() {
           set_type: set.set_type as 'warmup' | 'working'
         }))
 
-        console.log('✨ Found last workout sets:', allSets)
         return allSets
       }
 
-      console.log('❌ No sets found in any recent workout')
-      return null
+      return null // Exercise not found in any recent workout
     } catch (error) {
-      console.error('💥 Error in getLastWorkoutSets:', error)
-      return null
+      console.error('Error in getLastWorkoutSets:', error)
+      throw error
     }
   }
 
@@ -306,25 +305,25 @@ export default function EnhancedEditWorkoutPage() {
 
     // Always start with zeroed out sets
     setItems(prev => [...prev, { id: ex.id, name: ex.name, sets: [{ weight: 0, reps: 0, set_type: 'working' }] }])
-
-    // Fetch last workout data for suggestion
-    console.log('🔍 Fetching last workout sets for suggestion...')
-    const lastWorkoutSets = await getLastWorkoutSets(ex.id)
-    console.log('🎯 getLastWorkoutSets returned:', lastWorkoutSets)
-
-    if (lastWorkoutSets && lastWorkoutSets.length > 0) {
-      console.log('✨ Storing last workout suggestion')
-      setLastWorkoutSuggestions(prev => {
-        const newMap = new Map(prev)
-        newMap.set(ex.id, lastWorkoutSets)
-        return newMap
-      })
-    }
-
     setSearch('')
     setIsExerciseSelectorCollapsed(true)
-    // Auto-expand the new exercise and collapse others
     expandExerciseAndCollapseOthers(ex.id)
+
+    // Fetch last workout data for suggestion (in background)
+    try {
+      const lastWorkoutSets = await getLastWorkoutSets(ex.id)
+
+      if (lastWorkoutSets && lastWorkoutSets.length > 0) {
+        setLastWorkoutSuggestions(prev => {
+          const newMap = new Map(prev)
+          newMap.set(ex.id, lastWorkoutSets)
+          return newMap
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching workout suggestions:', error)
+      alert('⚠️ Could not load previous workout data: ' + (error as Error).message)
+    }
   }
 
   async function addCustomExercise() {
