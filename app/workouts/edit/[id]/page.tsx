@@ -99,7 +99,7 @@ export default function EnhancedEditWorkoutPage() {
       }
 
       if (!workouts || workouts.length === 0) {
-        return null // No workouts found - this is okay
+        return null // No workouts found
       }
 
       // Look for this exercise in recent workouts
@@ -111,13 +111,8 @@ export default function EnhancedEditWorkoutPage() {
           .eq('exercise_id', exerciseId)
           .maybeSingle()
 
-        if (exerciseError) {
-          console.warn('Error querying workout_exercises:', exerciseError)
+        if (exerciseError || !workoutExercise) {
           continue
-        }
-
-        if (!workoutExercise) {
-          continue // Exercise not in this workout
         }
 
         // Get all sets for this exercise
@@ -127,13 +122,8 @@ export default function EnhancedEditWorkoutPage() {
           .eq('workout_exercise_id', workoutExercise.id)
           .order('set_index', { ascending: true })
 
-        if (setsError) {
-          console.warn('Error querying sets:', setsError)
+        if (setsError || !sets || sets.length === 0) {
           continue
-        }
-
-        if (!sets || sets.length === 0) {
-          continue // No sets in this workout
         }
 
         // Return all sets from the last workout
@@ -148,7 +138,7 @@ export default function EnhancedEditWorkoutPage() {
 
       return null // Exercise not found in any recent workout
     } catch (error) {
-      console.error('Error in getLastWorkoutSets:', error)
+      console.error('Error fetching workout suggestions:', error)
       throw error
     }
   }
@@ -446,27 +436,31 @@ export default function EnhancedEditWorkoutPage() {
       setExpandedExercises(new Set([built[0].id]))
     }
 
-    // Fetch suggestions for all exercises in the template
-    console.log('🎯 Template loaded, fetching suggestions for', built.length, 'exercises')
-
-    for (const exercise of built) {
-      try {
-        const lastWorkoutSets = await getLastWorkoutSets(exercise.id)
-
-        if (lastWorkoutSets && lastWorkoutSets.length > 0) {
-          console.log('✅ Found suggestion for:', exercise.name)
-          setLastWorkoutSuggestions(prev => {
-            const newMap = new Map(prev)
-            newMap.set(exercise.id, lastWorkoutSets)
-            return newMap
-          })
-        } else {
-          console.log('ℹ️ No suggestion for:', exercise.name)
+    // Fetch suggestions for all exercises in parallel (faster!)
+    Promise.all(
+      built.map(async (exercise) => {
+        try {
+          const lastWorkoutSets = await getLastWorkoutSets(exercise.id)
+          if (lastWorkoutSets && lastWorkoutSets.length > 0) {
+            return { id: exercise.id, sets: lastWorkoutSets }
+          }
+        } catch (error) {
+          console.error('Error fetching suggestion for', exercise.name, ':', error)
         }
-      } catch (error) {
-        console.error('❌ Error fetching suggestion for', exercise.name, ':', error)
-      }
-    }
+        return null
+      })
+    ).then((results) => {
+      // Update all suggestions at once
+      setLastWorkoutSuggestions(prev => {
+        const newMap = new Map(prev)
+        results.forEach(result => {
+          if (result) {
+            newMap.set(result.id, result.sets)
+          }
+        })
+        return newMap
+      })
+    })
   }
 
   // Save workout as template
@@ -924,16 +918,6 @@ export default function EnhancedEditWorkoutPage() {
                   
                   {isExpanded && (
                     <div className="space-y-3">
-                      {/* Temporary Debug Info */}
-                      <div className="bg-purple-500/20 border border-purple-500/50 rounded p-2 text-xs">
-                        <div>Exercise ID: {item.id}</div>
-                        <div>Total suggestions stored: {lastWorkoutSuggestions.size}</div>
-                        <div>Has suggestion for this exercise: {lastWorkoutSuggestions.has(item.id) ? '✅ YES' : '❌ NO'}</div>
-                        {lastWorkoutSuggestions.has(item.id) && (
-                          <div>Suggestion data: {JSON.stringify(lastWorkoutSuggestions.get(item.id))}</div>
-                        )}
-                      </div>
-
                       {/* Show last workout suggestion if available */}
                       {lastWorkoutSuggestions.has(item.id) && (
                         <LastWorkoutSuggestion
