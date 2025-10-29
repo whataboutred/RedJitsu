@@ -437,13 +437,35 @@ export default function EnhancedEditWorkoutPage() {
         set_type: (t.set_type as 'warmup'|'working') || 'working'
       }))
     }))
-    
+
     setItems(built)
     setShowTemplateLoader(false)
-    
+
     // Auto-expand first exercise only
     if (built.length > 0) {
       setExpandedExercises(new Set([built[0].id]))
+    }
+
+    // Fetch suggestions for all exercises in the template
+    console.log('🎯 Template loaded, fetching suggestions for', built.length, 'exercises')
+
+    for (const exercise of built) {
+      try {
+        const lastWorkoutSets = await getLastWorkoutSets(exercise.id)
+
+        if (lastWorkoutSets && lastWorkoutSets.length > 0) {
+          console.log('✅ Found suggestion for:', exercise.name)
+          setLastWorkoutSuggestions(prev => {
+            const newMap = new Map(prev)
+            newMap.set(exercise.id, lastWorkoutSets)
+            return newMap
+          })
+        } else {
+          console.log('ℹ️ No suggestion for:', exercise.name)
+        }
+      } catch (error) {
+        console.error('❌ Error fetching suggestion for', exercise.name, ':', error)
+      }
     }
   }
 
