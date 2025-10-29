@@ -5,6 +5,7 @@ import BackgroundLogo from '@/components/BackgroundLogo'
 import QuickStartSection from '@/components/QuickStartSection'
 import ExerciseSelector from '@/components/ExerciseSelector'
 import EnhancedSetRow from '@/components/EnhancedSetRow'
+import LastWorkoutSuggestion from '@/components/LastWorkoutSuggestion'
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
@@ -35,6 +36,11 @@ export default function EnhancedNewWorkoutPage() {
   const [items, setItems] = useState<
     Array<{ id: string; name: string; sets: Array<{ weight: number; reps: number; set_type: 'warmup' | 'working' }> }>
   >([])
+
+  // Track last workout suggestions for each exercise
+  const [lastWorkoutSuggestions, setLastWorkoutSuggestions] = useState<
+    Map<string, Array<{ weight: number; reps: number; set_type: 'warmup' | 'working' }>>
+  >(new Map())
 
   // UI State
   const [isTemplateCollapsed, setIsTemplateCollapsed] = useState(true)
@@ -68,11 +74,11 @@ export default function EnhancedNewWorkoutPage() {
     setExpandedExercises(new Set([exerciseId]))
   }
 
-  // Fetch last working set for an exercise from most recent workout
-  async function getLastWorkingSet(exerciseId: string): Promise<{ weight: number; reps: number } | null> {
+  // Fetch all sets from the last workout for an exercise
+  async function getLastWorkoutSets(exerciseId: string): Promise<Array<{ weight: number; reps: number; set_type: 'warmup' | 'working' }> | null> {
     const userId = await getActiveUserId()
-    console.log('🔍 getLastWorkingSet called with:', { exerciseId, userId })
-    
+    console.log('🔍 getLastWorkoutSets called with:', { exerciseId, userId })
+
     if (!userId) {
       console.log('❌ No userId, returning null')
       return null
@@ -80,14 +86,14 @@ export default function EnhancedNewWorkoutPage() {
 
     try {
       console.log('🔎 Querying database for exercise:', exerciseId)
-      
-      // Simplified approach: First get workouts by user, then filter by exercise
+
+      // Get recent workouts
       const { data: workouts, error: workoutsError } = await supabase
         .from('workouts')
         .select('id, performed_at')
         .eq('user_id', userId)
         .order('performed_at', { ascending: false })
-        .limit(20) // Get recent workouts
+        .limit(20)
 
       console.log('📊 Found workouts:', { count: workouts?.length, error: workoutsError })
 
@@ -96,7 +102,7 @@ export default function EnhancedNewWorkoutPage() {
         return null
       }
 
-      // Now look for this exercise in recent workouts
+      // Look for this exercise in recent workouts
       for (const workout of workouts) {
         const { data: workoutExercise, error: exerciseError } = await supabase
           .from('workout_exercises')
@@ -112,12 +118,12 @@ export default function EnhancedNewWorkoutPage() {
 
         console.log('✅ Found exercise in workout:', workout.id)
 
-        // Get sets for this exercise
+        // Get all sets for this exercise
         const { data: sets, error: setsError } = await supabase
           .from('sets')
           .select('weight, reps, set_type, set_index')
           .eq('workout_exercise_id', workoutExercise.id)
-          .order('set_index', { ascending: false }) // Get last set first
+          .order('set_index', { ascending: true })
 
         console.log('🏋️ Sets found:', { count: sets?.length, error: setsError })
 
@@ -126,25 +132,21 @@ export default function EnhancedNewWorkoutPage() {
           continue
         }
 
-        // Find the last working set with weight > 0
-        const workingSet = sets.find(set => set.set_type === 'working' && set.weight > 0)
-        
-        if (workingSet) {
-          const result = {
-            weight: Number(workingSet.weight),
-            reps: Number(workingSet.reps)
-          }
-          console.log('✨ Found last working set:', result)
-          return result
-        } else {
-          console.log('⚠️ No working sets with weight > 0 in this workout')
-        }
+        // Return all sets from the last workout
+        const allSets = sets.map(set => ({
+          weight: Number(set.weight),
+          reps: Number(set.reps),
+          set_type: set.set_type as 'warmup' | 'working'
+        }))
+
+        console.log('✨ Found last workout sets:', allSets)
+        return allSets
       }
 
-      console.log('❌ No working sets found in any recent workout')
+      console.log('❌ No sets found in any recent workout')
       return null
     } catch (error) {
-      console.error('💥 Error in getLastWorkingSet:', error)
+      console.error('💥 Error in getLastWorkoutSets:', error)
       return null
     }
   }
@@ -182,48 +184,36 @@ export default function EnhancedNewWorkoutPage() {
 
   async function addExercise(id: string, avgWeight?: number, avgReps?: number) {
     console.log('🏋️ addExercise called with:', { id, avgWeight, avgReps })
-    
+
     const ex = allExercises.find(e => e.id === id)
     if (!ex) {
       console.log('❌ Exercise not found in allExercises:', id)
       return
     }
-    
+
     console.log('✅ Found exercise:', ex)
-    
-    // Try to get last working set data for this specific exercise
-    let smartSets: Array<{ weight: number; reps: number; set_type: 'warmup' | 'working' }> = []
-    
-    // First priority: Use provided avgWeight/avgReps (from QuickStart)
-    if (avgWeight && avgReps) {
-      console.log('📊 Using QuickStart data:', { avgWeight, avgReps })
-      smartSets = [{ 
-        weight: avgWeight, 
-        reps: avgReps, 
-        set_type: 'working' as const 
-      }]
-    } else {
-      console.log('🔍 No QuickStart data, fetching last working set...')
-      // Second priority: Fetch from last workout's working set
-      const lastWorkingSet = await getLastWorkingSet(ex.id)
-      console.log('🎯 getLastWorkingSet returned:', lastWorkingSet)
-      
-      if (lastWorkingSet) {
-        console.log('✨ Using last working set for smart defaults')
-        smartSets = [{ 
-          weight: lastWorkingSet.weight, 
-          reps: lastWorkingSet.reps, 
-          set_type: 'working' as const 
-        }]
-      } else {
-        console.log('⚠️ No last working set found, using defaults')
-        // Default: Empty set
-        smartSets = [{ weight: 0, reps: 0, set_type: 'working' as const }]
-      }
+
+    // Always start with zeroed out sets
+    const initialSets: Array<{ weight: number; reps: number; set_type: 'warmup' | 'working' }> = [
+      { weight: 0, reps: 0, set_type: 'working' as const }
+    ]
+
+    // Fetch last workout data for suggestion
+    console.log('🔍 Fetching last workout sets for suggestion...')
+    const lastWorkoutSets = await getLastWorkoutSets(ex.id)
+    console.log('🎯 getLastWorkoutSets returned:', lastWorkoutSets)
+
+    if (lastWorkoutSets && lastWorkoutSets.length > 0) {
+      console.log('✨ Storing last workout suggestion')
+      setLastWorkoutSuggestions(prev => {
+        const newMap = new Map(prev)
+        newMap.set(ex.id, lastWorkoutSets)
+        return newMap
+      })
     }
-    
-    console.log('🎪 Final smartSets for exercise:', smartSets)
-    setItems(p => [...p, { id: ex.id, name: ex.name, sets: smartSets }])
+
+    console.log('🎪 Adding exercise with zeroed sets:', initialSets)
+    setItems(p => [...p, { id: ex.id, name: ex.name, sets: initialSets }])
     setIsExerciseSelectorCollapsed(true) // Collapse after adding
     // Auto-expand the new exercise and collapse others
     expandExerciseAndCollapseOthers(ex.id)
@@ -363,6 +353,12 @@ export default function EnhancedNewWorkoutPage() {
       newSet.delete(exerciseId)
       return newSet
     })
+    // Also remove the suggestion for this exercise
+    setLastWorkoutSuggestions(prev => {
+      const newMap = new Map(prev)
+      newMap.delete(exerciseId)
+      return newMap
+    })
   }
 
   function updateSets(exerciseId: string, newSets: Array<{ weight: number; reps: number; set_type: 'warmup' | 'working' }>) {
@@ -396,8 +392,8 @@ export default function EnhancedNewWorkoutPage() {
 
         {/* Quick Start Section */}
         {workoutMode === 'quick' && (
-          <QuickStartSection 
-            onAddExercise={(ex) => addExercise(ex.id, ex.avgWeight, ex.avgReps)}
+          <QuickStartSection
+            onAddExercise={(ex) => addExercise(ex.id)}
             unit={unit}
           />
         )}
@@ -599,6 +595,14 @@ export default function EnhancedNewWorkoutPage() {
                   
                   {isExpanded && (
                     <div className="space-y-3">
+                      {/* Show last workout suggestion if available */}
+                      {lastWorkoutSuggestions.has(item.id) && (
+                        <LastWorkoutSuggestion
+                          sets={lastWorkoutSuggestions.get(item.id)!}
+                          unit={unit}
+                        />
+                      )}
+
                       {item.sets.map((set, setIndex) => (
                         <EnhancedSetRow
                           key={setIndex}

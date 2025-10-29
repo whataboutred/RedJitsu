@@ -4,6 +4,7 @@ import Nav from '@/components/Nav'
 import BackgroundLogo from '@/components/BackgroundLogo'
 import ExerciseSelector from '@/components/ExerciseSelector'
 import EnhancedSetRow from '@/components/EnhancedSetRow'
+import LastWorkoutSuggestion from '@/components/LastWorkoutSuggestion'
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
@@ -31,6 +32,11 @@ export default function EnhancedEditWorkoutPage() {
   const [items, setItems] = useState<
     Array<{ id: string; name: string; sets: Array<{ weight: number; reps: number; set_type: 'warmup' | 'working' }> }>
   >([])
+
+  // Track last workout suggestions for each exercise
+  const [lastWorkoutSuggestions, setLastWorkoutSuggestions] = useState<
+    Map<string, Array<{ weight: number; reps: number; set_type: 'warmup' | 'working' }>>
+  >(new Map())
 
   // UI State for enhanced experience
   const [isExerciseSelectorCollapsed, setIsExerciseSelectorCollapsed] = useState(true)
@@ -68,6 +74,84 @@ export default function EnhancedEditWorkoutPage() {
 
   const expandExerciseAndCollapseOthers = (exerciseId: string) => {
     setExpandedExercises(new Set([exerciseId]))
+  }
+
+  // Fetch all sets from the last workout for an exercise (excluding current workout)
+  async function getLastWorkoutSets(exerciseId: string): Promise<Array<{ weight: number; reps: number; set_type: 'warmup' | 'working' }> | null> {
+    const userId = await getActiveUserId()
+    console.log('🔍 getLastWorkoutSets called with:', { exerciseId, userId, currentWorkoutId: workoutId })
+
+    if (!userId) {
+      console.log('❌ No userId, returning null')
+      return null
+    }
+
+    try {
+      console.log('🔎 Querying database for exercise:', exerciseId)
+
+      // Get recent workouts (excluding the current one being edited)
+      const { data: workouts, error: workoutsError } = await supabase
+        .from('workouts')
+        .select('id, performed_at')
+        .eq('user_id', userId)
+        .neq('id', workoutId) // Exclude current workout
+        .order('performed_at', { ascending: false })
+        .limit(20)
+
+      console.log('📊 Found workouts:', { count: workouts?.length, error: workoutsError })
+
+      if (workoutsError || !workouts || workouts.length === 0) {
+        console.log('❌ No workouts found for user')
+        return null
+      }
+
+      // Look for this exercise in recent workouts
+      for (const workout of workouts) {
+        const { data: workoutExercise, error: exerciseError } = await supabase
+          .from('workout_exercises')
+          .select('id')
+          .eq('workout_id', workout.id)
+          .eq('exercise_id', exerciseId)
+          .single()
+
+        if (exerciseError || !workoutExercise) {
+          console.log(`⚠️ Exercise ${exerciseId} not found in workout ${workout.id}`)
+          continue
+        }
+
+        console.log('✅ Found exercise in workout:', workout.id)
+
+        // Get all sets for this exercise
+        const { data: sets, error: setsError } = await supabase
+          .from('sets')
+          .select('weight, reps, set_type, set_index')
+          .eq('workout_exercise_id', workoutExercise.id)
+          .order('set_index', { ascending: true })
+
+        console.log('🏋️ Sets found:', { count: sets?.length, error: setsError })
+
+        if (setsError || !sets || sets.length === 0) {
+          console.log('⚠️ No sets found, trying next workout')
+          continue
+        }
+
+        // Return all sets from the last workout
+        const allSets = sets.map(set => ({
+          weight: Number(set.weight),
+          reps: Number(set.reps),
+          set_type: set.set_type as 'warmup' | 'working'
+        }))
+
+        console.log('✨ Found last workout sets:', allSets)
+        return allSets
+      }
+
+      console.log('❌ No sets found in any recent workout')
+      return null
+    } catch (error) {
+      console.error('💥 Error in getLastWorkoutSets:', error)
+      return null
+    }
   }
 
   useEffect(() => {
@@ -212,15 +296,31 @@ export default function EnhancedEditWorkoutPage() {
 
   const title = customTitle.trim() || presetTitle
 
-  function addExercise(exerciseId: string) {
+  async function addExercise(exerciseId: string) {
     const ex = allExercises.find(e => e.id === exerciseId)
     if (!ex) return
-    
-    setItems(prev => {
-      const existing = prev.find(item => item.id === ex.id)
-      if (existing) return prev
-      return [...prev, { id: ex.id, name: ex.name, sets: [{ weight: 0, reps: 0, set_type: 'working' }] }]
-    })
+
+    // Check if exercise already exists
+    const existing = items.find(item => item.id === ex.id)
+    if (existing) return
+
+    // Always start with zeroed out sets
+    setItems(prev => [...prev, { id: ex.id, name: ex.name, sets: [{ weight: 0, reps: 0, set_type: 'working' }] }])
+
+    // Fetch last workout data for suggestion
+    console.log('🔍 Fetching last workout sets for suggestion...')
+    const lastWorkoutSets = await getLastWorkoutSets(ex.id)
+    console.log('🎯 getLastWorkoutSets returned:', lastWorkoutSets)
+
+    if (lastWorkoutSets && lastWorkoutSets.length > 0) {
+      console.log('✨ Storing last workout suggestion')
+      setLastWorkoutSuggestions(prev => {
+        const newMap = new Map(prev)
+        newMap.set(ex.id, lastWorkoutSets)
+        return newMap
+      })
+    }
+
     setSearch('')
     setIsExerciseSelectorCollapsed(true)
     // Auto-expand the new exercise and collapse others
@@ -253,6 +353,12 @@ export default function EnhancedEditWorkoutPage() {
 
   function removeExercise(exerciseId: string) {
     setItems(prev => prev.filter(item => item.id !== exerciseId))
+    // Also remove the suggestion for this exercise
+    setLastWorkoutSuggestions(prev => {
+      const newMap = new Map(prev)
+      newMap.delete(exerciseId)
+      return newMap
+    })
   }
 
   function updateSets(exerciseId: string, newSets: Array<{ weight: number; reps: number; set_type: 'warmup' | 'working' }>) {
@@ -797,6 +903,14 @@ export default function EnhancedEditWorkoutPage() {
                   
                   {isExpanded && (
                     <div className="space-y-3">
+                      {/* Show last workout suggestion if available */}
+                      {lastWorkoutSuggestions.has(item.id) && (
+                        <LastWorkoutSuggestion
+                          sets={lastWorkoutSuggestions.get(item.id)!}
+                          unit={unit}
+                        />
+                      )}
+
                       {item.sets.map((set, setIndex) => (
                         <div
                           key={setIndex}

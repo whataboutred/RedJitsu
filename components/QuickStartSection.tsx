@@ -14,7 +14,7 @@ type RecentExercise = {
 }
 
 type QuickStartSectionProps = {
-  onAddExercise: (exercise: { id: string; name: string; avgWeight?: number; avgReps?: number }) => void
+  onAddExercise: (exercise: { id: string; name: string }) => void
   unit: 'lb' | 'kg'
 }
 
@@ -155,11 +155,9 @@ export default function QuickStartSection({ onAddExercise, unit }: QuickStartSec
           <button
             key={ex.id}
             className="text-left bg-black/30 hover:bg-black/50 rounded-xl p-3 transition-all duration-200 border border-transparent hover:border-brand-red/30"
-            onClick={() => onAddExercise({ 
-              id: ex.id, 
-              name: ex.name, 
-              avgWeight: ex.avgWeight, 
-              avgReps: ex.avgReps 
+            onClick={() => onAddExercise({
+              id: ex.id,
+              name: ex.name
             })}
           >
             <div className="font-medium text-white/90">{ex.name}</div>
