@@ -78,11 +78,15 @@ export default function EnhancedNewWorkoutPage() {
   async function getLastWorkoutSets(exerciseId: string): Promise<Array<{ weight: number; reps: number; set_type: 'warmup' | 'working' }> | null> {
     const userId = await getActiveUserId()
 
+    console.log('🔐 User ID from getActiveUserId():', userId)
+
     if (!userId) {
-      throw new Error('No user ID found')
+      throw new Error('No user ID found - authentication may have failed')
     }
 
     try {
+      console.log('🔎 Querying workouts table for user:', userId)
+
       // Get recent workouts
       const { data: workouts, error: workoutsError } = await supabase
         .from('workouts')
@@ -91,15 +95,23 @@ export default function EnhancedNewWorkoutPage() {
         .order('performed_at', { ascending: false })
         .limit(20)
 
+      console.log('📊 Workouts query result:', {
+        found: workouts?.length || 0,
+        error: workoutsError?.message
+      })
+
       if (workoutsError) {
         throw new Error(`Failed to fetch workouts: ${workoutsError.message}`)
       }
 
       if (!workouts || workouts.length === 0) {
+        console.log('ℹ️ No workouts found for user')
         return null // No workouts found - this is okay for new users
       }
 
       // Look for this exercise in recent workouts
+      console.log('🔍 Searching through', workouts.length, 'workouts for exercise:', exerciseId)
+
       for (const workout of workouts) {
         const { data: workoutExercise, error: exerciseError } = await supabase
           .from('workout_exercises')
@@ -109,13 +121,15 @@ export default function EnhancedNewWorkoutPage() {
           .maybeSingle()
 
         if (exerciseError) {
-          console.warn('Error querying workout_exercises:', exerciseError)
+          console.warn('⚠️ Error querying workout_exercises:', exerciseError)
           continue
         }
 
         if (!workoutExercise) {
           continue // Exercise not in this workout
         }
+
+        console.log('✅ Found exercise in workout:', workout.id)
 
         // Get all sets for this exercise
         const { data: sets, error: setsError } = await supabase
@@ -124,12 +138,18 @@ export default function EnhancedNewWorkoutPage() {
           .eq('workout_exercise_id', workoutExercise.id)
           .order('set_index', { ascending: true })
 
+        console.log('🏋️ Sets query result:', {
+          found: sets?.length || 0,
+          error: setsError?.message
+        })
+
         if (setsError) {
-          console.warn('Error querying sets:', setsError)
+          console.warn('⚠️ Error querying sets:', setsError)
           continue
         }
 
         if (!sets || sets.length === 0) {
+          console.log('ℹ️ No sets found in this workout')
           continue // No sets in this workout
         }
 
@@ -140,8 +160,11 @@ export default function EnhancedNewWorkoutPage() {
           set_type: set.set_type as 'warmup' | 'working'
         }))
 
+        console.log('🎉 Returning', allSets.length, 'sets:', allSets)
         return allSets
       }
+
+      console.log('❌ Exercise not found in any recent workout')
 
       return null // Exercise not found in any recent workout
     } catch (error) {
@@ -200,20 +223,23 @@ export default function EnhancedNewWorkoutPage() {
 
     // Then fetch last workout data for suggestion (in background)
     try {
+      console.log('📥 Starting to fetch suggestions for exercise:', ex.name, 'ID:', ex.id)
       const lastWorkoutSets = await getLastWorkoutSets(ex.id)
+      console.log('📤 Finished fetching suggestions. Result:', lastWorkoutSets)
 
       if (lastWorkoutSets && lastWorkoutSets.length > 0) {
+        console.log('✅ Storing suggestions in state')
         setLastWorkoutSuggestions(prev => {
           const newMap = new Map(prev)
           newMap.set(ex.id, lastWorkoutSets)
+          console.log('💾 Updated suggestions map. New size:', newMap.size)
           return newMap
         })
       } else {
-        // Show a message if no data found
-        console.warn('No previous workout data found for:', ex.name)
+        console.warn('⚠️ No previous workout data found for:', ex.name)
       }
     } catch (error) {
-      console.error('Error fetching workout suggestions:', error)
+      console.error('❌ Error fetching workout suggestions:', error)
       alert('⚠️ Could not load previous workout data: ' + (error as Error).message)
     }
   }
@@ -597,11 +623,17 @@ export default function EnhancedNewWorkoutPage() {
                       {/* Temporary Debug Info */}
                       <div className="bg-purple-500/20 border border-purple-500/50 rounded p-2 text-xs">
                         <div>Exercise ID: {item.id}</div>
+                        <div>Exercise Name: {item.name}</div>
                         <div>Total suggestions stored: {lastWorkoutSuggestions.size}</div>
                         <div>Has suggestion for this exercise: {lastWorkoutSuggestions.has(item.id) ? '✅ YES' : '❌ NO'}</div>
                         {lastWorkoutSuggestions.has(item.id) && (
-                          <div>Suggestion data: {JSON.stringify(lastWorkoutSuggestions.get(item.id))}</div>
+                          <div className="mt-1 p-1 bg-black/30 rounded">
+                            Suggestion data: {JSON.stringify(lastWorkoutSuggestions.get(item.id))}
+                          </div>
                         )}
+                        <div className="mt-2 text-yellow-400">
+                          💡 Open browser console (F12) to see detailed logs
+                        </div>
                       </div>
 
                       {/* Show last workout suggestion if available */}
