@@ -222,6 +222,9 @@ export default function EnhancedNewWorkoutPage() {
     expandExerciseAndCollapseOthers(ex.id)
 
     // Then fetch last workout data for suggestion (in background)
+    console.log('🚀 FETCH FUNCTION STARTED for:', ex.name)
+    alert('🚀 About to fetch suggestions for: ' + ex.name)
+
     try {
       console.log('📥 Starting to fetch suggestions for exercise:', ex.name, 'ID:', ex.id)
       const lastWorkoutSets = await getLastWorkoutSets(ex.id)
@@ -229,6 +232,7 @@ export default function EnhancedNewWorkoutPage() {
 
       if (lastWorkoutSets && lastWorkoutSets.length > 0) {
         console.log('✅ Storing suggestions in state')
+        alert('✅ Found ' + lastWorkoutSets.length + ' sets from last workout!')
         setLastWorkoutSuggestions(prev => {
           const newMap = new Map(prev)
           newMap.set(ex.id, lastWorkoutSets)
@@ -237,11 +241,14 @@ export default function EnhancedNewWorkoutPage() {
         })
       } else {
         console.warn('⚠️ No previous workout data found for:', ex.name)
+        alert('ℹ️ No previous workout data found for ' + ex.name)
       }
     } catch (error) {
       console.error('❌ Error fetching workout suggestions:', error)
-      alert('⚠️ Could not load previous workout data: ' + (error as Error).message)
+      alert('❌ Error: ' + (error as Error).message)
     }
+
+    console.log('🏁 FETCH FUNCTION COMPLETED')
   }
 
   async function addCustomExercise() {
