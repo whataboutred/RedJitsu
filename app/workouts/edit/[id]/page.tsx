@@ -64,6 +64,14 @@ export default function EnhancedEditWorkoutPage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [isAutoSaving, setIsAutoSaving] = useState(false)
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const itemsRef = useRef(items)
+  const isAutoSavingRef = useRef(isAutoSaving)
+  const savingRef = useRef(saving)
+
+  // Keep refs in sync
+  useEffect(() => { itemsRef.current = items }, [items])
+  useEffect(() => { isAutoSavingRef.current = isAutoSaving }, [isAutoSaving])
+  useEffect(() => { savingRef.current = saving }, [saving])
 
   // Auto-collapse helper functions
   const toggleExerciseExpanded = (exerciseId: string) => {
@@ -694,16 +702,11 @@ export default function EnhancedEditWorkoutPage() {
     }
   }
 
-  // Auto-save every 30 seconds using ref to avoid re-render loops
+  // Auto-save every 30 seconds - runs once on mount only
   useEffect(() => {
-    // Clear any existing timer
-    if (autoSaveTimerRef.current) {
-      clearInterval(autoSaveTimerRef.current)
-    }
-
-    // Set up new timer
     autoSaveTimerRef.current = setInterval(() => {
-      if (items.length > 0 && !isAutoSaving && !saving) {
+      // Access current values via refs to avoid stale closures
+      if (itemsRef.current.length > 0 && !isAutoSavingRef.current && !savingRef.current) {
         autoSave()
       }
     }, 30000) // 30 seconds
@@ -714,7 +717,7 @@ export default function EnhancedEditWorkoutPage() {
         clearInterval(autoSaveTimerRef.current)
       }
     }
-  }, [items.length, isAutoSaving, saving]) // Only recreate if these specific values change
+  }, []) // Empty deps - run once on mount
 
   async function handleSave() {
     const userId = await getActiveUserId()

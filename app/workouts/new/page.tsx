@@ -63,6 +63,12 @@ export default function EnhancedNewWorkoutPage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const itemsRef = useRef(items)
+  const isSavingRef = useRef(isSaving)
+
+  // Keep refs in sync
+  useEffect(() => { itemsRef.current = items }, [items])
+  useEffect(() => { isSavingRef.current = isSaving }, [isSaving])
 
   // Auto-collapse helper functions
   const toggleExerciseExpanded = (exerciseId: string) => {
@@ -449,16 +455,11 @@ export default function EnhancedNewWorkoutPage() {
     }
   }
 
-  // Auto-save every 30 seconds using ref to avoid re-render loops
+  // Auto-save every 30 seconds - runs once on mount only
   useEffect(() => {
-    // Clear any existing timer
-    if (autoSaveTimerRef.current) {
-      clearInterval(autoSaveTimerRef.current)
-    }
-
-    // Set up new timer
     autoSaveTimerRef.current = setInterval(() => {
-      if (items.length > 0 && !isSaving) {
+      // Access current values via refs to avoid stale closures
+      if (itemsRef.current.length > 0 && !isSavingRef.current) {
         autoSave()
       }
     }, 30000) // 30 seconds
@@ -469,7 +470,7 @@ export default function EnhancedNewWorkoutPage() {
         clearInterval(autoSaveTimerRef.current)
       }
     }
-  }, [items.length, isSaving]) // Only recreate if these specific values change
+  }, []) // Empty deps - run once on mount
 
   // Enhanced save function with better UX
   async function saveOnline() {
