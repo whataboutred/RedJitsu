@@ -457,8 +457,65 @@ export default function EnhancedNewWorkoutPage() {
       let workoutId: string
 
       if (autosaveWorkoutId) {
-        // Update the auto-saved draft
-        await autoSave() // Make sure it's up to date
+        // Update the auto-saved draft manually (don't use autoSave which fails silently)
+        const { error: workoutError } = await supabase
+          .from('workouts')
+          .update({
+            performed_at: iso,
+            title: title,
+            note: note || null,
+            location: location || null
+          })
+          .eq('id', autosaveWorkoutId)
+          .eq('user_id', userId)
+
+        if (workoutError) {
+          alert('Failed to update workout: ' + workoutError.message)
+          return
+        }
+
+        // Delete existing exercises and sets, then re-insert
+        const { data: existingExercises } = await supabase
+          .from('workout_exercises')
+          .select('id')
+          .eq('workout_id', autosaveWorkoutId)
+
+        if (existingExercises) {
+          for (const ex of existingExercises) {
+            await supabase.from('sets').delete().eq('workout_exercise_id', ex.id)
+          }
+          await supabase.from('workout_exercises').delete().eq('workout_id', autosaveWorkoutId)
+        }
+
+        // Insert current exercises and sets
+        for (const it of items) {
+          const { data: wex, error: wexError } = await supabase
+            .from('workout_exercises')
+            .insert({ workout_id: autosaveWorkoutId, exercise_id: it.id, display_name: it.name })
+            .select('id')
+            .single()
+
+          if (wexError || !wex) {
+            alert('Failed to save exercise: ' + (wexError?.message || 'Unknown error'))
+            return
+          }
+
+          if (it.sets.length) {
+            const rows = it.sets.map((s, idx) => ({
+              workout_exercise_id: wex.id,
+              set_index: idx + 1,
+              weight: s.weight,
+              reps: s.reps,
+              set_type: s.set_type,
+            }))
+            const { error: setsError } = await supabase.from('sets').insert(rows)
+            if (setsError) {
+              alert('Failed to save sets: ' + setsError.message)
+              return
+            }
+          }
+        }
+
         workoutId = autosaveWorkoutId
       } else {
         // Create new workout
@@ -467,7 +524,10 @@ export default function EnhancedNewWorkoutPage() {
           .insert({ user_id: userId, performed_at: iso, title, note: note || null, location: location || null })
           .select('id')
           .single()
-        if (error || !w) { alert('Save failed'); return }
+        if (error || !w) {
+          alert('Save failed: ' + (error?.message || 'Unknown error'))
+          return
+        }
         workoutId = w.id
 
         for (const it of items) {
@@ -492,6 +552,9 @@ export default function EnhancedNewWorkoutPage() {
       }
 
       router.push('/history?highlight=' + workoutId)
+    } catch (error) {
+      console.error('Save error:', error)
+      alert('Unexpected error while saving: ' + (error as Error).message)
     } finally {
       setIsSaving(false)
     }
