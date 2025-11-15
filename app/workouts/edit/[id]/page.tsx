@@ -693,7 +693,7 @@ export default function EnhancedEditWorkoutPage() {
     }
   }
 
-  // Auto-save every 30 seconds
+  // Auto-save every 30 seconds (fixed: prevent infinite loop by removing deps)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const interval = setInterval(() => {
