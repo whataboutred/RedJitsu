@@ -223,32 +223,27 @@ export default function EnhancedEditWorkoutPage() {
     if (!userId) return
 
     try {
-      // Load workout details
-      const { data: workout } = await supabase
+      // Load workout details (location column may or may not exist)
+      const { data: workout, error: workoutError } = await supabase
         .from('workouts')
-        .select('performed_at, title, note')
+        .select('*')
         .eq('id', workoutId)
         .eq('user_id', userId)
         .single()
+
+      if (workoutError) {
+        console.error('Error loading workout:', workoutError)
+        throw workoutError
+      }
 
       if (workout) {
         setPerformedAt(new Date(workout.performed_at).toISOString().slice(0, 16))
         setNote(workout.note || '')
         setCustomTitle(workout.title || '')
 
-        // Try to load location if column exists (gracefully handle if it doesn't)
-        try {
-          const { data: workoutWithLocation } = await supabase
-            .from('workouts')
-            .select('location')
-            .eq('id', workoutId)
-            .single()
-          if (workoutWithLocation?.location) {
-            setLocation(workoutWithLocation.location)
-          }
-        } catch (e) {
-          // Location column doesn't exist yet, ignore
-          console.log('Location column not available yet')
+        // Set location if it exists in the response
+        if (workout.location) {
+          setLocation(workout.location)
         }
       }
 
