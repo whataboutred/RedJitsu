@@ -5,7 +5,7 @@ import BackgroundLogo from '@/components/BackgroundLogo'
 import ExerciseSelector from '@/components/ExerciseSelector'
 import EnhancedSetRow from '@/components/EnhancedSetRow'
 import LastWorkoutSuggestion from '@/components/LastWorkoutSuggestion'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import Link from 'next/link'
@@ -63,6 +63,7 @@ export default function EnhancedEditWorkoutPage() {
   // Auto-save state
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [isAutoSaving, setIsAutoSaving] = useState(false)
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Auto-collapse helper functions
   const toggleExerciseExpanded = (exerciseId: string) => {
@@ -693,15 +694,27 @@ export default function EnhancedEditWorkoutPage() {
     }
   }
 
-  // Auto-save every 30 seconds - TEMPORARILY DISABLED FOR DEBUGGING
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     autoSave()
-  //   }, 30000) // 30 seconds
+  // Auto-save every 30 seconds using ref to avoid re-render loops
+  useEffect(() => {
+    // Clear any existing timer
+    if (autoSaveTimerRef.current) {
+      clearInterval(autoSaveTimerRef.current)
+    }
 
-  //   return () => clearInterval(interval)
-  // }, []) // Empty deps - only create interval once on mount
+    // Set up new timer
+    autoSaveTimerRef.current = setInterval(() => {
+      if (items.length > 0 && !isAutoSaving && !saving) {
+        autoSave()
+      }
+    }, 30000) // 30 seconds
+
+    // Cleanup on unmount
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearInterval(autoSaveTimerRef.current)
+      }
+    }
+  }, [items.length, isAutoSaving, saving]) // Only recreate if these specific values change
 
   async function handleSave() {
     const userId = await getActiveUserId()

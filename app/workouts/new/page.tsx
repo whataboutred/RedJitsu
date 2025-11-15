@@ -6,7 +6,7 @@ import QuickStartSection from '@/components/QuickStartSection'
 import ExerciseSelector from '@/components/ExerciseSelector'
 import EnhancedSetRow from '@/components/EnhancedSetRow'
 import LastWorkoutSuggestion from '@/components/LastWorkoutSuggestion'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import Link from 'next/link'
@@ -62,6 +62,7 @@ export default function EnhancedNewWorkoutPage() {
   const [autosaveWorkoutId, setAutosaveWorkoutId] = useState<string | null>(null)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Auto-collapse helper functions
   const toggleExerciseExpanded = (exerciseId: string) => {
@@ -448,15 +449,27 @@ export default function EnhancedNewWorkoutPage() {
     }
   }
 
-  // Auto-save every 30 seconds - TEMPORARILY DISABLED FOR DEBUGGING
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     autoSave()
-  //   }, 30000) // 30 seconds
+  // Auto-save every 30 seconds using ref to avoid re-render loops
+  useEffect(() => {
+    // Clear any existing timer
+    if (autoSaveTimerRef.current) {
+      clearInterval(autoSaveTimerRef.current)
+    }
 
-  //   return () => clearInterval(interval)
-  // }, []) // Empty deps - only create interval once on mount
+    // Set up new timer
+    autoSaveTimerRef.current = setInterval(() => {
+      if (items.length > 0 && !isSaving) {
+        autoSave()
+      }
+    }, 30000) // 30 seconds
+
+    // Cleanup on unmount
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearInterval(autoSaveTimerRef.current)
+      }
+    }
+  }, [items.length, isSaving]) // Only recreate if these specific values change
 
   // Enhanced save function with better UX
   async function saveOnline() {
