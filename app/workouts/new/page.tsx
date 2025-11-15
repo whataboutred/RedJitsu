@@ -449,13 +449,14 @@ export default function EnhancedNewWorkoutPage() {
   }
 
   // Auto-save every 30 seconds
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const interval = setInterval(() => {
       autoSave()
     }, 30000) // 30 seconds
 
     return () => clearInterval(interval)
-  }, [items, performedAt, customTitle, note, location, autosaveWorkoutId, isSaving])
+  }, []) // Empty deps - only create interval once on mount
 
   // Enhanced save function with better UX
   async function saveOnline() {
