@@ -16,7 +16,6 @@ import { savePendingWorkout, trySyncPending } from '@/lib/offline'
 import { useRouter } from 'next/navigation'
 import { useDraftAutoSave, getTimeAgo, WorkoutDraft } from '@/hooks/useDraftAutoSave'
 import { getLastWorkoutSetsForExercises, WorkoutSet } from '@/lib/workoutSuggestions'
-import { withRetry } from '@/lib/queryUtils'
 import { Save, Wifi, WifiOff, CheckCircle2, Clock } from 'lucide-react'
 
 type Exercise = { id: string; name: string; category: 'barbell'|'dumbbell'|'machine'|'cable'|'other' }
@@ -174,9 +173,7 @@ export default function EnhancedNewWorkoutPage() {
 
       // Load user profile
       try {
-        const { data: profile } = await withRetry(() =>
-          supabase.from('profiles').select('unit').eq('id', userId).maybeSingle()
-        )
+        const { data: profile } = await supabase.from('profiles').select('unit').eq('id', userId).maybeSingle()
         if (profile?.unit) setUnit(profile.unit as 'lb'|'kg')
       } catch (error) {
         console.error('Error loading profile:', error)
@@ -184,9 +181,7 @@ export default function EnhancedNewWorkoutPage() {
 
       // Load exercises
       try {
-        const { data: ex } = await withRetry(() =>
-          supabase.from('exercises').select('id,name,category').order('name')
-        )
+        const { data: ex } = await supabase.from('exercises').select('id,name,category').order('name')
         setAllExercises((ex||[]) as Exercise[])
       } catch (error) {
         console.error('Error loading exercises:', error)
@@ -195,11 +190,9 @@ export default function EnhancedNewWorkoutPage() {
 
       // Load programs
       try {
-        const { data: progs } = await withRetry(() =>
-          supabase.from('programs')
-            .select('id,name,is_active')
-            .order('created_at', { ascending: false })
-        )
+        const { data: progs } = await supabase.from('programs')
+          .select('id,name,is_active')
+          .order('created_at', { ascending: false })
         setPrograms((progs||[]) as Program[])
       } catch (error) {
         console.error('Error loading programs:', error)
@@ -307,13 +300,11 @@ export default function EnhancedNewWorkoutPage() {
     }
 
     try {
-      const { data: ins, error } = await withRetry(() =>
-        supabase
-          .from('exercises')
-          .insert({ name, category:'other', is_global:false, owner:userId })
-          .select('id,name,category')
-          .single()
-      )
+      const { data: ins, error } = await supabase
+        .from('exercises')
+        .insert({ name, category:'other', is_global:false, owner:userId })
+        .select('id,name,category')
+        .single()
 
       if (error || !ins) {
         toast.error('Could not create exercise')
@@ -342,12 +333,10 @@ export default function EnhancedNewWorkoutPage() {
     if (!programId) return
 
     try {
-      const { data } = await withRetry(() =>
-        supabase.from('program_days')
-          .select('id,name,dows,order_index')
-          .eq('program_id', programId)
-          .order('order_index')
-      )
+      const { data } = await supabase.from('program_days')
+        .select('id,name,dows,order_index')
+        .eq('program_id', programId)
+        .order('order_index')
       setDays((data||[]) as ProgramDay[])
     } catch (error) {
       toast.error('Failed to load program days')
@@ -356,12 +345,10 @@ export default function EnhancedNewWorkoutPage() {
 
   async function loadTemplate(program: Program, day: ProgramDay) {
     try {
-      const { data: tex } = await withRetry(() =>
-        supabase.from('template_exercises')
-          .select('exercise_id,display_name,default_sets,default_reps,set_type,order_index')
-          .eq('program_day_id', day.id)
-          .order('order_index')
-      )
+      const { data: tex } = await supabase.from('template_exercises')
+        .select('exercise_id,display_name,default_sets,default_reps,set_type,order_index')
+        .eq('program_day_id', day.id)
+        .order('order_index')
 
       if (!tex || tex.length === 0) {
         toast.error('This day has no exercises yet')
@@ -434,13 +421,11 @@ export default function EnhancedNewWorkoutPage() {
       if (location) insertData.location = location
 
       // Insert workout
-      const { data: w, error } = await withRetry(() =>
-        supabase
-          .from('workouts')
-          .insert(insertData)
-          .select('id')
-          .single()
-      , { maxRetries: 2 })
+      const { data: w, error } = await supabase
+        .from('workouts')
+        .insert(insertData)
+        .select('id')
+        .single()
 
       if (error || !w) {
         throw new Error(error?.message || 'Failed to create workout')
@@ -454,13 +439,11 @@ export default function EnhancedNewWorkoutPage() {
 
       try {
         for (const item of items) {
-          const { data: wex, error: wexError } = await withRetry(() =>
-            supabase
-              .from('workout_exercises')
-              .insert({ workout_id: workoutId, exercise_id: item.id, display_name: item.name })
-              .select('id')
-              .single()
-          )
+          const { data: wex, error: wexError } = await supabase
+            .from('workout_exercises')
+            .insert({ workout_id: workoutId, exercise_id: item.id, display_name: item.name })
+            .select('id')
+            .single()
 
           if (wexError || !wex) {
             throw new Error(`Failed to add exercise: ${item.name}`)
@@ -477,9 +460,7 @@ export default function EnhancedNewWorkoutPage() {
               set_type: s.set_type,
             }))
 
-            const { error: setsError } = await withRetry(() =>
-              supabase.from('sets').insert(rows)
-            )
+            const { error: setsError } = await supabase.from('sets').insert(rows)
 
             if (setsError) {
               throw new Error(`Failed to save sets for ${item.name}`)
