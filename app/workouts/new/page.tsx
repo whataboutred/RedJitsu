@@ -640,6 +640,7 @@ export default function NewWorkoutPage() {
   // Programs
   const [programs, setPrograms] = useState<{ id: string; name: string }[]>([])
   const [showTemplateSheet, setShowTemplateSheet] = useState(false)
+  const [loadingTemplate, setLoadingTemplate] = useState(false)
 
   // Draft auto-save
   const { saveDraft, loadDraft, clearDraft } = useDraftAutoSave({
@@ -1106,30 +1107,48 @@ export default function NewWorkoutPage() {
             programs.map((prog) => (
               <button
                 key={prog.id}
+                disabled={loadingTemplate}
                 onClick={async () => {
+                  setLoadingTemplate(true)
                   try {
                     // Fetch program days and their exercises
-                    const { data: days } = await supabase
+                    const { data: days, error: daysError } = await supabase
                       .from('program_days')
                       .select('id, name')
                       .eq('program_id', prog.id)
                       .order('order_index')
 
+                    if (daysError) {
+                      console.error('Days error:', daysError)
+                      toast.error('Failed to load program days')
+                      setLoadingTemplate(false)
+                      return
+                    }
+
                     if (!days || days.length === 0) {
-                      toast.error('No exercises found in this program')
+                      toast.error('No training days found in this program')
+                      setLoadingTemplate(false)
                       return
                     }
 
                     // Fetch all template exercises for this program's days
                     const dayIds = days.map(d => d.id)
-                    const { data: templateExercises } = await supabase
+                    const { data: templateExercises, error: exercisesError } = await supabase
                       .from('template_exercises')
                       .select('exercise_id, display_name, default_sets, default_reps, program_day_id')
                       .in('program_day_id', dayIds)
                       .order('order_index')
 
+                    if (exercisesError) {
+                      console.error('Exercises error:', exercisesError)
+                      toast.error('Failed to load program exercises')
+                      setLoadingTemplate(false)
+                      return
+                    }
+
                     if (!templateExercises || templateExercises.length === 0) {
                       toast.error('No exercises found in this program')
+                      setLoadingTemplate(false)
                       return
                     }
 
@@ -1183,6 +1202,7 @@ export default function NewWorkoutPage() {
 
                     if (newExercises.length === 0) {
                       toast.error('All exercises from this program are already added')
+                      setLoadingTemplate(false)
                       return
                     }
 
@@ -1196,12 +1216,15 @@ export default function NewWorkoutPage() {
                   } catch (error) {
                     console.error('Error loading template:', error)
                     toast.error('Failed to load template')
+                  } finally {
+                    setLoadingTemplate(false)
                   }
                 }}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800 transition-colors text-left"
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800 transition-colors text-left disabled:opacity-50"
               >
-                <FileText className="w-5 h-5 text-zinc-400" />
+                <FileText className={`w-5 h-5 text-zinc-400 ${loadingTemplate ? 'animate-pulse' : ''}`} />
                 <span>{prog.name}</span>
+                {loadingTemplate && <Clock className="w-4 h-4 animate-spin ml-auto" />}
               </button>
             ))
           ) : (
