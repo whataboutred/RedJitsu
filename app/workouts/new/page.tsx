@@ -198,9 +198,9 @@ export default function EnhancedNewWorkoutPage() {
         console.error('Error loading programs:', error)
       }
 
-      // Load previously used locations
+      // Load previously used locations (only works after migration)
       try {
-        const { data: locations } = await supabase
+        const { data: locations, error } = await supabase
           .from('workouts')
           .select('location')
           .eq('user_id', userId)
@@ -208,12 +208,15 @@ export default function EnhancedNewWorkoutPage() {
           .order('performed_at', { ascending: false })
           .limit(100)
 
-        if (locations) {
+        if (error) {
+          console.log('[Location] Column does not exist yet - migration not applied')
+        } else if (locations) {
           const uniqueLocations = [...new Set(locations.map(l => l.location).filter(Boolean))]
+          console.log('[Location] Loaded saved locations:', uniqueLocations)
           setSavedLocations(uniqueLocations)
         }
       } catch (e) {
-        // Location column may not exist yet, ignore
+        console.log('[Location] Error loading locations:', e)
       }
     })()
   }, [])
@@ -576,6 +579,25 @@ export default function EnhancedNewWorkoutPage() {
         </div>
 
         <main className="relative z-10 max-w-4xl mx-auto p-4 space-y-6 pb-32">
+          {/* Debug Panel - Remove after testing */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-3 text-xs">
+              <div className="font-bold text-purple-400 mb-2">🔍 Debug Info</div>
+              <div className="space-y-1 text-purple-300">
+                <div>Suggestions loaded: {lastWorkoutSuggestions.size} exercises</div>
+                <div>Exercises in workout: {items.length}</div>
+                {lastWorkoutSuggestions.size > 0 && (
+                  <div className="mt-2">
+                    Suggestions for: {Array.from(lastWorkoutSuggestions.keys()).map(id => {
+                      const exercise = items.find(i => i.id === id)
+                      return exercise?.name || id.substring(0, 8)
+                    }).join(', ')}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">💪 New Workout</h1>
             <div className="flex gap-2">
@@ -785,6 +807,14 @@ export default function EnhancedNewWorkoutPage() {
 
                       {isExpanded && (
                         <div className="space-y-3">
+                          {/* Debug info - remove after testing */}
+                          {process.env.NODE_ENV === 'development' && (
+                            <div className="text-xs text-yellow-400 bg-yellow-900/20 p-2 rounded">
+                              Debug: Has suggestion: {lastWorkoutSuggestions.has(item.id) ? 'YES' : 'NO'}
+                              {lastWorkoutSuggestions.has(item.id) && ` (${lastWorkoutSuggestions.get(item.id)?.length} sets)`}
+                            </div>
+                          )}
+
                           {lastWorkoutSuggestions.has(item.id) && (
                             <LastWorkoutSuggestion
                               sets={lastWorkoutSuggestions.get(item.id)!}
