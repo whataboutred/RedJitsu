@@ -641,6 +641,8 @@ export default function NewWorkoutPage() {
   const [programs, setPrograms] = useState<{ id: string; name: string }[]>([])
   const [showTemplateSheet, setShowTemplateSheet] = useState(false)
   const [loadingTemplate, setLoadingTemplate] = useState(false)
+  const [selectedProgram, setSelectedProgram] = useState<{ id: string; name: string } | null>(null)
+  const [programDays, setProgramDays] = useState<{ id: string; name: string }[]>([])
 
   // Draft auto-save
   const { saveDraft, loadDraft, clearDraft } = useDraftAutoSave({
@@ -1096,144 +1098,202 @@ export default function NewWorkoutPage() {
         summary={summary}
       />
 
-      {/* Template Sheet (simplified) */}
+      {/* Template Sheet - Two step: Program -> Day */}
       <BottomSheet
         isOpen={showTemplateSheet}
-        onClose={() => setShowTemplateSheet(false)}
-        title="Load Template"
+        onClose={() => {
+          setShowTemplateSheet(false)
+          setSelectedProgram(null)
+          setProgramDays([])
+        }}
+        title={selectedProgram ? `${selectedProgram.name} - Select Day` : "Load Template"}
       >
         <div className="space-y-2">
-          {programs.length > 0 ? (
-            programs.map((prog) => (
-              <button
-                key={prog.id}
-                disabled={loadingTemplate}
-                onClick={async () => {
-                  setLoadingTemplate(true)
-                  try {
-                    // Fetch program days and their exercises
-                    const { data: days, error: daysError } = await supabase
-                      .from('program_days')
-                      .select('id, name')
-                      .eq('program_id', prog.id)
-                      .order('order_index')
+          {/* Back button when viewing days */}
+          {selectedProgram && (
+            <button
+              onClick={() => {
+                setSelectedProgram(null)
+                setProgramDays([])
+              }}
+              className="flex items-center gap-2 text-zinc-400 hover:text-white mb-4"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to programs</span>
+            </button>
+          )}
 
-                    if (daysError) {
-                      console.error('Days error:', daysError)
-                      toast.error('Failed to load program days')
-                      setLoadingTemplate(false)
-                      return
-                    }
+          {/* Show program days if a program is selected */}
+          {selectedProgram ? (
+            loadingTemplate ? (
+              <div className="flex items-center justify-center py-8">
+                <Clock className="w-6 h-6 animate-spin text-zinc-400" />
+              </div>
+            ) : programDays.length > 0 ? (
+              programDays.map((day) => (
+                <button
+                  key={day.id}
+                  onClick={async () => {
+                    setLoadingTemplate(true)
+                    try {
+                      // Fetch exercises for this specific day
+                      const { data: templateExercises, error: exercisesError } = await supabase
+                        .from('template_exercises')
+                        .select('exercise_id, display_name, default_sets, default_reps')
+                        .eq('program_day_id', day.id)
+                        .order('order_index')
 
-                    if (!days || days.length === 0) {
-                      toast.error('No training days found in this program')
-                      setLoadingTemplate(false)
-                      return
-                    }
-
-                    // Fetch all template exercises for this program's days
-                    const dayIds = days.map(d => d.id)
-                    const { data: templateExercises, error: exercisesError } = await supabase
-                      .from('template_exercises')
-                      .select('exercise_id, display_name, default_sets, default_reps, program_day_id')
-                      .in('program_day_id', dayIds)
-                      .order('order_index')
-
-                    if (exercisesError) {
-                      console.error('Exercises error:', exercisesError)
-                      toast.error('Failed to load program exercises')
-                      setLoadingTemplate(false)
-                      return
-                    }
-
-                    if (!templateExercises || templateExercises.length === 0) {
-                      toast.error('No exercises found in this program')
-                      setLoadingTemplate(false)
-                      return
-                    }
-
-                    // Convert template exercises to workout exercises
-                    const newExercises: WorkoutExercise[] = []
-
-                    for (const te of templateExercises) {
-                      // Skip if already in workout
-                      if (exercises.some(e => e.exerciseId === te.exercise_id)) continue
-
-                      const newExercise: WorkoutExercise = {
-                        id: Math.random().toString(36).substring(7),
-                        exerciseId: te.exercise_id,
-                        name: te.display_name,
-                        sets: Array.from({ length: te.default_sets || 3 }, () => ({
-                          weight: 0,
-                          reps: te.default_reps || 0,
-                          isWarmup: false,
-                          isCompleted: false,
-                        })),
+                      if (exercisesError) {
+                        console.error('Exercises error:', exercisesError)
+                        toast.error('Failed to load exercises')
+                        return
                       }
 
-                      // Fetch last workout data for suggestions
-                      if (userIdRef.current) {
-                        try {
-                          const suggestions = await getLastWorkoutSetsForExercises(
-                            userIdRef.current,
-                            [te.exercise_id],
-                            location
-                          )
-                          const lastSets = suggestions.get(te.exercise_id)
-                          if (lastSets && lastSets.length > 0) {
-                            newExercise.lastWorkout = {
-                              date: new Date().toISOString(),
-                              sets: lastSets.map((s) => ({ weight: s.weight, reps: s.reps })),
-                            }
-                            // Pre-fill sets from last workout
-                            newExercise.sets = newExercise.sets.map((set, idx) => ({
-                              ...set,
-                              weight: lastSets[idx]?.weight || lastSets[0]?.weight || 0,
-                              reps: lastSets[idx]?.reps || te.default_reps || 0,
-                            }))
-                          }
-                        } catch (e) {
-                          console.error('Error fetching suggestions:', e)
+                      if (!templateExercises || templateExercises.length === 0) {
+                        toast.error('No exercises found in this day')
+                        return
+                      }
+
+                      // Convert template exercises to workout exercises
+                      const newExercises: WorkoutExercise[] = []
+
+                      for (const te of templateExercises) {
+                        // Skip if already in workout
+                        if (exercises.some(e => e.exerciseId === te.exercise_id)) continue
+
+                        const newExercise: WorkoutExercise = {
+                          id: Math.random().toString(36).substring(7),
+                          exerciseId: te.exercise_id,
+                          name: te.display_name,
+                          sets: Array.from({ length: te.default_sets || 3 }, () => ({
+                            weight: 0,
+                            reps: te.default_reps || 0,
+                            isWarmup: false,
+                            isCompleted: false,
+                          })),
                         }
+
+                        // Fetch last workout data for suggestions
+                        if (userIdRef.current) {
+                          try {
+                            const suggestions = await getLastWorkoutSetsForExercises(
+                              userIdRef.current,
+                              [te.exercise_id],
+                              location
+                            )
+                            const lastSets = suggestions.get(te.exercise_id)
+                            if (lastSets && lastSets.length > 0) {
+                              newExercise.lastWorkout = {
+                                date: new Date().toISOString(),
+                                sets: lastSets.map((s) => ({ weight: s.weight, reps: s.reps })),
+                              }
+                              // Pre-fill sets from last workout
+                              newExercise.sets = newExercise.sets.map((set, idx) => ({
+                                ...set,
+                                weight: lastSets[idx]?.weight || lastSets[0]?.weight || 0,
+                                reps: lastSets[idx]?.reps || te.default_reps || 0,
+                              }))
+                            }
+                          } catch (e) {
+                            console.error('Error fetching suggestions:', e)
+                          }
+                        }
+
+                        newExercises.push(newExercise)
                       }
 
-                      newExercises.push(newExercise)
-                    }
+                      if (newExercises.length === 0) {
+                        toast.error('All exercises from this day are already added')
+                        return
+                      }
 
-                    if (newExercises.length === 0) {
-                      toast.error('All exercises from this program are already added')
+                      setExercises(prev => [...prev, ...newExercises])
+                      setTitle(`${selectedProgram.name} - ${day.name}`)
+                      if (newExercises.length > 0) {
+                        setExpandedId(newExercises[0].id)
+                      }
+                      setShowTemplateSheet(false)
+                      setSelectedProgram(null)
+                      setProgramDays([])
+                      toast.success(`Loaded ${newExercises.length} exercises from ${day.name}`)
+                    } catch (error) {
+                      console.error('Error loading template:', error)
+                      toast.error('Failed to load template')
+                    } finally {
                       setLoadingTemplate(false)
-                      return
                     }
-
-                    setExercises(prev => [...prev, ...newExercises])
-                    setTitle(prog.name)
-                    if (newExercises.length > 0) {
-                      setExpandedId(newExercises[0].id)
-                    }
-                    setShowTemplateSheet(false)
-                    toast.success(`Loaded ${newExercises.length} exercises from ${prog.name}`)
-                  } catch (error) {
-                    console.error('Error loading template:', error)
-                    toast.error('Failed to load template')
-                  } finally {
-                    setLoadingTemplate(false)
-                  }
-                }}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800 transition-colors text-left disabled:opacity-50"
-              >
-                <FileText className={`w-5 h-5 text-zinc-400 ${loadingTemplate ? 'animate-pulse' : ''}`} />
-                <span>{prog.name}</span>
-                {loadingTemplate && <Clock className="w-4 h-4 animate-spin ml-auto" />}
-              </button>
-            ))
+                  }}
+                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 transition-colors text-left"
+                >
+                  <Calendar className="w-5 h-5 text-brand-red" />
+                  <span className="font-medium">{day.name}</span>
+                  <ChevronDown className="w-4 h-4 text-zinc-400 ml-auto -rotate-90" />
+                </button>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-zinc-400">No training days found in this program</p>
+              </div>
+            )
           ) : (
-            <div className="text-center py-8">
-              <p className="text-zinc-400 mb-4">No programs yet</p>
-              <Link href="/programs" className="btn btn-sm">
-                Create Program
-              </Link>
-            </div>
+            /* Show programs list */
+            programs.length > 0 ? (
+              programs.map((prog) => (
+                <button
+                  key={prog.id}
+                  disabled={loadingTemplate}
+                  onClick={async () => {
+                    setLoadingTemplate(true)
+                    setSelectedProgram(prog)
+                    try {
+                      // Fetch program days
+                      const { data: days, error: daysError } = await supabase
+                        .from('program_days')
+                        .select('id, name')
+                        .eq('program_id', prog.id)
+                        .order('order_index')
+
+                      if (daysError) {
+                        console.error('Days error:', daysError)
+                        toast.error('Failed to load program days')
+                        setSelectedProgram(null)
+                        return
+                      }
+
+                      if (!days || days.length === 0) {
+                        toast.error('No training days found in this program')
+                        setSelectedProgram(null)
+                        return
+                      }
+
+                      setProgramDays(days)
+                    } catch (error) {
+                      console.error('Error loading program:', error)
+                      toast.error('Failed to load program')
+                      setSelectedProgram(null)
+                    } finally {
+                      setLoadingTemplate(false)
+                    }
+                  }}
+                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 transition-colors text-left disabled:opacity-50"
+                >
+                  <FileText className={`w-5 h-5 text-zinc-400 ${loadingTemplate ? 'animate-pulse' : ''}`} />
+                  <span className="font-medium">{prog.name}</span>
+                  {loadingTemplate ? (
+                    <Clock className="w-4 h-4 animate-spin ml-auto" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-zinc-400 ml-auto -rotate-90" />
+                  )}
+                </button>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-zinc-400 mb-4">No programs yet</p>
+                <Link href="/programs" className="btn btn-sm">
+                  Create Program
+                </Link>
+              </div>
+            )
           )}
         </div>
       </BottomSheet>
