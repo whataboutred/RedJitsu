@@ -1104,14 +1104,105 @@ export default function NewWorkoutPage() {
         <div className="space-y-2">
           {programs.length > 0 ? (
             programs.map((prog) => (
-              <Link
+              <button
                 key={prog.id}
-                href={`/programs?load=${prog.id}`}
-                className="flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800 transition-colors"
+                onClick={async () => {
+                  try {
+                    // Fetch program days and their exercises
+                    const { data: days } = await supabase
+                      .from('program_days')
+                      .select('id, name')
+                      .eq('program_id', prog.id)
+                      .order('order_index')
+
+                    if (!days || days.length === 0) {
+                      toast.error('No exercises found in this program')
+                      return
+                    }
+
+                    // Fetch all template exercises for this program's days
+                    const dayIds = days.map(d => d.id)
+                    const { data: templateExercises } = await supabase
+                      .from('template_exercises')
+                      .select('exercise_id, display_name, default_sets, default_reps, program_day_id')
+                      .in('program_day_id', dayIds)
+                      .order('order_index')
+
+                    if (!templateExercises || templateExercises.length === 0) {
+                      toast.error('No exercises found in this program')
+                      return
+                    }
+
+                    // Convert template exercises to workout exercises
+                    const newExercises: WorkoutExercise[] = []
+
+                    for (const te of templateExercises) {
+                      // Skip if already in workout
+                      if (exercises.some(e => e.exerciseId === te.exercise_id)) continue
+
+                      const newExercise: WorkoutExercise = {
+                        id: Math.random().toString(36).substring(7),
+                        exerciseId: te.exercise_id,
+                        name: te.display_name,
+                        sets: Array.from({ length: te.default_sets || 3 }, () => ({
+                          weight: 0,
+                          reps: te.default_reps || 0,
+                          isWarmup: false,
+                          isCompleted: false,
+                        })),
+                      }
+
+                      // Fetch last workout data for suggestions
+                      if (userIdRef.current) {
+                        try {
+                          const suggestions = await getLastWorkoutSetsForExercises(
+                            userIdRef.current,
+                            [te.exercise_id],
+                            location
+                          )
+                          const lastSets = suggestions.get(te.exercise_id)
+                          if (lastSets && lastSets.length > 0) {
+                            newExercise.lastWorkout = {
+                              date: new Date().toISOString(),
+                              sets: lastSets.map((s) => ({ weight: s.weight, reps: s.reps })),
+                            }
+                            // Pre-fill sets from last workout
+                            newExercise.sets = newExercise.sets.map((set, idx) => ({
+                              ...set,
+                              weight: lastSets[idx]?.weight || lastSets[0]?.weight || 0,
+                              reps: lastSets[idx]?.reps || te.default_reps || 0,
+                            }))
+                          }
+                        } catch (e) {
+                          console.error('Error fetching suggestions:', e)
+                        }
+                      }
+
+                      newExercises.push(newExercise)
+                    }
+
+                    if (newExercises.length === 0) {
+                      toast.error('All exercises from this program are already added')
+                      return
+                    }
+
+                    setExercises(prev => [...prev, ...newExercises])
+                    setTitle(prog.name)
+                    if (newExercises.length > 0) {
+                      setExpandedId(newExercises[0].id)
+                    }
+                    setShowTemplateSheet(false)
+                    toast.success(`Loaded ${newExercises.length} exercises from ${prog.name}`)
+                  } catch (error) {
+                    console.error('Error loading template:', error)
+                    toast.error('Failed to load template')
+                  }
+                }}
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800 transition-colors text-left"
               >
                 <FileText className="w-5 h-5 text-zinc-400" />
                 <span>{prog.name}</span>
-              </Link>
+              </button>
             ))
           ) : (
             <div className="text-center py-8">
