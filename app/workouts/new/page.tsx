@@ -374,16 +374,26 @@ function ExerciseCard({
           >
             <div className="p-4 space-y-3">
               {/* Last Workout Reference */}
-              {exercise.lastWorkout && exercise.lastWorkout.sets.length > 0 && (
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3">
-                  <div className="flex items-center gap-2 text-blue-400 text-sm font-medium mb-2">
-                    <TrendingUp className="w-4 h-4" />
-                    Last Workout
-                  </div>
+              <div className={`rounded-xl p-3 ${
+                exercise.lastWorkout && exercise.lastWorkout.sets.length > 0
+                  ? 'bg-blue-500/10 border border-blue-500/20'
+                  : 'bg-zinc-800/50 border border-zinc-700/50'
+              }`}>
+                <div className={`flex items-center gap-2 text-sm font-medium mb-2 ${
+                  exercise.lastWorkout && exercise.lastWorkout.sets.length > 0
+                    ? 'text-blue-400'
+                    : 'text-zinc-500'
+                }`}>
+                  <TrendingUp className="w-4 h-4" />
+                  {exercise.lastWorkout && exercise.lastWorkout.sets.length > 0
+                    ? 'Previous Workout'
+                    : 'No Previous Data'}
+                </div>
+                {exercise.lastWorkout && exercise.lastWorkout.sets.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {exercise.lastWorkout.sets.slice(0, 5).map((s, i) => (
-                      <span key={i} className="px-2 py-1 bg-blue-500/20 rounded-lg text-sm text-blue-300">
-                        {s.weight}{unit} x {s.reps}
+                      <span key={i} className="px-3 py-1.5 bg-blue-500/20 rounded-lg text-sm text-blue-300 font-medium">
+                        {s.weight}{unit} × {s.reps}
                       </span>
                     ))}
                     {exercise.lastWorkout.sets.length > 5 && (
@@ -392,8 +402,12 @@ function ExerciseCard({
                       </span>
                     )}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <p className="text-sm text-zinc-500">
+                    This is your first time doing this exercise. Enter your sets below.
+                  </p>
+                )}
+              </div>
 
               {/* Sets */}
               <AnimatePresence>
