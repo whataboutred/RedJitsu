@@ -770,7 +770,7 @@ export default function NewWorkoutPage() {
       sets: [{ weight: 0, reps: 0, isWarmup: false, isCompleted: false }],
     }
 
-    // Fetch last workout data
+    // Fetch last workout data for recommendation display (don't pre-fill)
     if (userIdRef.current) {
       try {
         const suggestions = await getLastWorkoutSetsForExercises(
@@ -781,12 +781,10 @@ export default function NewWorkoutPage() {
         const lastSets = suggestions.get(ex.id)
         if (lastSets && lastSets.length > 0) {
           newExercise.lastWorkout = {
-            date: new Date().toISOString(), // Shows as recent
+            date: new Date().toISOString(),
             sets: lastSets.map((s) => ({ weight: s.weight, reps: s.reps })),
           }
-          // Pre-fill first set from last workout
-          newExercise.sets[0].weight = lastSets[0].weight
-          newExercise.sets[0].reps = lastSets[0].reps
+          // Don't pre-fill - let user see recommendation and enter manually
         }
       } catch (e) {
         console.error('Error fetching suggestions:', e)
@@ -1154,49 +1152,48 @@ export default function NewWorkoutPage() {
                         return
                       }
 
-                      // Convert template exercises to workout exercises
+                      // Get all exercise IDs for batch fetching last workout data
+                      const exerciseIds = templateExercises.map(te => te.exercise_id)
+
+                      // Batch fetch last workout data for all exercises at once
+                      let lastWorkoutMap = new Map<string, { weight: number; reps: number }[]>()
+                      if (userIdRef.current && exerciseIds.length > 0) {
+                        try {
+                          lastWorkoutMap = await getLastWorkoutSetsForExercises(
+                            userIdRef.current,
+                            exerciseIds,
+                            location
+                          )
+                        } catch (e) {
+                          console.error('Error fetching suggestions:', e)
+                        }
+                      }
+
+                      // Convert template exercises to workout exercises (fast - no async in loop)
                       const newExercises: WorkoutExercise[] = []
 
                       for (const te of templateExercises) {
                         // Skip if already in workout
                         if (exercises.some(e => e.exerciseId === te.exercise_id)) continue
 
+                        const lastSets = lastWorkoutMap.get(te.exercise_id)
+
                         const newExercise: WorkoutExercise = {
                           id: Math.random().toString(36).substring(7),
                           exerciseId: te.exercise_id,
                           name: te.display_name,
+                          // Create empty sets - don't pre-fill weight/reps
                           sets: Array.from({ length: te.default_sets || 3 }, () => ({
                             weight: 0,
-                            reps: te.default_reps || 0,
+                            reps: 0,
                             isWarmup: false,
                             isCompleted: false,
                           })),
-                        }
-
-                        // Fetch last workout data for suggestions
-                        if (userIdRef.current) {
-                          try {
-                            const suggestions = await getLastWorkoutSetsForExercises(
-                              userIdRef.current,
-                              [te.exercise_id],
-                              location
-                            )
-                            const lastSets = suggestions.get(te.exercise_id)
-                            if (lastSets && lastSets.length > 0) {
-                              newExercise.lastWorkout = {
-                                date: new Date().toISOString(),
-                                sets: lastSets.map((s) => ({ weight: s.weight, reps: s.reps })),
-                              }
-                              // Pre-fill sets from last workout
-                              newExercise.sets = newExercise.sets.map((set, idx) => ({
-                                ...set,
-                                weight: lastSets[idx]?.weight || lastSets[0]?.weight || 0,
-                                reps: lastSets[idx]?.reps || te.default_reps || 0,
-                              }))
-                            }
-                          } catch (e) {
-                            console.error('Error fetching suggestions:', e)
-                          }
+                          // Store last workout data for recommendation display
+                          lastWorkout: lastSets && lastSets.length > 0 ? {
+                            date: new Date().toISOString(),
+                            sets: lastSets.map((s) => ({ weight: s.weight, reps: s.reps })),
+                          } : undefined,
                         }
 
                         newExercises.push(newExercise)

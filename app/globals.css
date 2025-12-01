@@ -334,18 +334,27 @@ h1, h2, h3, h4, h5, h6 {
    ============================================ */
 
 .bottom-sheet-backdrop {
-  @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-50;
+  @apply fixed inset-0 bg-black/70 backdrop-blur-sm z-50;
 }
 
 .bottom-sheet {
   @apply fixed bottom-0 left-0 right-0;
-  @apply bg-zinc-900 rounded-t-3xl;
-  @apply pb-safe-bottom;
-  @apply z-50 max-h-[90vh] overflow-hidden;
+  @apply bg-zinc-900 rounded-t-3xl border-t border-white/10;
+  @apply z-50 overflow-hidden;
+  max-height: 85vh;
+  max-height: 85dvh; /* Use dynamic viewport height for mobile */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .bottom-sheet-handle {
   @apply w-12 h-1 bg-zinc-600 rounded-full mx-auto mt-3 mb-2;
+}
+
+/* Ensure modals and sheets don't get cut off on mobile */
+@supports (height: 100dvh) {
+  .bottom-sheet {
+    max-height: 85dvh;
+  }
 }
 
 /* ============================================

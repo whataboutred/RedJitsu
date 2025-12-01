@@ -18,7 +18,7 @@ export const BottomSheet = ({
   onClose,
   children,
   title,
-  snapPoints = [0.5, 0.9],
+  snapPoints = [0.5, 0.85],
   initialSnap = 0,
   showHandle = true,
 }: BottomSheetProps) => {
@@ -62,7 +62,7 @@ export const BottomSheet = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="bottom-sheet-backdrop"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50"
             onClick={onClose}
           />
 
@@ -78,13 +78,16 @@ export const BottomSheet = ({
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.5 }}
             onDragEnd={handleDragEnd}
-            className="bottom-sheet flex flex-col"
-            style={{ maxHeight: `${snapPoints[snapPoints.length - 1] * 100}vh` }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-zinc-900 rounded-t-3xl border-t border-white/10 flex flex-col"
+            style={{
+              maxHeight: 'min(85vh, 85dvh)',
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+            }}
           >
             {/* Handle */}
             {showHandle && (
               <div
-                className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
+                className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing flex-shrink-0"
                 onPointerDown={(e) => dragControls.start(e)}
               >
                 <div className="w-12 h-1 bg-zinc-600 rounded-full" />
@@ -93,13 +96,13 @@ export const BottomSheet = ({
 
             {/* Title */}
             {title && (
-              <div className="px-4 pb-3 border-b border-white/5">
+              <div className="px-4 pb-3 border-b border-white/5 flex-shrink-0">
                 <h2 className="text-lg font-semibold text-white">{title}</h2>
               </div>
             )}
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto overscroll-contain p-4">
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4 min-h-0">
               {children}
             </div>
           </motion.div>
@@ -164,14 +167,18 @@ export const Modal = ({ isOpen, onClose, children, title, size = 'md' }: ModalPr
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className={`
               fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-              w-full ${modalSizes[size]}
+              w-[calc(100%-2rem)] ${modalSizes[size]}
               bg-zinc-900 rounded-2xl border border-white/10
               shadow-2xl overflow-hidden
+              mx-4
             `}
+            style={{
+              maxHeight: 'min(calc(100vh - 4rem), calc(100dvh - 4rem))',
+            }}
           >
             {/* Header */}
             {title && (
-              <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 flex-shrink-0">
                 <h2 className="text-lg font-semibold text-white">{title}</h2>
                 <button
                   onClick={onClose}
@@ -185,7 +192,14 @@ export const Modal = ({ isOpen, onClose, children, title, size = 'md' }: ModalPr
             )}
 
             {/* Content */}
-            <div className="p-4 max-h-[70vh] overflow-y-auto">{children}</div>
+            <div
+              className="p-4 overflow-y-auto"
+              style={{
+                maxHeight: 'calc(100dvh - 10rem)',
+              }}
+            >
+              {children}
+            </div>
           </motion.div>
         </>
       )}
