@@ -18,7 +18,7 @@ const rateLimiter = new QueryRateLimiter(3) // Max 3 concurrent queries
 
 /**
  * Optimized function to get last workout sets for multiple exercises
- * Uses a single query with joins instead of N+1 queries
+ * Uses a query starting from workouts table to ensure proper ordering
  */
 export async function getLastWorkoutSetsForExercises(
   userId: string,
@@ -30,80 +30,102 @@ export async function getLastWorkoutSetsForExercises(
   }
 
   try {
-    console.log('[workoutSuggestions] Querying for exercises:', exerciseIds)
+    console.log('[workoutSuggestions] Querying for exercises:', exerciseIds, 'userId:', userId, 'location:', location)
 
-    // Try query with location first, fall back to query without location if it fails
+    // Query from workouts table to ensure proper date ordering
+    // The key fix: ordering by performed_at works correctly when querying from workouts table
     let data: any[] = []
+
     try {
-      // Try with location column (requires migration)
+      // Query workouts with nested workout_exercises and sets
       let query = supabase
-        .from('workout_exercises')
+        .from('workouts')
         .select(`
-          exercise_id,
-          workouts!inner(performed_at, user_id, location),
-          sets(weight, reps, set_type, set_index)
+          id,
+          performed_at,
+          location,
+          workout_exercises!inner(
+            exercise_id,
+            sets(weight, reps, set_type, set_index)
+          )
         `)
-        .eq('workouts.user_id', userId)
-        .in('exercise_id', exerciseIds)
-        .order('workouts.performed_at', { ascending: false })
-        .limit(100)
+        .eq('user_id', userId)
+        .order('performed_at', { ascending: false })
+        .limit(50)
 
-      data = await querySupabase<any>(query, { timeout: 5000, maxRetries: 2 })
-      console.log('[workoutSuggestions] Query with location returned:', data.length, 'workout_exercises')
-    } catch (locationError) {
-      console.log('[workoutSuggestions] Location column not found, querying without it...')
-      // Fallback: query without location column (for users who haven't run migration)
-      let query = supabase
-        .from('workout_exercises')
-        .select(`
-          exercise_id,
-          workouts!inner(performed_at, user_id),
-          sets(weight, reps, set_type, set_index)
-        `)
-        .eq('workouts.user_id', userId)
-        .in('exercise_id', exerciseIds)
-        .order('workouts.performed_at', { ascending: false })
-        .limit(100)
+      data = await querySupabase<any>(query, { timeout: 8000, maxRetries: 2 })
+      console.log('[workoutSuggestions] Query returned:', data.length, 'workouts')
+    } catch (queryError: any) {
+      console.error('[workoutSuggestions] Query error:', queryError?.message || queryError)
+      // Try simpler fallback query without location
+      try {
+        let fallbackQuery = supabase
+          .from('workouts')
+          .select(`
+            id,
+            performed_at,
+            workout_exercises!inner(
+              exercise_id,
+              sets(weight, reps, set_type, set_index)
+            )
+          `)
+          .eq('user_id', userId)
+          .order('performed_at', { ascending: false })
+          .limit(50)
 
-      data = await querySupabase<any>(query, { timeout: 5000, maxRetries: 2 })
-      console.log('[workoutSuggestions] Query without location returned:', data.length, 'workout_exercises')
+        data = await querySupabase<any>(fallbackQuery, { timeout: 8000, maxRetries: 2 })
+        console.log('[workoutSuggestions] Fallback query returned:', data.length, 'workouts')
+      } catch (fallbackError) {
+        console.error('[workoutSuggestions] Fallback query also failed:', fallbackError)
+        throw fallbackError
+      }
     }
 
     // Group by exercise and find the most recent workout for each
     const exerciseMap = new Map<string, { date: string; sets: WorkoutSet[] }>()
 
-    for (const item of data) {
-      const exerciseId = item.exercise_id
-      const workoutDate = item.workouts.performed_at
-      const workoutLocation = item.workouts?.location // May not exist pre-migration
-      const sets = item.sets || []
+    for (const workout of data) {
+      const workoutDate = workout.performed_at
+      const workoutLocation = workout.location // May be null
+      const workoutExercises = workout.workout_exercises || []
 
-      // Skip if location filter is active and doesn't match (only if location exists in data)
+      // Skip if location filter is active and doesn't match
       if (location && workoutLocation && workoutLocation !== location) {
         continue
       }
 
-      // Check if we already have a more recent workout for this exercise
-      const existing = exerciseMap.get(exerciseId)
-      if (existing && existing.date > workoutDate) {
-        continue
-      }
+      for (const wex of workoutExercises) {
+        const exerciseId = wex.exercise_id
+        const sets = wex.sets || []
 
-      // Store this workout's sets
-      if (sets.length > 0) {
-        const formattedSets = sets
-          .sort((a: any, b: any) => (a.set_index || 0) - (b.set_index || 0))
-          .map((s: any) => ({
-            weight: Number(s.weight),
-            reps: Number(s.reps),
-            set_type: s.set_type as 'warmup' | 'working',
-            set_index: s.set_index,
-          }))
+        // Only process exercises we're interested in
+        if (!exerciseIds.includes(exerciseId)) {
+          continue
+        }
 
-        exerciseMap.set(exerciseId, {
-          date: workoutDate,
-          sets: formattedSets,
-        })
+        // Check if we already have a more recent workout for this exercise
+        // (data is ordered by date desc, so first occurrence is most recent)
+        if (exerciseMap.has(exerciseId)) {
+          continue
+        }
+
+        // Store this workout's sets
+        if (sets.length > 0) {
+          const formattedSets = sets
+            .sort((a: any, b: any) => (a.set_index || 0) - (b.set_index || 0))
+            .map((s: any) => ({
+              weight: Number(s.weight),
+              reps: Number(s.reps),
+              set_type: s.set_type as 'warmup' | 'working',
+              set_index: s.set_index,
+            }))
+
+          exerciseMap.set(exerciseId, {
+            date: workoutDate,
+            sets: formattedSets,
+          })
+          console.log('[workoutSuggestions] Found previous data for exercise:', exerciseId, '- sets:', formattedSets.length)
+        }
       }
     }
 
@@ -113,9 +135,10 @@ export async function getLastWorkoutSetsForExercises(
       result.set(key, value.sets)
     })
 
+    console.log('[workoutSuggestions] Returning data for', result.size, 'exercises out of', exerciseIds.length, 'requested')
     return result
   } catch (error) {
-    console.error('Error fetching workout suggestions:', error)
+    console.error('[workoutSuggestions] Error fetching workout suggestions:', error)
     // Return empty map on error instead of throwing
     return new Map()
   }
@@ -145,50 +168,67 @@ export async function getLastThreeWorkouts(
   location?: string
 ): Promise<ExerciseSuggestion[]> {
   try {
-    // Try with location column, fallback if it doesn't exist
+    // Query from workouts table to ensure proper ordering
     let data: any[] = []
+
     try {
       let query = supabase
-        .from('workout_exercises')
+        .from('workouts')
         .select(`
-          exercise_id,
-          workouts!inner(id, performed_at, user_id, location),
-          sets(weight, reps, set_type, set_index)
+          id,
+          performed_at,
+          location,
+          workout_exercises!inner(
+            exercise_id,
+            sets(weight, reps, set_type, set_index)
+          )
         `)
-        .eq('workouts.user_id', userId)
-        .eq('exercise_id', exerciseId)
-        .order('workouts.performed_at', { ascending: false })
-        .limit(3)
+        .eq('user_id', userId)
+        .eq('workout_exercises.exercise_id', exerciseId)
+        .order('performed_at', { ascending: false })
+        .limit(10) // Fetch more to account for location filtering
 
-      data = await querySupabase<any>(query, { timeout: 5000, maxRetries: 2 })
-    } catch (locationError) {
-      // Fallback without location
-      let query = supabase
-        .from('workout_exercises')
+      data = await querySupabase<any>(query, { timeout: 8000, maxRetries: 2 })
+    } catch (queryError) {
+      // Fallback without location column
+      let fallbackQuery = supabase
+        .from('workouts')
         .select(`
-          exercise_id,
-          workouts!inner(id, performed_at, user_id),
-          sets(weight, reps, set_type, set_index)
+          id,
+          performed_at,
+          workout_exercises!inner(
+            exercise_id,
+            sets(weight, reps, set_type, set_index)
+          )
         `)
-        .eq('workouts.user_id', userId)
-        .eq('exercise_id', exerciseId)
-        .order('workouts.performed_at', { ascending: false })
-        .limit(3)
+        .eq('user_id', userId)
+        .eq('workout_exercises.exercise_id', exerciseId)
+        .order('performed_at', { ascending: false })
+        .limit(10)
 
-      data = await querySupabase<any>(query, { timeout: 5000, maxRetries: 2 })
+      data = await querySupabase<any>(fallbackQuery, { timeout: 8000, maxRetries: 2 })
     }
 
     const results: ExerciseSuggestion[] = []
 
-    for (const item of data) {
-      const workoutDate = item.workouts.performed_at
-      const workoutLocation = item.workouts?.location
-      const sets = item.sets || []
+    for (const workout of data) {
+      // Stop if we have 3 results
+      if (results.length >= 3) break
+
+      const workoutDate = workout.performed_at
+      const workoutLocation = workout.location
+      const workoutExercises = workout.workout_exercises || []
 
       // Skip if location filter is active and doesn't match
       if (location && workoutLocation && workoutLocation !== location) {
         continue
       }
+
+      // Find the exercise in this workout
+      const wex = workoutExercises.find((w: any) => w.exercise_id === exerciseId)
+      if (!wex) continue
+
+      const sets = wex.sets || []
 
       if (sets.length > 0) {
         const formattedSets = sets
@@ -201,7 +241,7 @@ export async function getLastThreeWorkouts(
           }))
 
         results.push({
-          exerciseId: item.exercise_id,
+          exerciseId: exerciseId,
           sets: formattedSets,
           workoutDate,
         })
