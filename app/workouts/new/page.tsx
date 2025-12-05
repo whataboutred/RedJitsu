@@ -865,34 +865,64 @@ export default function NewWorkoutPage() {
       }
       if (location) insertData.location = location
 
+      console.log('[saveWorkout] Creating workout:', insertData)
+
       const { data: w, error } = await supabase
         .from('workouts')
         .insert(insertData)
         .select('id')
         .single()
 
-      if (error || !w) throw new Error(error?.message || 'Failed to create workout')
+      if (error || !w) {
+        console.error('[saveWorkout] Failed to create workout:', error)
+        throw new Error(error?.message || 'Failed to create workout')
+      }
+
+      console.log('[saveWorkout] Created workout:', w.id)
 
       // Add exercises and sets
       for (const ex of exercises) {
+        console.log('[saveWorkout] Adding exercise:', ex.name, 'exerciseId:', ex.exerciseId)
+
         const { data: wex, error: wexError } = await supabase
           .from('workout_exercises')
           .insert({ workout_id: w.id, exercise_id: ex.exerciseId, display_name: ex.name })
           .select('id')
           .single()
 
-        if (wexError || !wex) throw new Error(`Failed to add ${ex.name}`)
+        if (wexError || !wex) {
+          console.error('[saveWorkout] Failed to add exercise:', ex.name, wexError)
+          throw new Error(`Failed to add ${ex.name}`)
+        }
 
-        const workingSets = ex.sets.filter((s) => s.isCompleted || s.weight > 0 || s.reps > 0)
-        if (workingSets.length > 0) {
-          const rows = workingSets.map((s, idx) => ({
+        console.log('[saveWorkout] Added exercise:', ex.name, 'wex.id:', wex.id)
+
+        // Save ALL sets that have any data (weight OR reps > 0, or marked complete)
+        const setsToSave = ex.sets.filter((s) => s.isCompleted || s.weight > 0 || s.reps > 0)
+
+        console.log('[saveWorkout] Sets to save for', ex.name, ':', setsToSave.length, 'of', ex.sets.length)
+
+        if (setsToSave.length > 0) {
+          const rows = setsToSave.map((s, idx) => ({
             workout_exercise_id: wex.id,
             set_index: idx + 1,
             weight: s.weight,
             reps: s.reps,
             set_type: s.isWarmup ? 'warmup' : 'working',
           }))
-          await supabase.from('sets').insert(rows)
+
+          console.log('[saveWorkout] Inserting sets:', rows)
+
+          const { error: setsError } = await supabase.from('sets').insert(rows)
+
+          if (setsError) {
+            console.error('[saveWorkout] Failed to save sets:', setsError)
+            throw new Error(`Failed to save sets for ${ex.name}`)
+          }
+
+          console.log('[saveWorkout] Saved', rows.length, 'sets for', ex.name)
+        } else {
+          console.warn('[saveWorkout] No sets to save for', ex.name, '- all sets have 0 weight/reps and not completed')
         }
       }
 
@@ -901,6 +931,7 @@ export default function NewWorkoutPage() {
       setShowSummary(true)
       toast.success('Workout saved!')
     } catch (error: any) {
+      console.error('[saveWorkout] Error:', error)
       toast.error(error.message || 'Failed to save workout')
     } finally {
       setSaving(false)
