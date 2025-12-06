@@ -165,6 +165,7 @@ function HistoryClient() {
   const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress[]>([])
   const [streakData, setStreakData] = useState<StreakData | null>(null)
   const [activeProgramExercises, setActiveProgramExercises] = useState<Set<string>>(new Set())
+  const [hasActiveProgram, setHasActiveProgram] = useState(false)
   const [selectedView, setSelectedView] = useState<'analytics' | 'workouts'>('analytics')
   const [workoutFilter, setWorkoutFilter] = useState<'all' | 'week' | 'month'>('month')
   const [selectedExercise, setSelectedExercise] = useState<string>('')
@@ -480,9 +481,14 @@ function HistoryClient() {
       .maybeSingle()
 
     if (!activeProgram) {
+      setHasActiveProgram(false)
       setActiveProgramExercises(new Set())
+      // Fallback: load progress for all exercises from recent workouts
+      await calculateExerciseProgressFromAllWorkouts(userId)
       return
     }
+
+    setHasActiveProgram(true)
 
     // Get program days with exercises
     const { data: programDays } = await supabase
@@ -505,14 +511,19 @@ function HistoryClient() {
 
     setActiveProgramExercises(exerciseIds)
 
-    // Now calculate progress for active program exercises
-    await calculateExerciseProgress(userId, exerciseIds, exerciseNameMap)
+    // Calculate progress for active program exercises
+    const hasProgress = await calculateExerciseProgress(userId, exerciseIds, exerciseNameMap)
+
+    // If no progress data from program exercises, fallback to all exercises
+    if (!hasProgress) {
+      await calculateExerciseProgressFromAllWorkouts(userId)
+    }
   }
 
-  async function calculateExerciseProgress(userId: string, activeExerciseIds: Set<string>, exerciseNameMap: Map<string, string>) {
+  async function calculateExerciseProgress(userId: string, activeExerciseIds: Set<string>, exerciseNameMap: Map<string, string>): Promise<boolean> {
     if (activeExerciseIds.size === 0) {
       setExerciseProgress([])
-      return
+      return false
     }
 
     // Fetch exercise data from last 90 days
@@ -531,7 +542,7 @@ function HistoryClient() {
 
     if (!exerciseData || exerciseData.length === 0) {
       setExerciseProgress([])
-      return
+      return false
     }
 
     // Group by exercise and calculate progress
@@ -586,6 +597,98 @@ function HistoryClient() {
       }
 
       // Determine trend
+      let trend: 'up' | 'down' | 'stagnant' = 'stagnant'
+      if (percentChange > 2) trend = 'up'
+      else if (percentChange < -2) trend = 'down'
+
+      progress.push({
+        exerciseId,
+        exerciseName: data.name,
+        firstWeight: firstSession.maxWeight,
+        latestWeight: latestSession.maxWeight,
+        firstReps: Math.round(firstSession.avgReps),
+        latestReps: Math.round(latestSession.avgReps),
+        weightChange,
+        repsChange,
+        percentChange: Math.round(percentChange * 10) / 10,
+        sessionCount: data.sessions.length,
+        trend
+      })
+    })
+
+    setExerciseProgress(progress)
+    return progress.length > 0
+  }
+
+  async function calculateExerciseProgressFromAllWorkouts(userId: string) {
+    // Fetch all exercise data from last 90 days (not filtered by program)
+    const { data: exerciseData } = await supabase
+      .from('workout_exercises')
+      .select(`
+        exercise_id,
+        display_name,
+        workouts!inner(performed_at, user_id),
+        sets(weight, reps, set_type)
+      `)
+      .eq('workouts.user_id', userId)
+      .gte('workouts.performed_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
+      .order('workouts.performed_at', { ascending: true })
+
+    if (!exerciseData || exerciseData.length === 0) {
+      setExerciseProgress([])
+      return
+    }
+
+    // Group by exercise and calculate progress
+    const exerciseMap = new Map<string, {
+      name: string
+      sessions: Array<{ date: string; maxWeight: number; avgReps: number }>
+    }>()
+
+    exerciseData.forEach((item: any) => {
+      const exerciseId = item.exercise_id
+      const date = new Date(item.workouts.performed_at).toISOString().split('T')[0]
+
+      const workingSets = item.sets?.filter((s: any) => s.set_type === 'working' && s.weight > 0) || []
+      if (workingSets.length === 0) return
+
+      const maxWeight = Math.max(...workingSets.map((s: any) => s.weight))
+      const avgReps = workingSets.reduce((sum: number, s: any) => sum + s.reps, 0) / workingSets.length
+
+      if (!exerciseMap.has(exerciseId)) {
+        exerciseMap.set(exerciseId, {
+          name: item.display_name,
+          sessions: []
+        })
+      }
+
+      const existing = exerciseMap.get(exerciseId)!
+      const existingSession = existing.sessions.find(s => s.date === date)
+      if (existingSession) {
+        existingSession.maxWeight = Math.max(existingSession.maxWeight, maxWeight)
+        existingSession.avgReps = Math.max(existingSession.avgReps, avgReps)
+      } else {
+        existing.sessions.push({ date, maxWeight, avgReps })
+      }
+    })
+
+    // Calculate progress metrics
+    const progress: ExerciseProgress[] = []
+
+    exerciseMap.forEach((data, exerciseId) => {
+      if (data.sessions.length < 2) return
+
+      const firstSession = data.sessions[0]
+      const latestSession = data.sessions[data.sessions.length - 1]
+
+      const weightChange = latestSession.maxWeight - firstSession.maxWeight
+      const repsChange = Math.round(latestSession.avgReps - firstSession.avgReps)
+
+      let percentChange = 0
+      if (firstSession.maxWeight > 0) {
+        percentChange = ((latestSession.maxWeight - firstSession.maxWeight) / firstSession.maxWeight) * 100
+      }
+
       let trend: 'up' | 'down' | 'stagnant' = 'stagnant'
       if (percentChange > 2) trend = 'up'
       else if (percentChange < -2) trend = 'down'
@@ -786,13 +889,19 @@ function HistoryClient() {
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-5 h-5 text-red-400" />
                 <h3 className="font-semibold text-white">Exercise Progress</h3>
-                <span className="text-xs text-zinc-500 ml-auto">From active program • Last 90 days</span>
+                <span className="text-xs text-zinc-500 ml-auto">
+                  {hasActiveProgram && activeProgramExercises.size > 0 ? 'From active program' : 'All exercises'} • Last 90 days
+                </span>
               </div>
 
               {exerciseProgress.length === 0 ? (
                 <div className="text-center py-8">
                   <Dumbbell className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                  <p className="text-zinc-400">Set up an active program and complete workouts to see progress!</p>
+                  <p className="text-zinc-400">
+                    {hasActiveProgram
+                      ? 'Complete more workouts with your program exercises to see progress!'
+                      : 'Complete a few workouts to see your progress!'}
+                  </p>
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-4">
