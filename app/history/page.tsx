@@ -11,11 +11,16 @@ import {
   Flame,
   Target,
   TrendingUp,
+  TrendingDown,
   Trophy,
   Zap,
   Activity,
   Filter,
-  ChevronDown
+  ChevronDown,
+  AlertTriangle,
+  ArrowUp,
+  ArrowDown,
+  Minus
 } from 'lucide-react'
 import { AnimatedCard, StatCard } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -47,6 +52,26 @@ type VolumeData = {
   upperVolume: number
   lowerVolume: number
   totalSets: number
+}
+
+type ExerciseProgress = {
+  exerciseId: string
+  exerciseName: string
+  firstWeight: number
+  latestWeight: number
+  firstReps: number
+  latestReps: number
+  weightChange: number
+  repsChange: number
+  percentChange: number
+  sessionCount: number
+  trend: 'up' | 'down' | 'stagnant'
+}
+
+type StreakData = {
+  strength: { current: number; thisWeek: number; goal: number; isOnTrack: boolean }
+  bjj: { current: number; thisWeek: number; goal: number; isOnTrack: boolean }
+  cardio: { current: number; thisWeek: number; goal: number; isOnTrack: boolean }
 }
 
 export const dynamic = 'force-dynamic'
@@ -137,6 +162,9 @@ function HistoryClient() {
   const [cardio, setCardio] = useState<Cardio[]>([])
   const [progressionData, setProgressionData] = useState<ProgressionData[]>([])
   const [volumeData, setVolumeData] = useState<VolumeData[]>([])
+  const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress[]>([])
+  const [streakData, setStreakData] = useState<StreakData | null>(null)
+  const [activeProgramExercises, setActiveProgramExercises] = useState<Set<string>>(new Set())
   const [selectedView, setSelectedView] = useState<'analytics' | 'workouts'>('analytics')
   const [workoutFilter, setWorkoutFilter] = useState<'all' | 'week' | 'month'>('month')
   const [selectedExercise, setSelectedExercise] = useState<string>('')
@@ -281,6 +309,8 @@ function HistoryClient() {
 
       await loadProgressionData(userId)
       await loadVolumeData(userId)
+      await loadActiveProgramExercises(userId)
+      await loadStreakData(userId)
 
       setLoading(false)
     })()
@@ -440,6 +470,247 @@ function HistoryClient() {
     }
   }
 
+  async function loadActiveProgramExercises(userId: string) {
+    // Get active program
+    const { data: activeProgram } = await supabase
+      .from('programs')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (!activeProgram) {
+      setActiveProgramExercises(new Set())
+      return
+    }
+
+    // Get program days with exercises
+    const { data: programDays } = await supabase
+      .from('program_days')
+      .select(`
+        id,
+        template_exercises(exercise_id, display_name)
+      `)
+      .eq('program_id', activeProgram.id)
+
+    const exerciseIds = new Set<string>()
+    const exerciseNameMap = new Map<string, string>()
+
+    programDays?.forEach((day: any) => {
+      day.template_exercises?.forEach((ex: any) => {
+        exerciseIds.add(ex.exercise_id)
+        exerciseNameMap.set(ex.exercise_id, ex.display_name)
+      })
+    })
+
+    setActiveProgramExercises(exerciseIds)
+
+    // Now calculate progress for active program exercises
+    await calculateExerciseProgress(userId, exerciseIds, exerciseNameMap)
+  }
+
+  async function calculateExerciseProgress(userId: string, activeExerciseIds: Set<string>, exerciseNameMap: Map<string, string>) {
+    if (activeExerciseIds.size === 0) {
+      setExerciseProgress([])
+      return
+    }
+
+    // Fetch exercise data from last 90 days
+    const { data: exerciseData } = await supabase
+      .from('workout_exercises')
+      .select(`
+        exercise_id,
+        display_name,
+        workouts!inner(performed_at, user_id),
+        sets(weight, reps, set_type)
+      `)
+      .eq('workouts.user_id', userId)
+      .in('exercise_id', Array.from(activeExerciseIds))
+      .gte('workouts.performed_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
+      .order('workouts.performed_at', { ascending: true })
+
+    if (!exerciseData || exerciseData.length === 0) {
+      setExerciseProgress([])
+      return
+    }
+
+    // Group by exercise and calculate progress
+    const exerciseMap = new Map<string, {
+      name: string
+      sessions: Array<{ date: string; maxWeight: number; avgReps: number }>
+    }>()
+
+    exerciseData.forEach((item: any) => {
+      const exerciseId = item.exercise_id
+      const date = new Date(item.workouts.performed_at).toISOString().split('T')[0]
+
+      const workingSets = item.sets?.filter((s: any) => s.set_type === 'working' && s.weight > 0) || []
+      if (workingSets.length === 0) return
+
+      const maxWeight = Math.max(...workingSets.map((s: any) => s.weight))
+      const avgReps = workingSets.reduce((sum: number, s: any) => sum + s.reps, 0) / workingSets.length
+
+      if (!exerciseMap.has(exerciseId)) {
+        exerciseMap.set(exerciseId, {
+          name: exerciseNameMap.get(exerciseId) || item.display_name,
+          sessions: []
+        })
+      }
+
+      const existing = exerciseMap.get(exerciseId)!
+      const existingSession = existing.sessions.find(s => s.date === date)
+      if (existingSession) {
+        existingSession.maxWeight = Math.max(existingSession.maxWeight, maxWeight)
+        existingSession.avgReps = Math.max(existingSession.avgReps, avgReps)
+      } else {
+        existing.sessions.push({ date, maxWeight, avgReps })
+      }
+    })
+
+    // Calculate progress metrics
+    const progress: ExerciseProgress[] = []
+
+    exerciseMap.forEach((data, exerciseId) => {
+      if (data.sessions.length < 2) return
+
+      const firstSession = data.sessions[0]
+      const latestSession = data.sessions[data.sessions.length - 1]
+
+      const weightChange = latestSession.maxWeight - firstSession.maxWeight
+      const repsChange = Math.round(latestSession.avgReps - firstSession.avgReps)
+
+      // Calculate percentage change based on weight primarily
+      let percentChange = 0
+      if (firstSession.maxWeight > 0) {
+        percentChange = ((latestSession.maxWeight - firstSession.maxWeight) / firstSession.maxWeight) * 100
+      }
+
+      // Determine trend
+      let trend: 'up' | 'down' | 'stagnant' = 'stagnant'
+      if (percentChange > 2) trend = 'up'
+      else if (percentChange < -2) trend = 'down'
+
+      progress.push({
+        exerciseId,
+        exerciseName: data.name,
+        firstWeight: firstSession.maxWeight,
+        latestWeight: latestSession.maxWeight,
+        firstReps: Math.round(firstSession.avgReps),
+        latestReps: Math.round(latestSession.avgReps),
+        weightChange,
+        repsChange,
+        percentChange: Math.round(percentChange * 10) / 10,
+        sessionCount: data.sessions.length,
+        trend
+      })
+    })
+
+    setExerciseProgress(progress)
+  }
+
+  async function loadStreakData(userId: string) {
+    // Get profile goals
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('weekly_goal, bjj_weekly_goal, cardio_weekly_goal')
+      .eq('id', userId)
+      .maybeSingle()
+
+    const strengthGoal = prof?.weekly_goal ?? 4
+    const bjjGoal = prof?.bjj_weekly_goal ?? 2
+    const cardioGoal = prof?.cardio_weekly_goal ?? 3
+
+    // Fetch recent sessions
+    const [workoutsRes, bjjRes, cardioRes] = await Promise.all([
+      supabase
+        .from('workouts')
+        .select('performed_at')
+        .eq('user_id', userId)
+        .order('performed_at', { ascending: false })
+        .limit(500),
+      supabase
+        .from('bjj_sessions')
+        .select('performed_at')
+        .eq('user_id', userId)
+        .order('performed_at', { ascending: false })
+        .limit(500),
+      supabase
+        .from('cardio_sessions')
+        .select('performed_at')
+        .eq('user_id', userId)
+        .order('performed_at', { ascending: false })
+        .limit(500)
+    ])
+
+    const now = new Date()
+    const startOfWeekSunday = (d: Date) => {
+      const x = new Date(d)
+      x.setHours(0, 0, 0, 0)
+      const day = x.getDay()
+      x.setDate(x.getDate() - day)
+      return x
+    }
+    const weekKey = (d: Date) => startOfWeekSunday(d).toISOString().slice(0, 10)
+    const thisWeekKey = weekKey(now)
+    const dayIndex = now.getDay()
+
+    // Calculate streaks and weekly counts
+    const calculateStats = (sessions: any[], goal: number) => {
+      const weekCounts = new Map<string, number>()
+      sessions.forEach(s => {
+        const k = weekKey(new Date(s.performed_at))
+        weekCounts.set(k, (weekCounts.get(k) || 0) + 1)
+      })
+
+      const thisWeekCount = weekCounts.get(thisWeekKey) || 0
+
+      // Calculate streak
+      const keys: string[] = []
+      let cursor = startOfWeekSunday(now)
+      for (let i = 0; i < 120; i++) {
+        keys.push(cursor.toISOString().slice(0, 10))
+        cursor = new Date(cursor)
+        cursor.setDate(cursor.getDate() - 7)
+      }
+
+      let streak = 0
+      for (const k of keys) {
+        const c = weekCounts.get(k) || 0
+        if (c >= goal) streak++
+        else {
+          if (k === thisWeekKey && c < goal) continue
+          break
+        }
+      }
+
+      const expectedByToday = Math.ceil((goal * (dayIndex + 1)) / 7)
+      const isOnTrack = thisWeekCount >= expectedByToday
+
+      return { current: streak, thisWeek: thisWeekCount, goal, isOnTrack }
+    }
+
+    setStreakData({
+      strength: calculateStats(workoutsRes.data || [], strengthGoal),
+      bjj: calculateStats(bjjRes.data || [], bjjGoal),
+      cardio: calculateStats(cardioRes.data || [], cardioGoal)
+    })
+  }
+
+  // Computed: top growth and need work exercises
+  const topGrowth = useMemo(() => {
+    return exerciseProgress
+      .filter(e => e.trend === 'up')
+      .sort((a, b) => b.percentChange - a.percentChange)
+      .slice(0, 3)
+  }, [exerciseProgress])
+
+  const needWork = useMemo(() => {
+    return exerciseProgress
+      .filter(e => e.trend === 'down' || e.trend === 'stagnant')
+      .sort((a, b) => a.percentChange - b.percentChange)
+      .slice(0, 3)
+  }, [exerciseProgress])
+
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'strength': return <Dumbbell className="w-5 h-5" />
@@ -510,61 +781,195 @@ function HistoryClient() {
       <div className="p-4 space-y-4">
         {selectedView === 'analytics' ? (
           <>
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <AnimatedCard delay={0} className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
-                    <Flame className="w-6 h-6 text-red-400" />
+            {/* Exercise Progress Section */}
+            <AnimatedCard delay={0}>
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="w-5 h-5 text-red-400" />
+                <h3 className="font-semibold text-white">Exercise Progress</h3>
+                <span className="text-xs text-zinc-500 ml-auto">From active program • Last 90 days</span>
+              </div>
+
+              {exerciseProgress.length === 0 ? (
+                <div className="text-center py-8">
+                  <Dumbbell className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
+                  <p className="text-zinc-400">Set up an active program and complete workouts to see progress!</p>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* Top 3 Growth */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                        <ArrowUp className="w-3.5 h-3.5 text-emerald-400" />
+                      </div>
+                      <h4 className="text-sm font-medium text-emerald-400">Top Growth</h4>
+                    </div>
+                    {topGrowth.length > 0 ? (
+                      <div className="space-y-2">
+                        {topGrowth.map((exercise, idx) => (
+                          <motion.div
+                            key={exercise.exerciseId}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.1 }}
+                            className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl"
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-medium text-white text-sm truncate flex-1">{exercise.exerciseName}</span>
+                              <span className="text-emerald-400 font-bold text-sm ml-2">
+                                +{exercise.percentChange}%
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-zinc-400">
+                              <span>{exercise.firstWeight} → {exercise.latestWeight} lb</span>
+                              <span className="text-zinc-600">•</span>
+                              <span>{exercise.sessionCount} sessions</span>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-zinc-900/50 rounded-xl text-center">
+                        <p className="text-zinc-500 text-sm">No improving exercises yet</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Top 3 Need Work */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                      </div>
+                      <h4 className="text-sm font-medium text-amber-400">Need Work</h4>
+                    </div>
+                    {needWork.length > 0 ? (
+                      <div className="space-y-2">
+                        {needWork.map((exercise, idx) => (
+                          <motion.div
+                            key={exercise.exerciseId}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.1 }}
+                            className={`p-3 rounded-xl ${
+                              exercise.trend === 'down'
+                                ? 'bg-red-500/10 border border-red-500/20'
+                                : 'bg-amber-500/10 border border-amber-500/20'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-medium text-white text-sm truncate flex-1">{exercise.exerciseName}</span>
+                              <div className="flex items-center gap-1 ml-2">
+                                {exercise.trend === 'down' ? (
+                                  <ArrowDown className="w-3 h-3 text-red-400" />
+                                ) : (
+                                  <Minus className="w-3 h-3 text-amber-400" />
+                                )}
+                                <span className={`font-bold text-sm ${
+                                  exercise.trend === 'down' ? 'text-red-400' : 'text-amber-400'
+                                }`}>
+                                  {exercise.percentChange > 0 ? '+' : ''}{exercise.percentChange}%
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-zinc-400">
+                              <span>{exercise.firstWeight} → {exercise.latestWeight} lb</span>
+                              <span className="text-zinc-600">•</span>
+                              <span>{exercise.trend === 'stagnant' ? 'Stagnant' : 'Regressed'}</span>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-zinc-900/50 rounded-xl text-center">
+                        <p className="text-zinc-500 text-sm">All exercises progressing well!</p>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-red-400">{workoutStats.thisWeek}</p>
-                <p className="text-xs text-zinc-400">This Week</p>
-              </AnimatedCard>
+              )}
+            </AnimatedCard>
 
-              <AnimatedCard delay={0.05} className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-blue-400" />
+            {/* Streak Info Section */}
+            {streakData && (
+              <AnimatedCard delay={0.1}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Flame className="w-5 h-5 text-red-400" />
+                  <h3 className="font-semibold text-white">Current Streaks</h3>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  {/* Strength Streak */}
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-center">
+                    <div className="flex items-center justify-center gap-1 mb-2">
+                      <Dumbbell className="w-4 h-4 text-red-400" />
+                      <span className="text-xs font-medium text-red-400">Strength</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-1">
+                      <Flame className="w-4 h-4 text-amber-400" />
+                      <span className="text-xl font-bold text-white">{streakData.strength.current}</span>
+                      <span className="text-xs text-zinc-400">wks</span>
+                    </div>
+                    <div className="mt-2 text-xs">
+                      <span className="text-zinc-400">{streakData.strength.thisWeek}/{streakData.strength.goal} this week</span>
+                      <div className={`mt-1 ${streakData.strength.isOnTrack ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        {streakData.strength.isOnTrack ? 'On Track' : 'Catch Up'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* BJJ Streak */}
+                  <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-center">
+                    <div className="flex items-center justify-center gap-1 mb-2">
+                      <Target className="w-4 h-4 text-purple-400" />
+                      <span className="text-xs font-medium text-purple-400">BJJ</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-1">
+                      <Flame className="w-4 h-4 text-amber-400" />
+                      <span className="text-xl font-bold text-white">{streakData.bjj.current}</span>
+                      <span className="text-xs text-zinc-400">wks</span>
+                    </div>
+                    <div className="mt-2 text-xs">
+                      <span className="text-zinc-400">{streakData.bjj.thisWeek}/{streakData.bjj.goal} this week</span>
+                      <div className={`mt-1 ${streakData.bjj.isOnTrack ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        {streakData.bjj.isOnTrack ? 'On Track' : 'Catch Up'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cardio Streak */}
+                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center">
+                    <div className="flex items-center justify-center gap-1 mb-2">
+                      <Activity className="w-4 h-4 text-emerald-400" />
+                      <span className="text-xs font-medium text-emerald-400">Cardio</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-1">
+                      <Flame className="w-4 h-4 text-amber-400" />
+                      <span className="text-xl font-bold text-white">{streakData.cardio.current}</span>
+                      <span className="text-xs text-zinc-400">wks</span>
+                    </div>
+                    <div className="mt-2 text-xs">
+                      <span className="text-zinc-400">{streakData.cardio.thisWeek}/{streakData.cardio.goal} this week</span>
+                      <div className={`mt-1 ${streakData.cardio.isOnTrack ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        {streakData.cardio.isOnTrack ? 'On Track' : 'Catch Up'}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-blue-400">{workoutStats.thisMonth}</p>
-                <p className="text-xs text-zinc-400">This Month</p>
               </AnimatedCard>
+            )}
 
-              <AnimatedCard delay={0.1} className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-emerald-400" />
-                  </div>
-                </div>
-                <p className="text-2xl font-bold text-emerald-400">{workoutStats.avgPerWeek}</p>
-                <p className="text-xs text-zinc-400">Avg/Week</p>
-              </AnimatedCard>
-
-              <AnimatedCard delay={0.15} className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
-                    <Trophy className="w-6 h-6 text-purple-400" />
-                  </div>
-                </div>
-                <p className="text-2xl font-bold text-purple-400">{workoutStats.total}</p>
-                <p className="text-xs text-zinc-400">Total</p>
-              </AnimatedCard>
-            </div>
-
-            {/* Volume Trends */}
+            {/* Volume Tracker */}
             {volumeData.length > 0 && (
               <AnimatedCard delay={0.2}>
                 <div className="flex items-center gap-2 mb-4">
                   <BarChart3 className="w-5 h-5 text-red-400" />
-                  <h3 className="font-semibold text-white">Volume Trends</h3>
-                  <span className="text-xs text-zinc-500 ml-auto">Last 60 days</span>
+                  <h3 className="font-semibold text-white">Volume Tracker</h3>
+                  <span className="text-xs text-zinc-500 ml-auto">Working sets per session • Last 60 days</span>
                 </div>
 
                 <div className="space-y-3">
                   {volumeData.slice(-10).map((day, index) => {
-                    const total = day.upperVolume + day.lowerVolume
                     const maxTotal = Math.max(...volumeData.slice(-10).map(d => d.upperVolume + d.lowerVolume))
 
                     return (
@@ -613,88 +1018,48 @@ function HistoryClient() {
               </AnimatedCard>
             )}
 
-            {/* Exercise Progression */}
-            <AnimatedCard delay={0.25}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-red-400" />
-                  <h3 className="font-semibold text-white">Exercise Progression</h3>
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <AnimatedCard delay={0.25} className="text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <Flame className="w-6 h-6 text-red-400" />
+                  </div>
                 </div>
-                {progressionData.length > 0 && (
-                  <select
-                    className="px-3 py-1.5 bg-zinc-900 border border-white/10 rounded-lg text-sm text-white focus:border-red-500 focus:outline-none"
-                    value={selectedExercise}
-                    onChange={(e) => setSelectedExercise(e.target.value)}
-                  >
-                    <option value="">All Exercises</option>
-                    {progressionData.map((ex) => (
-                      <option key={ex.exerciseId} value={ex.exerciseId}>
-                        {ex.exerciseName}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
+                <p className="text-2xl font-bold text-red-400">{workoutStats.thisWeek}</p>
+                <p className="text-xs text-zinc-400">This Week</p>
+              </AnimatedCard>
 
-              {progressionData.length === 0 ? (
-                <div className="text-center py-8">
-                  <Dumbbell className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                  <p className="text-zinc-400">Complete a few workouts to see your progress!</p>
+              <AnimatedCard delay={0.3} className="text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                    <Calendar className="w-6 h-6 text-blue-400" />
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {(selectedExercise ?
-                    progressionData.filter(ex => ex.exerciseId === selectedExercise) :
-                    progressionData.slice(0, 3)
-                  ).map((exercise, idx) => {
-                    const latestWeight = exercise.data[exercise.data.length - 1]?.maxWeight || 0
-                    const previousWeight = exercise.data[exercise.data.length - 2]?.maxWeight || 0
-                    const change = latestWeight - previousWeight
-                    const isImproving = change > 0
+                <p className="text-2xl font-bold text-blue-400">{workoutStats.thisMonth}</p>
+                <p className="text-xs text-zinc-400">This Month</p>
+              </AnimatedCard>
 
-                    return (
-                      <motion.div
-                        key={exercise.exerciseId}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.1 }}
-                        className="p-4 bg-zinc-900/50 rounded-xl"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="font-medium text-white">{exercise.exerciseName}</h4>
-                          {exercise.data.length >= 2 && (
-                            <span className={`text-sm font-medium ${isImproving ? 'text-emerald-400' : 'text-red-400'}`}>
-                              {isImproving ? '+' : ''}{change} lb
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Mini chart */}
-                        <div className="flex items-end gap-1 h-12 mb-3">
-                          {exercise.data.slice(-8).map((session, i) => {
-                            const maxWeight = Math.max(...exercise.data.map(d => d.maxWeight))
-                            return (
-                              <motion.div
-                                key={i}
-                                className="flex-1 bg-gradient-to-t from-red-500 to-orange-400 rounded-t"
-                                initial={{ height: 0 }}
-                                animate={{ height: `${(session.maxWeight / maxWeight) * 100}%` }}
-                                transition={{ delay: 0.2 + i * 0.05, duration: 0.3 }}
-                              />
-                            )
-                          })}
-                        </div>
-
-                        <div className="flex justify-between text-xs text-zinc-500">
-                          <span>First: {exercise.data[0]?.maxWeight || 0} lb</span>
-                          <span>Latest: {latestWeight} lb</span>
-                        </div>
-                      </motion.div>
-                    )
-                  })}
+              <AnimatedCard delay={0.35} className="text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <TrendingUp className="w-6 h-6 text-emerald-400" />
+                  </div>
                 </div>
-              )}
-            </AnimatedCard>
+                <p className="text-2xl font-bold text-emerald-400">{workoutStats.avgPerWeek}</p>
+                <p className="text-xs text-zinc-400">Avg/Week</p>
+              </AnimatedCard>
+
+              <AnimatedCard delay={0.4} className="text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
+                    <Trophy className="w-6 h-6 text-purple-400" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-purple-400">{workoutStats.total}</p>
+                <p className="text-xs text-zinc-400">Total</p>
+              </AnimatedCard>
+            </div>
           </>
         ) : (
           /* Workout History View */
