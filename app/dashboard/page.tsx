@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId } from '@/lib/activeUser'
 import { logger, EventType } from '@/lib/splunkLogger'
@@ -10,15 +10,11 @@ import {
   Dumbbell,
   Activity,
   Heart,
-  TrendingUp,
-  Calendar,
-  Clock,
   ChevronRight,
   Target,
   Flame,
-  Zap,
 } from 'lucide-react'
-import { AnimatedCard, StatCard } from '@/components/ui/Card'
+import { AnimatedCard } from '@/components/ui/Card'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 
 type Workout = { id: string; performed_at: string; title: string | null }
@@ -34,6 +30,11 @@ type Cardio = {
   activity: string
   duration_minutes: number | null
 }
+type ProgramDay = {
+  id: string
+  name: string
+  dows: number[]
+}
 
 function startOfWeekSunday(d: Date) {
   const x = new Date(d)
@@ -47,17 +48,6 @@ function weekKey(d: Date) {
   return startOfWeekSunday(d).toISOString().slice(0, 10)
 }
 
-function formatRelativeDate(dateStr: string) {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Yesterday'
-  if (diffDays < 7) return `${diffDays} days ago`
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
 
 // Motivational quotes
 const quotes = [
@@ -78,9 +68,10 @@ function ProgressRing({ progress, size = 80, strokeWidth = 6, color = 'stroke-br
   const radius = (size - strokeWidth) / 2
   const circumference = radius * 2 * Math.PI
   const offset = circumference - (Math.min(progress, 100) / 100) * circumference
+  const isSmall = size <= 60
 
   return (
-    <div className="progress-ring" style={{ width: size, height: size }}>
+    <div className="progress-ring flex-shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
         <circle
           className="stroke-zinc-800"
@@ -107,13 +98,13 @@ function ProgressRing({ progress, size = 80, strokeWidth = 6, color = 'stroke-br
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-lg font-bold">{Math.round(progress)}%</span>
+        <span className={`font-bold ${isSmall ? 'text-xs' : 'text-lg'}`}>{Math.round(progress)}%</span>
       </div>
     </div>
   )
 }
 
-// Goal Card Component
+// Goal Card Component - Compact version
 function GoalCard({
   type,
   icon: Icon,
@@ -143,106 +134,41 @@ function GoalCard({
   }
 
   return (
-    <AnimatedCard
-      className={`bg-gradient-to-br ${colorMap[type].bg} to-transparent ${colorMap[type].border}`}
-      delay={type === 'strength' ? 0 : type === 'bjj' ? 0.1 : 0.2}
-    >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-xl bg-zinc-800`}>
-            <Icon className="w-5 h-5" style={{ color }} />
-          </div>
-          <div>
-            <h3 className="font-semibold text-white">{label}</h3>
-            <p className="text-sm text-zinc-400">Weekly Goal</p>
-          </div>
-        </div>
-        {streak > 0 && (
-          <div className="flex items-center gap-1 px-2 py-1 bg-amber-500/20 rounded-lg">
-            <Flame className="w-4 h-4 text-amber-400" />
-            <span className="text-sm font-medium text-amber-400">{streak}w</span>
-          </div>
-        )}
-      </div>
-
-      <div className="flex items-center gap-6">
-        <ProgressRing progress={progress} color={colorMap[type].ring} />
-        <div className="flex-1">
-          <div className="flex items-baseline gap-2 mb-2">
-            <span className="text-3xl font-bold">{current}</span>
-            <span className="text-zinc-500">/ {goal}</span>
-          </div>
-          <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-sm font-medium ${
-            isOnTrack
-              ? 'bg-emerald-500/20 text-emerald-400'
-              : 'bg-amber-500/20 text-amber-400'
-          }`}>
-            {isOnTrack ? (
-              <>
-                <TrendingUp className="w-3.5 h-3.5" />
-                On Track
-              </>
-            ) : (
-              <>
-                <Zap className="w-3.5 h-3.5" />
-                Catch Up
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <Link
-        href={href}
-        className="mt-4 flex items-center justify-between p-3 -mx-1 rounded-xl hover:bg-white/5 transition-colors group"
+    <Link href={href}>
+      <AnimatedCard
+        className={`bg-gradient-to-br ${colorMap[type].bg} to-transparent ${colorMap[type].border} p-3 hover:bg-white/5 transition-colors cursor-pointer`}
+        delay={type === 'strength' ? 0 : type === 'bjj' ? 0.1 : 0.2}
       >
-        <span className="text-sm text-zinc-400">Start {label}</span>
-        <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-      </Link>
-    </AnimatedCard>
+        <div className="flex items-center gap-3">
+          <ProgressRing progress={progress} size={56} strokeWidth={5} color={colorMap[type].ring} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <Icon className="w-4 h-4" style={{ color }} />
+              <span className="font-medium text-white text-sm">{label}</span>
+              {streak > 0 && (
+                <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-500/20 rounded text-xs">
+                  <Flame className="w-3 h-3 text-amber-400" />
+                  <span className="font-medium text-amber-400">{streak}w</span>
+                </div>
+              )}
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl font-bold">{current}</span>
+              <span className="text-zinc-500 text-sm">/ {goal}</span>
+              <span className={`ml-auto text-xs font-medium ${
+                isOnTrack ? 'text-emerald-400' : 'text-amber-400'
+              }`}>
+                {isOnTrack ? 'On Track' : 'Catch Up'}
+              </span>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-zinc-500 flex-shrink-0" />
+        </div>
+      </AnimatedCard>
+    </Link>
   )
 }
 
-// Recent Activity Item
-function ActivityItem({
-  type,
-  title,
-  subtitle,
-  date,
-  id,
-}: {
-  type: 'workout' | 'bjj' | 'cardio'
-  title: string
-  subtitle?: string
-  date: string
-  id: string
-}) {
-  const icons = {
-    workout: { icon: Dumbbell, color: 'text-red-400', bg: 'bg-red-500/10' },
-    bjj: { icon: Activity, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-    cardio: { icon: Heart, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  }
-  const { icon: Icon, color, bg } = icons[type]
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800/50 transition-colors group"
-    >
-      <div className={`p-2 rounded-lg ${bg}`}>
-        <Icon className={`w-4 h-4 ${color}`} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-medium text-white truncate">{title}</p>
-        {subtitle && <p className="text-sm text-zinc-500 truncate">{subtitle}</p>}
-      </div>
-      <div className="text-right">
-        <p className="text-sm text-zinc-400">{formatRelativeDate(date)}</p>
-      </div>
-    </motion.div>
-  )
-}
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true)
@@ -255,6 +181,7 @@ export default function Dashboard() {
   const [showStrengthGoal, setShowStrengthGoal] = useState<boolean>(true)
   const [showBjjGoal, setShowBjjGoal] = useState<boolean>(true)
   const [showCardioGoal, setShowCardioGoal] = useState<boolean>(false)
+  const [todayWorkoutDay, setTodayWorkoutDay] = useState<string | null>(null)
 
   // Random quote for today
   const todayQuote = useMemo(() => {
@@ -319,6 +246,30 @@ export default function Dashboard() {
       setWorkouts((workoutsRes.data || []) as Workout[])
       setBjj((bjjRes.data || []) as BJJ[])
       setCardio((cardioRes.data || []) as Cardio[])
+
+      // Fetch today's workout day from active program
+      const { data: activeProgram } = await supabase
+        .from('programs')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .maybeSingle()
+
+      if (activeProgram) {
+        const todayDow = new Date().getDay()
+        const { data: programDays } = await supabase
+          .from('program_days')
+          .select('id,name,dows')
+          .eq('program_id', activeProgram.id)
+
+        const todaysDay = (programDays || []).find((day: ProgramDay) =>
+          day.dows && day.dows.includes(todayDow)
+        )
+        if (todaysDay) {
+          setTodayWorkoutDay(todaysDay.name)
+        }
+      }
+
       setLoading(false)
     })()
   }, [])
@@ -444,33 +395,6 @@ export default function Dashboard() {
   const cardioExpectedByToday = Math.ceil((cardioWeeklyGoal * (dayIndex + 1)) / 7)
   const onTrackCardio = cardioThisWeekCount >= cardioExpectedByToday
 
-  // Recent activities
-  const recentActivities = useMemo(() => {
-    const all = [
-      ...workouts.slice(0, 10).map((w) => ({
-        type: 'workout' as const,
-        id: w.id,
-        title: w.title || 'Workout',
-        date: w.performed_at,
-      })),
-      ...bjj.slice(0, 10).map((s) => ({
-        type: 'bjj' as const,
-        id: s.id,
-        title: s.kind.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-        subtitle: `${s.duration_min} min`,
-        date: s.performed_at,
-      })),
-      ...cardio.slice(0, 10).map((s) => ({
-        type: 'cardio' as const,
-        id: s.id,
-        title: s.activity,
-        subtitle: s.duration_minutes ? `${s.duration_minutes} min` : undefined,
-        date: s.performed_at,
-      })),
-    ]
-    return all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8)
-  }, [workouts, bjj, cardio])
-
   // Greeting based on time
   const greeting = useMemo(() => {
     const hour = new Date().getHours()
@@ -509,7 +433,9 @@ export default function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-1"
       >
-        <h1 className="text-2xl font-bold text-white">{greeting}</h1>
+        <h1 className="text-2xl font-bold text-white">
+          {greeting}{todayWorkoutDay && <span className="text-zinc-400 font-normal"> — Today is <span className="text-brand-red font-semibold">{todayWorkoutDay}</span></span>}
+        </h1>
         <p className="text-zinc-400">
           {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>
@@ -597,40 +523,6 @@ export default function Dashboard() {
           </Link>
         </AnimatedCard>
       )}
-
-      {/* Recent Activity */}
-      <AnimatedCard delay={0.3}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-white flex items-center gap-2">
-            <Clock className="w-4 h-4 text-zinc-400" />
-            Recent Activity
-          </h2>
-          <Link href="/history" className="text-sm text-zinc-400 hover:text-white transition-colors flex items-center gap-1">
-            View all
-            <ChevronRight className="w-4 h-4" />
-          </Link>
-        </div>
-        <div className="space-y-1">
-          {recentActivities.length > 0 ? (
-            recentActivities.map((activity, i) => (
-              <ActivityItem
-                key={`${activity.type}-${activity.id}`}
-                type={activity.type}
-                title={activity.title}
-                subtitle={(activity as any).subtitle}
-                date={activity.date}
-                id={activity.id}
-              />
-            ))
-          ) : (
-            <div className="text-center py-8">
-              <Calendar className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-              <p className="text-zinc-400">No activity yet</p>
-              <p className="text-zinc-500 text-sm">Start tracking your workouts!</p>
-            </div>
-          )}
-        </div>
-      </AnimatedCard>
 
       {/* Motivational Quote */}
       <motion.div
