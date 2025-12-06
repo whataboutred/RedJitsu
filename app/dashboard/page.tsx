@@ -13,9 +13,11 @@ import {
   ChevronRight,
   Target,
   Flame,
+  RefreshCw,
 } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/Card'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
+import { getDailyQuote, refreshQuote, type Quote } from '@/lib/quoteService'
 
 type Workout = { id: string; performed_at: string; title: string | null }
 type BJJ = {
@@ -47,17 +49,6 @@ function startOfWeekSunday(d: Date) {
 function weekKey(d: Date) {
   return startOfWeekSunday(d).toISOString().slice(0, 10)
 }
-
-
-// Motivational quotes
-const quotes = [
-  { text: "The only bad workout is the one that didn't happen.", author: "Unknown" },
-  { text: "Success is the sum of small efforts repeated day in and day out.", author: "Robert Collier" },
-  { text: "The body achieves what the mind believes.", author: "Napoleon Hill" },
-  { text: "Don't wish for it. Work for it.", author: "Unknown" },
-  { text: "Discipline is choosing between what you want now and what you want most.", author: "Abraham Lincoln" },
-]
-
 // Progress Ring Component
 function ProgressRing({ progress, size = 80, strokeWidth = 6, color = 'stroke-brand-red' }: {
   progress: number
@@ -182,12 +173,20 @@ export default function Dashboard() {
   const [showBjjGoal, setShowBjjGoal] = useState<boolean>(true)
   const [showCardioGoal, setShowCardioGoal] = useState<boolean>(false)
   const [todayWorkoutDay, setTodayWorkoutDay] = useState<string | null>(null)
+  const [todayQuote, setTodayQuote] = useState<Quote | null>(null)
+  const [isRefreshingQuote, setIsRefreshingQuote] = useState(false)
 
-  // Random quote for today
-  const todayQuote = useMemo(() => {
-    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000)
-    return quotes[dayOfYear % quotes.length]
+  // Load daily quote
+  useEffect(() => {
+    getDailyQuote().then(setTodayQuote)
   }, [])
+
+  const handleRefreshQuote = async () => {
+    setIsRefreshingQuote(true)
+    const newQuote = await refreshQuote()
+    setTodayQuote(newQuote)
+    setIsRefreshingQuote(false)
+  }
 
   const loadProfileData = async () => {
     const userId = await getActiveUserId()
@@ -525,15 +524,27 @@ export default function Dashboard() {
       )}
 
       {/* Motivational Quote */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="text-center py-6"
-      >
-        <p className="text-zinc-400 italic mb-2">"{todayQuote.text}"</p>
-        <p className="text-zinc-500 text-sm">— {todayQuote.author}</p>
-      </motion.div>
+      {todayQuote && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="relative text-center py-6 px-4"
+        >
+          <button
+            onClick={handleRefreshQuote}
+            disabled={isRefreshingQuote}
+            className="absolute top-4 right-4 p-2 text-zinc-600 hover:text-zinc-400 transition-colors disabled:opacity-50"
+            title="Get new quote"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshingQuote ? 'animate-spin' : ''}`} />
+          </button>
+          <p className="text-zinc-400 italic mb-2 font-serif text-lg leading-relaxed max-w-2xl mx-auto">
+            "{todayQuote.text}"
+          </p>
+          <p className="text-zinc-500 text-sm">— {todayQuote.author}</p>
+        </motion.div>
+      )}
     </div>
   )
 }
