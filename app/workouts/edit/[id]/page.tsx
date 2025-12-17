@@ -675,10 +675,10 @@ export default function EditWorkoutPage() {
           // Delete old sets
           await supabase.from('sets').delete().eq('workout_exercise_id', workoutExercise.id)
 
-          // Insert new sets
-          const setsToSave = ex.sets.filter(s => s.weight > 0 || s.reps > 0 || s.isCompleted)
-          if (setsToSave.length > 0) {
-            const rows = setsToSave.map((s, idx) => ({
+          // Insert all sets to preserve the workout template structure
+          // This ensures incomplete workouts show correct X/Y sets (e.g., 1/3 not 1/1)
+          if (ex.sets.length > 0) {
+            const rows = ex.sets.map((s, idx) => ({
               workout_exercise_id: workoutExercise!.id,
               set_index: idx + 1,
               weight: s.weight,

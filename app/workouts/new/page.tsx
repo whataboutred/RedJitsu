@@ -897,10 +897,11 @@ export default function NewWorkoutPage() {
 
         console.log('[saveWorkout] Added exercise:', ex.name, 'wex.id:', wex.id)
 
-        // Save ALL sets that have any data (weight OR reps > 0, or marked complete)
-        const setsToSave = ex.sets.filter((s) => s.isCompleted || s.weight > 0 || s.reps > 0)
+        // Save ALL sets to preserve the workout template structure
+        // This ensures incomplete workouts show correct X/Y sets (e.g., 1/3 not 1/1)
+        const setsToSave = ex.sets
 
-        console.log('[saveWorkout] Sets to save for', ex.name, ':', setsToSave.length, 'of', ex.sets.length)
+        console.log('[saveWorkout] Sets to save for', ex.name, ':', setsToSave.length)
 
         if (setsToSave.length > 0) {
           const rows = setsToSave.map((s, idx) => ({
@@ -921,8 +922,6 @@ export default function NewWorkoutPage() {
           }
 
           console.log('[saveWorkout] Saved', rows.length, 'sets for', ex.name)
-        } else {
-          console.warn('[saveWorkout] No sets to save for', ex.name, '- all sets have 0 weight/reps and not completed')
         }
       }
 
