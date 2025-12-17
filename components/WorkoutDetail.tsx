@@ -13,6 +13,7 @@ type WorkoutSet = {
   reps: number | null
   set_type: string
   set_index: number
+  completed: boolean
 }
 
 type Exercise = {
@@ -51,6 +52,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
           reps,
           set_type,
           set_index,
+          completed,
           workout_exercises!inner(
             exercise_id,
             workout_id
@@ -58,7 +60,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         `)
         .eq('workout_exercises.workout_id', workoutId)
         .order('set_index', { ascending: true })
-      
+
       // Transform the data to match the expected format
       const transformedSets = (s || []).map((set: any) => ({
         id: set.id,
@@ -66,7 +68,8 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         weight: set.weight,
         reps: set.reps,
         set_type: set.set_type,
-        set_index: set.set_index
+        set_index: set.set_index,
+        completed: set.completed ?? false
       }))
       setSets(transformedSets)
 
@@ -188,21 +191,35 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-          {Object.entries(groupedSets).map(([exerciseId, exerciseSets]) => (
+          {Object.entries(groupedSets).map(([exerciseId, exerciseSets]) => {
+            const workingSets = exerciseSets.filter(s => s.set_type !== 'warmup')
+            const completedSets = workingSets.filter(s => s.completed).length
+            const totalSets = workingSets.length
+            return (
             <div key={exerciseId} className="bg-black/30 rounded-xl p-3 space-y-2">
-              <div className="font-medium text-white/90">{getExerciseName(exerciseId)}</div>
+              <div className="flex items-center justify-between">
+                <div className="font-medium text-white/90">{getExerciseName(exerciseId)}</div>
+                <div className="text-xs text-white/50">{completedSets}/{totalSets} sets</div>
+              </div>
               {exerciseSets.map((set, i) => (
-                <div key={set.id} className="text-white/70 text-sm pl-2">
+                <div key={set.id} className={`text-sm pl-2 ${set.completed ? 'text-white/70' : 'text-white/40'}`}>
                   <span className="text-white/50">Set {set.set_index}:</span>{' '}
-                  {set.weight && `${set.weight} lb`}
-                  {set.weight && set.reps && ' × '}
-                  {set.reps && `${set.reps} reps`}
-                  {!set.weight && !set.reps && 'No details recorded'}
+                  {set.completed ? (
+                    <>
+                      {set.weight && `${set.weight} lb`}
+                      {set.weight && set.reps && ' × '}
+                      {set.reps && `${set.reps} reps`}
+                      {!set.weight && !set.reps && 'No details recorded'}
+                    </>
+                  ) : (
+                    <span className="italic">Not completed</span>
+                  )}
                   {set.set_type === 'warmup' && <span className="text-yellow-400 ml-1">(warmup)</span>}
                 </div>
               ))}
             </div>
-          ))}
+          )})}
+
 
           {!sets.length && (
             <div className="text-white/60">No sets recorded for this workout.</div>

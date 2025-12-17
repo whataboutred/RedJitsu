@@ -425,7 +425,7 @@ export default function EditWorkoutPage() {
         id,
         display_name,
         exercise_id,
-        sets (weight, reps, set_type, set_index)
+        sets (weight, reps, set_type, set_index, completed)
       `)
       .eq('workout_id', workoutId)
       .order('order_index')
@@ -455,7 +455,7 @@ export default function EditWorkoutPage() {
               weight: s.weight || 0,
               reps: s.reps || 0,
               isWarmup: s.set_type === 'warmup',
-              isCompleted: true, // Already saved sets are considered complete
+              isCompleted: s.completed ?? false,
             })),
           lastWorkout: lastSets && lastSets.length > 0 ? {
             date: new Date().toISOString(),
@@ -684,6 +684,7 @@ export default function EditWorkoutPage() {
               weight: s.weight,
               reps: s.reps,
               set_type: s.isWarmup ? 'warmup' : 'working',
+              completed: s.isCompleted,
             }))
             await supabase.from('sets').insert(rows)
           }

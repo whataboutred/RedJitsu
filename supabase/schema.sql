@@ -65,6 +65,7 @@ create table if not exists public.sets (
   weight numeric not null default 0,
   reps int not null default 0,
   set_type text not null check (set_type in ('warmup','working')) default 'working',
+  completed boolean not null default false,
   created_at timestamptz default now()
 );
 alter table public.sets enable row level security;

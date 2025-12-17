@@ -910,6 +910,7 @@ export default function NewWorkoutPage() {
             weight: s.weight,
             reps: s.reps,
             set_type: s.isWarmup ? 'warmup' : 'working',
+            completed: s.isCompleted,
           }))
 
           console.log('[saveWorkout] Inserting sets:', rows)
