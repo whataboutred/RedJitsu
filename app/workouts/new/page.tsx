@@ -854,6 +854,27 @@ export default function NewWorkoutPage() {
       const userId = await getActiveUserId()
       if (!userId) throw new Error('Not logged in')
 
+      // Validate exercises before saving
+      if (exercises.length === 0) {
+        throw new Error('Add at least one exercise')
+      }
+
+      // Check for duplicate exercise IDs (shouldn't happen but can prevent DB errors)
+      const exerciseIds = exercises.map(e => e.exerciseId)
+      const uniqueIds = new Set(exerciseIds)
+      if (uniqueIds.size !== exerciseIds.length) {
+        const duplicates = exerciseIds.filter((id, idx) => exerciseIds.indexOf(id) !== idx)
+        const dupExercise = exercises.find(e => e.exerciseId === duplicates[0])
+        throw new Error(`Duplicate exercise: ${dupExercise?.name || 'Unknown'}. Please remove one.`)
+      }
+
+      // Check for invalid exercise IDs
+      for (const ex of exercises) {
+        if (!ex.exerciseId) {
+          throw new Error(`Invalid exercise data for ${ex.name}. Please remove and re-add it.`)
+        }
+      }
+
       const iso = performedAt ? new Date(performedAt).toISOString() : new Date().toISOString()
 
       // Create workout
@@ -892,7 +913,7 @@ export default function NewWorkoutPage() {
 
         if (wexError || !wex) {
           console.error('[saveWorkout] Failed to add exercise:', ex.name, wexError)
-          throw new Error(`Failed to add ${ex.name}`)
+          throw new Error(`Failed to add ${ex.name}: ${wexError?.message || 'Unknown error'}`)
         }
 
         console.log('[saveWorkout] Added exercise:', ex.name, 'wex.id:', wex.id)
@@ -919,7 +940,7 @@ export default function NewWorkoutPage() {
 
           if (setsError) {
             console.error('[saveWorkout] Failed to save sets:', setsError)
-            throw new Error(`Failed to save sets for ${ex.name}`)
+            throw new Error(`Failed to save sets for ${ex.name}: ${setsError.message || 'Unknown error'}`)
           }
 
           console.log('[saveWorkout] Saved', rows.length, 'sets for', ex.name)

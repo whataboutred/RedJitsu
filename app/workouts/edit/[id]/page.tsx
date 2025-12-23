@@ -609,8 +609,23 @@ export default function EditWorkoutPage() {
       if (!userId) throw new Error('Not logged in')
 
       if (exercises.length === 0) {
-        toast.error('Add at least one exercise')
-        return
+        throw new Error('Add at least one exercise')
+      }
+
+      // Check for duplicate exercise IDs
+      const exerciseIds = exercises.map(e => e.exerciseId)
+      const uniqueIds = new Set(exerciseIds)
+      if (uniqueIds.size !== exerciseIds.length) {
+        const duplicates = exerciseIds.filter((id, idx) => exerciseIds.indexOf(id) !== idx)
+        const dupExercise = exercises.find(e => e.exerciseId === duplicates[0])
+        throw new Error(`Duplicate exercise: ${dupExercise?.name || 'Unknown'}. Please remove one.`)
+      }
+
+      // Check for invalid exercise IDs
+      for (const ex of exercises) {
+        if (!ex.exerciseId) {
+          throw new Error(`Invalid exercise data for ${ex.name}. Please remove and re-add it.`)
+        }
       }
 
       // Update workout
@@ -653,12 +668,16 @@ export default function EditWorkoutPage() {
         let workoutExercise = currentExercises?.find(ce => ce.exercise_id === ex.exerciseId)
 
         if (workoutExercise) {
-          await supabase
+          const { error: updateError } = await supabase
             .from('workout_exercises')
             .update({ display_name: ex.name, order_index: i })
             .eq('id', workoutExercise.id)
+          if (updateError) {
+            console.error('Failed to update exercise:', ex.name, updateError)
+            throw new Error(`Failed to update ${ex.name}: ${updateError.message}`)
+          }
         } else {
-          const { data: newEx } = await supabase
+          const { data: newEx, error: insertError } = await supabase
             .from('workout_exercises')
             .insert({
               workout_id: workoutId,
@@ -668,6 +687,10 @@ export default function EditWorkoutPage() {
             })
             .select()
             .single()
+          if (insertError || !newEx) {
+            console.error('Failed to add exercise:', ex.name, insertError)
+            throw new Error(`Failed to add ${ex.name}: ${insertError?.message || 'Unknown error'}`)
+          }
           workoutExercise = newEx
         }
 
@@ -686,7 +709,11 @@ export default function EditWorkoutPage() {
               set_type: s.isWarmup ? 'warmup' : 'working',
               completed: s.isCompleted,
             }))
-            await supabase.from('sets').insert(rows)
+            const { error: setsError } = await supabase.from('sets').insert(rows)
+            if (setsError) {
+              console.error('Failed to save sets for:', ex.name, setsError)
+              throw new Error(`Failed to save sets for ${ex.name}: ${setsError.message}`)
+            }
           }
         }
       }
