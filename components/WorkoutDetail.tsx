@@ -38,65 +38,71 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         return
       }
 
-      // Load everything in a single query from workouts table
-      // RLS handles authorization - we just need to query by workout ID
-      const { data: workoutData, error: workoutError } = await supabase
+      // Query workout the same way history page does (which works)
+      // Use .limit(1) instead of .single() to avoid errors
+      const { data: workoutResults, error: workoutError } = await supabase
         .from('workouts')
-        .select(`
-          performed_at,
-          title,
-          workout_exercises(
-            id,
-            exercise_id,
-            display_name,
-            order_index,
-            sets(id, weight, reps, set_type, set_index, completed)
-          )
-        `)
+        .select('id, performed_at, title')
         .eq('id', workoutId)
-        .single()
+        .eq('user_id', userId)
+        .limit(1)
 
-      console.log('[WorkoutDetail] Query result:', workoutData, 'error:', workoutError)
+      console.log('[WorkoutDetail] Workout query result:', workoutResults, 'error:', workoutError)
 
-      if (workoutData) {
-        setWorkout({ performed_at: workoutData.performed_at, title: workoutData.title })
+      const workoutData = workoutResults?.[0]
+      if (!workoutData) {
+        console.log('[WorkoutDetail] Workout not found. userId:', userId, 'workoutId:', workoutId)
+        setLoading(false)
+        return
+      }
 
-        const workoutExercises = (workoutData as any).workout_exercises || []
-        console.log('[WorkoutDetail] workout_exercises count:', workoutExercises.length)
+      setWorkout({ performed_at: workoutData.performed_at, title: workoutData.title })
 
-        if (workoutExercises.length > 0) {
-          // Build exercise name map from display_name
-          const exerciseNameMap: Exercise[] = workoutExercises.map((wex: any) => ({
-            id: wex.exercise_id,
-            name: wex.display_name
-          }))
-          setExercises(exerciseNameMap)
+      // Get workout_exercises separately (like edit page does)
+      const { data: workoutExercises, error: wexError } = await supabase
+        .from('workout_exercises')
+        .select(`
+          id,
+          exercise_id,
+          display_name,
+          order_index,
+          sets(id, weight, reps, set_type, set_index, completed)
+        `)
+        .eq('workout_id', workoutId)
+        .order('order_index')
 
-          // Transform nested data to flat sets array
-          const allSets: WorkoutSet[] = []
-          workoutExercises.forEach((wex: any) => {
-            const exerciseSets = wex.sets || []
-            console.log('[WorkoutDetail] Exercise', wex.display_name, 'has', exerciseSets.length, 'sets')
-            exerciseSets.forEach((set: any) => {
-              allSets.push({
-                id: set.id,
-                exercise_id: wex.exercise_id,
-                weight: set.weight,
-                reps: set.reps,
-                set_type: set.set_type,
-                set_index: set.set_index,
-                completed: set.completed ?? false
-              })
+      console.log('[WorkoutDetail] workout_exercises result:', workoutExercises?.length, 'error:', wexError)
+
+      if (workoutExercises && workoutExercises.length > 0) {
+        // Build exercise name map from display_name
+        const exerciseNameMap: Exercise[] = workoutExercises.map((wex: any) => ({
+          id: wex.exercise_id,
+          name: wex.display_name
+        }))
+        setExercises(exerciseNameMap)
+
+        // Transform nested data to flat sets array
+        const allSets: WorkoutSet[] = []
+        workoutExercises.forEach((wex: any) => {
+          const exerciseSets = wex.sets || []
+          console.log('[WorkoutDetail] Exercise', wex.display_name, 'has', exerciseSets.length, 'sets')
+          exerciseSets.forEach((set: any) => {
+            allSets.push({
+              id: set.id,
+              exercise_id: wex.exercise_id,
+              weight: set.weight,
+              reps: set.reps,
+              set_type: set.set_type,
+              set_index: set.set_index,
+              completed: set.completed ?? false
             })
           })
-          console.log('[WorkoutDetail] Total sets found:', allSets.length)
-          setSets(allSets)
-        } else {
-          console.log('[WorkoutDetail] No workout_exercises found')
-          setSets([])
-        }
+        })
+        console.log('[WorkoutDetail] Total sets found:', allSets.length)
+        setSets(allSets)
       } else {
-        console.log('[WorkoutDetail] No workout data returned')
+        console.log('[WorkoutDetail] No workout_exercises found')
+        setSets([])
       }
 
       setLoading(false)
