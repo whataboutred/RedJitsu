@@ -38,16 +38,19 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         return
       }
 
-      // Query workout the same way history page does (which works)
-      // Use .limit(1) instead of .single() to avoid errors
+      // Query workout WITH nested workout_exercises in single query
+      // This leverages the explicit user_id filter to bypass RLS issues
       const { data: workoutResults, error: workoutError } = await supabase
         .from('workouts')
-        .select('id, performed_at, title')
+        .select(`
+          id, performed_at, title,
+          workout_exercises(id, exercise_id, display_name, order_index)
+        `)
         .eq('id', workoutId)
         .eq('user_id', userId)
         .limit(1)
 
-      console.log('[WorkoutDetail] Workout query result:', workoutResults, 'error:', workoutError)
+      console.log('[WorkoutDetail] Workout+exercises result:', workoutResults, 'error:', workoutError)
 
       const workoutData = workoutResults?.[0]
       if (!workoutData) {
@@ -58,13 +61,9 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
 
       setWorkout({ performed_at: workoutData.performed_at, title: workoutData.title })
 
-      // Get workout_exercises using .in() like history page does (works with RLS)
-      const { data: workoutExercises, error: wexError } = await supabase
-        .from('workout_exercises')
-        .select('id, exercise_id, display_name, order_index, workout_id')
-        .in('workout_id', [workoutId])
-
-      console.log('[WorkoutDetail] workout_exercises result:', workoutExercises?.length, 'error:', wexError)
+      // Extract workout_exercises from nested query result
+      const workoutExercises = (workoutData as any).workout_exercises || []
+      console.log('[WorkoutDetail] workout_exercises from nested:', workoutExercises.length)
 
       if (workoutExercises && workoutExercises.length > 0) {
         // Build exercise name map from display_name
