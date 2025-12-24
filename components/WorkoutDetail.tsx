@@ -74,7 +74,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         setExercises(exerciseNameMap)
 
         // Get sets separately using workout_exercise IDs
-        const wexIds = workoutExercises.map(we => we.id)
+        const wexIds = workoutExercises.map((we: any) => we.id)
         const { data: setsData, error: setsError } = await supabase
           .from('sets')
           .select('id, workout_exercise_id, weight, reps, set_type, set_index, completed')
@@ -84,12 +84,12 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         console.log('[WorkoutDetail] sets result:', setsData?.length, 'error:', setsError)
 
         // Map workout_exercise_id to exercise_id
-        const wexToExercise = new Map(workoutExercises.map(we => [we.id, we.exercise_id]))
+        const wexToExercise = new Map(workoutExercises.map((we: any) => [we.id, we.exercise_id]))
 
         // Transform to flat sets array
         const allSets: WorkoutSet[] = (setsData || []).map((set: any) => ({
           id: set.id,
-          exercise_id: wexToExercise.get(set.workout_exercise_id),
+          exercise_id: wexToExercise.get(set.workout_exercise_id) as string,
           weight: set.weight,
           reps: set.reps,
           set_type: set.set_type,
