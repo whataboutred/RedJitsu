@@ -38,7 +38,8 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         return
       }
 
-      // Load everything in a single query from workouts table (handles RLS better)
+      // Load everything in a single query from workouts table
+      // RLS handles authorization - we just need to query by workout ID
       const { data: workoutData, error: workoutError } = await supabase
         .from('workouts')
         .select(`
@@ -53,7 +54,6 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
           )
         `)
         .eq('id', workoutId)
-        .eq('user_id', userId)
         .single()
 
       console.log('[WorkoutDetail] Query result:', workoutData, 'error:', workoutError)
