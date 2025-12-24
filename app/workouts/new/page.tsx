@@ -962,10 +962,31 @@ export default function NewWorkoutPage() {
         }
       }
 
+      // Verify the data was actually saved by reading it back
+      const { data: verifyWex } = await supabase
+        .from('workout_exercises')
+        .select('id')
+        .eq('workout_id', w.id)
+
+      const { data: verifySets } = await supabase
+        .from('sets')
+        .select('id')
+        .in('workout_exercise_id', verifyWex?.map(we => we.id) || [])
+
+      console.log('[saveWorkout] Verification - workout_exercises:', verifyWex?.length, 'sets:', verifySets?.length)
+
+      if (!verifyWex?.length) {
+        console.error('[saveWorkout] WARNING: No workout_exercises found after save!')
+        toast.error('Warning: Workout saved but exercise data may be missing. Please check history.')
+      } else if (!verifySets?.length) {
+        console.error('[saveWorkout] WARNING: No sets found after save!')
+        toast.error('Warning: Workout saved but set data may be missing. Please check history.')
+      }
+
       clearDraft()
       setSavedWorkoutId(w.id)
       setShowSummary(true)
-      toast.success('Workout saved!')
+      toast.success(`Workout saved! (${verifyWex?.length || 0} exercises, ${verifySets?.length || 0} sets)`)
     } catch (error: any) {
       console.error('[saveWorkout] Error:', error)
       toast.error(error.message || 'Failed to save workout')
