@@ -38,19 +38,15 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         return
       }
 
-      // Query workout WITH nested workout_exercises in single query
-      // This leverages the explicit user_id filter to bypass RLS issues
+      // Step 1: Query workout basic info
       const { data: workoutResults, error: workoutError } = await supabase
         .from('workouts')
-        .select(`
-          id, performed_at, title,
-          workout_exercises(id, exercise_id, display_name, order_index)
-        `)
+        .select('id, performed_at, title')
         .eq('id', workoutId)
         .eq('user_id', userId)
         .limit(1)
 
-      console.log('[WorkoutDetail] Workout+exercises result:', workoutResults, 'error:', workoutError)
+      console.log('[WorkoutDetail] Workout query result:', workoutResults, 'error:', workoutError)
 
       const workoutData = workoutResults?.[0]
       if (!workoutData) {
@@ -61,41 +57,45 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
 
       setWorkout({ performed_at: workoutData.performed_at, title: workoutData.title })
 
-      // Extract workout_exercises from nested query result
-      const workoutExercises = (workoutData as any).workout_exercises || []
-      console.log('[WorkoutDetail] workout_exercises from nested:', workoutExercises.length)
+      // Step 2: Query workout_exercises with nested sets - EXACTLY like loadProgressionData does
+      // This pattern is proven to work in history page (lines 403-411)
+      const { data: exerciseData, error: exerciseError } = await supabase
+        .from('workout_exercises')
+        .select(`
+          id,
+          exercise_id,
+          display_name,
+          order_index,
+          sets(id, weight, reps, set_type, set_index, completed)
+        `)
+        .in('workout_id', [workoutId])
 
-      if (workoutExercises && workoutExercises.length > 0) {
-        // Build exercise name map from display_name
-        const exerciseNameMap: Exercise[] = workoutExercises.map((wex: any) => ({
+      console.log('[WorkoutDetail] Exercise data:', JSON.stringify(exerciseData), 'error:', exerciseError)
+
+      if (exerciseData && exerciseData.length > 0) {
+        // Build exercise name map
+        const exerciseNameMap: Exercise[] = exerciseData.map((wex: any) => ({
           id: wex.exercise_id,
           name: wex.display_name
         }))
         setExercises(exerciseNameMap)
 
-        // Get sets separately using workout_exercise IDs
-        const wexIds = workoutExercises.map((we: any) => we.id)
-        const { data: setsData, error: setsError } = await supabase
-          .from('sets')
-          .select('id, workout_exercise_id, weight, reps, set_type, set_index, completed')
-          .in('workout_exercise_id', wexIds)
-          .order('set_index')
-
-        console.log('[WorkoutDetail] sets result:', setsData?.length, 'error:', setsError)
-
-        // Map workout_exercise_id to exercise_id
-        const wexToExercise = new Map(workoutExercises.map((we: any) => [we.id, we.exercise_id]))
-
-        // Transform to flat sets array
-        const allSets: WorkoutSet[] = (setsData || []).map((set: any) => ({
-          id: set.id,
-          exercise_id: wexToExercise.get(set.workout_exercise_id) as string,
-          weight: set.weight,
-          reps: set.reps,
-          set_type: set.set_type,
-          set_index: set.set_index,
-          completed: set.completed ?? false
-        }))
+        // Transform nested sets to flat array
+        const allSets: WorkoutSet[] = []
+        for (const wex of exerciseData) {
+          const exerciseSets = (wex as any).sets || []
+          for (const set of exerciseSets) {
+            allSets.push({
+              id: set.id,
+              exercise_id: wex.exercise_id,
+              weight: set.weight,
+              reps: set.reps,
+              set_type: set.set_type,
+              set_index: set.set_index,
+              completed: set.completed ?? false
+            })
+          }
+        }
 
         console.log('[WorkoutDetail] Total sets found:', allSets.length)
         setSets(allSets)
