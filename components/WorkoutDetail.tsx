@@ -38,43 +38,43 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         return
       }
 
-      // Use the same nested query pattern that works in history page's loadVolumeData
-      // Key: query from workouts with .eq('user_id', userId) and nested workout_exercises + sets
-      const { data: workoutData, error: workoutError } = await supabase
+      // Step 1: Query workout basic info
+      const { data: workoutResults, error: workoutError } = await supabase
         .from('workouts')
-        .select(`
-          id,
-          performed_at,
-          title,
-          workout_exercises(
-            id,
-            exercise_id,
-            display_name,
-            order_index,
-            sets(id, weight, reps, set_type, set_index, completed)
-          )
-        `)
+        .select('id, performed_at, title')
         .eq('id', workoutId)
         .eq('user_id', userId)
         .limit(1)
 
-      console.log('[WorkoutDetail] Query result:', JSON.stringify(workoutData), 'error:', workoutError)
+      console.log('[WorkoutDetail] Workout query result:', workoutResults, 'error:', workoutError)
 
-      const workout = workoutData?.[0]
-      if (!workout) {
+      const workoutData = workoutResults?.[0]
+      if (!workoutData) {
         console.log('[WorkoutDetail] Workout not found. userId:', userId, 'workoutId:', workoutId)
         setLoading(false)
         return
       }
 
-      setWorkout({ performed_at: workout.performed_at, title: workout.title })
+      setWorkout({ performed_at: workoutData.performed_at, title: workoutData.title })
 
-      const workoutExercises = (workout as any).workout_exercises || []
-      console.log('[WorkoutDetail] workout_exercises count:', workoutExercises.length)
+      // Step 2: Query workout_exercises with nested sets - EXACTLY like loadProgressionData does
+      // This pattern is proven to work in history page (lines 403-411)
+      const { data: exerciseData, error: exerciseError } = await supabase
+        .from('workout_exercises')
+        .select(`
+          id,
+          exercise_id,
+          display_name,
+          order_index,
+          sets(id, weight, reps, set_type, set_index, completed)
+        `)
+        .in('workout_id', [workoutId])
 
-      if (workoutExercises.length > 0) {
-        // Build exercise name map from display_name
-        const exerciseNameMap: Exercise[] = workoutExercises.map((wex: any) => ({
+      console.log('[WorkoutDetail] Exercise data:', JSON.stringify(exerciseData), 'error:', exerciseError)
+
+      if (exerciseData && exerciseData.length > 0) {
+        // Build exercise name map
+        const exerciseNameMap: Exercise[] = exerciseData.map((wex: any) => ({
           id: wex.exercise_id,
           name: wex.display_name
         }))
@@ -82,8 +82,8 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
 
         // Transform nested sets to flat array
         const allSets: WorkoutSet[] = []
-        for (const wex of workoutExercises) {
-          const exerciseSets = wex.sets || []
+        for (const wex of exerciseData) {
+          const exerciseSets = (wex as any).sets || []
           for (const set of exerciseSets) {
             allSets.push({
               id: set.id,
