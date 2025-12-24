@@ -925,7 +925,8 @@ export default function NewWorkoutPage() {
         console.log('[saveWorkout] Sets to save for', ex.name, ':', setsToSave.length)
 
         if (setsToSave.length > 0) {
-          const rows = setsToSave.map((s, idx) => ({
+          // Try with completed field first, fall back without it if column doesn't exist
+          const rowsWithCompleted = setsToSave.map((s, idx) => ({
             workout_exercise_id: wex.id,
             set_index: idx + 1,
             weight: s.weight,
@@ -934,16 +935,30 @@ export default function NewWorkoutPage() {
             completed: s.isCompleted,
           }))
 
-          console.log('[saveWorkout] Inserting sets:', rows)
+          console.log('[saveWorkout] Inserting sets:', rowsWithCompleted)
 
-          const { error: setsError } = await supabase.from('sets').insert(rows)
+          let { error: setsError } = await supabase.from('sets').insert(rowsWithCompleted)
+
+          // If the 'completed' column doesn't exist, retry without it
+          if (setsError?.message?.includes('completed') && setsError?.message?.includes('schema')) {
+            console.log('[saveWorkout] Retrying without completed field')
+            const rowsWithoutCompleted = setsToSave.map((s, idx) => ({
+              workout_exercise_id: wex.id,
+              set_index: idx + 1,
+              weight: s.weight,
+              reps: s.reps,
+              set_type: s.isWarmup ? 'warmup' : 'working',
+            }))
+            const result = await supabase.from('sets').insert(rowsWithoutCompleted)
+            setsError = result.error
+          }
 
           if (setsError) {
             console.error('[saveWorkout] Failed to save sets:', setsError)
             throw new Error(`Failed to save sets for ${ex.name}: ${setsError.message || 'Unknown error'}`)
           }
 
-          console.log('[saveWorkout] Saved', rows.length, 'sets for', ex.name)
+          console.log('[saveWorkout] Saved', setsToSave.length, 'sets for', ex.name)
         }
       }
 
