@@ -701,7 +701,8 @@ export default function EditWorkoutPage() {
           // Insert all sets to preserve the workout template structure
           // This ensures incomplete workouts show correct X/Y sets (e.g., 1/3 not 1/1)
           if (ex.sets.length > 0) {
-            const rows = ex.sets.map((s, idx) => ({
+            // Try with completed field first, fall back without it if column doesn't exist
+            const rowsWithCompleted = ex.sets.map((s, idx) => ({
               workout_exercise_id: workoutExercise!.id,
               set_index: idx + 1,
               weight: s.weight,
@@ -709,7 +710,23 @@ export default function EditWorkoutPage() {
               set_type: s.isWarmup ? 'warmup' : 'working',
               completed: s.isCompleted,
             }))
-            const { error: setsError } = await supabase.from('sets').insert(rows)
+
+            let { error: setsError } = await supabase.from('sets').insert(rowsWithCompleted)
+
+            // If the 'completed' column doesn't exist, retry without it
+            if (setsError?.message?.includes('completed') && setsError?.message?.includes('schema')) {
+              console.log('[handleSave] Retrying without completed field')
+              const rowsWithoutCompleted = ex.sets.map((s, idx) => ({
+                workout_exercise_id: workoutExercise!.id,
+                set_index: idx + 1,
+                weight: s.weight,
+                reps: s.reps,
+                set_type: s.isWarmup ? 'warmup' : 'working',
+              }))
+              const result = await supabase.from('sets').insert(rowsWithoutCompleted)
+              setsError = result.error
+            }
+
             if (setsError) {
               console.error('Failed to save sets for:', ex.name, setsError)
               throw new Error(`Failed to save sets for ${ex.name}: ${setsError.message}`)
