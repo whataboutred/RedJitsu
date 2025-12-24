@@ -32,7 +32,7 @@ import WorkoutDetail from '@/components/WorkoutDetail'
 import BJJDetail from '@/components/BJJDetail'
 import CardioDetail from '@/components/CardioDetail'
 
-type Workout = { id: string; performed_at: string; title: string | null }
+type Workout = { id: string; performed_at: string; title: string | null; exercise_count?: number }
 type BJJ = { id: string; performed_at: string; duration_min: number; kind: 'class' | 'drilling' | 'open_mat'; intensity: string | null; notes: string | null }
 type Cardio = { id: string; performed_at: string; activity: string; duration_minutes: number | null; distance: number | null; distance_unit: string | null; intensity: string | null; notes: string | null }
 
@@ -237,12 +237,15 @@ function HistoryClient() {
     }> = []
 
     workouts.forEach(w => {
+      const hasData = (w.exercise_count || 0) > 0
       activities.push({
         id: w.id,
         type: 'strength',
         date: new Date(w.performed_at),
         title: w.title || 'Strength Training',
-        subtitle: new Date(w.performed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        subtitle: hasData
+          ? `${w.exercise_count} exercise${w.exercise_count !== 1 ? 's' : ''} • ${new Date(w.performed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+          : `⚠️ No data • ${new Date(w.performed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
         data: w
       })
     })
@@ -288,7 +291,24 @@ function HistoryClient() {
         .eq('user_id', userId)
         .order('performed_at', { ascending: false })
         .limit(PAGE_SIZE)
-      const initialWorkouts = (w || []) as Workout[]
+
+      // Get exercise counts for these workouts
+      const workoutIds = (w || []).map(workout => workout.id)
+      const { data: exerciseCounts } = await supabase
+        .from('workout_exercises')
+        .select('workout_id')
+        .in('workout_id', workoutIds)
+
+      // Count exercises per workout
+      const countMap = new Map<string, number>()
+      exerciseCounts?.forEach(ex => {
+        countMap.set(ex.workout_id, (countMap.get(ex.workout_id) || 0) + 1)
+      })
+
+      const initialWorkouts = (w || []).map(workout => ({
+        ...workout,
+        exercise_count: countMap.get(workout.id) || 0
+      })) as Workout[]
       setWorkouts(initialWorkouts)
       setHasMore(initialWorkouts.length === PAGE_SIZE)
 
@@ -335,7 +355,22 @@ function HistoryClient() {
         .order('performed_at', { ascending: false })
         .range(offset, offset + PAGE_SIZE - 1)
 
-      const newWorkouts = (w || []) as Workout[]
+      // Get exercise counts for these workouts
+      const workoutIds = (w || []).map(workout => workout.id)
+      const { data: exerciseCounts } = await supabase
+        .from('workout_exercises')
+        .select('workout_id')
+        .in('workout_id', workoutIds)
+
+      const countMap = new Map<string, number>()
+      exerciseCounts?.forEach(ex => {
+        countMap.set(ex.workout_id, (countMap.get(ex.workout_id) || 0) + 1)
+      })
+
+      const newWorkouts = (w || []).map(workout => ({
+        ...workout,
+        exercise_count: countMap.get(workout.id) || 0
+      })) as Workout[]
       setWorkouts(prev => [...prev, ...newWorkouts])
       setPage(nextPage)
       setHasMore(newWorkouts.length === PAGE_SIZE)
