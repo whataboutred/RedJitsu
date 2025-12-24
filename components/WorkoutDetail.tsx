@@ -32,33 +32,41 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
   useEffect(() => {
     (async () => {
       const userId = await getActiveUserId()
-      if (!userId) return
+      console.log('[WorkoutDetail] Loading workout:', workoutId, 'userId:', userId)
+      if (!userId) {
+        console.log('[WorkoutDetail] No userId, aborting')
+        return
+      }
 
       // Load workout details
-      const { data: w } = await supabase
+      const { data: w, error: wError } = await supabase
         .from('workouts')
         .select('performed_at,title')
         .eq('id', workoutId)
         .eq('user_id', userId)
         .single()
+      console.log('[WorkoutDetail] Workout query result:', w, 'error:', wError)
       setWorkout(w as any)
 
       // First get workout_exercises for this workout
-      const { data: workoutExercises } = await supabase
+      const { data: workoutExercises, error: wexError } = await supabase
         .from('workout_exercises')
         .select('id, exercise_id')
         .eq('workout_id', workoutId)
+      console.log('[WorkoutDetail] workout_exercises query result:', workoutExercises?.length, 'items, error:', wexError)
 
       if (workoutExercises && workoutExercises.length > 0) {
         // Get all workout_exercise IDs
         const wexIds = workoutExercises.map(we => we.id)
+        console.log('[WorkoutDetail] wexIds:', wexIds)
 
         // Load sets for these workout_exercises
-        const { data: s } = await supabase
+        const { data: s, error: setsError } = await supabase
           .from('sets')
           .select('id, workout_exercise_id, weight, reps, set_type, set_index, completed')
           .in('workout_exercise_id', wexIds)
           .order('set_index', { ascending: true })
+        console.log('[WorkoutDetail] sets query result:', s?.length, 'items, error:', setsError)
 
         // Create a map of workout_exercise_id to exercise_id
         const wexToExercise = new Map(workoutExercises.map(we => [we.id, we.exercise_id]))
@@ -73,8 +81,10 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
           set_index: set.set_index,
           completed: set.completed ?? false
         }))
+        console.log('[WorkoutDetail] transformedSets:', transformedSets.length)
         setSets(transformedSets)
       } else {
+        console.log('[WorkoutDetail] No workout_exercises found for this workout')
         setSets([])
       }
 
