@@ -13,7 +13,6 @@ type WorkoutSet = {
   reps: number | null
   set_type: string
   set_index: number
-  completed: boolean
 }
 
 type Exercise = {
@@ -77,7 +76,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         const wexIds = exerciseData.map((wex: any) => wex.id)
         const { data: setsData, error: setsError } = await supabase
           .from('sets')
-          .select('id, workout_exercise_id, weight, reps, set_type, set_index, completed')
+          .select('id, workout_exercise_id, weight, reps, set_type, set_index')
           .in('workout_exercise_id', wexIds)
           .order('set_index')
 
@@ -93,8 +92,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
           weight: set.weight,
           reps: set.reps,
           set_type: set.set_type,
-          set_index: set.set_index,
-          completed: set.completed ?? false
+          set_index: set.set_index
         }))
 
         console.log('[WorkoutDetail] Total sets found:', allSets.length)
@@ -218,30 +216,26 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         <div className="flex-1 overflow-y-auto space-y-4 pr-2">
           {Object.entries(groupedSets).map(([exerciseId, exerciseSets]) => {
             const workingSets = exerciseSets.filter(s => s.set_type !== 'warmup')
-            const completedSets = workingSets.filter(s => s.completed).length
+            const setsWithData = workingSets.filter(s => s.weight !== null || s.reps !== null).length
             const totalSets = workingSets.length
             return (
             <div key={exerciseId} className="bg-black/30 rounded-xl p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <div className="font-medium text-white/90">{getExerciseName(exerciseId)}</div>
-                <div className="text-xs text-white/50">{completedSets}/{totalSets} sets</div>
+                <div className="text-xs text-white/50">{setsWithData}/{totalSets} sets</div>
               </div>
-              {exerciseSets.map((set, i) => (
-                <div key={set.id} className={`text-sm pl-2 ${set.completed ? 'text-white/70' : 'text-white/40'}`}>
+              {exerciseSets.map((set, i) => {
+                const hasData = set.weight !== null || set.reps !== null
+                return (
+                <div key={set.id} className={`text-sm pl-2 ${hasData ? 'text-white/70' : 'text-white/40'}`}>
                   <span className="text-white/50">Set {set.set_index}:</span>{' '}
-                  {set.completed ? (
-                    <>
-                      {set.weight && `${set.weight} lb`}
-                      {set.weight && set.reps && ' × '}
-                      {set.reps && `${set.reps} reps`}
-                      {!set.weight && !set.reps && 'No details recorded'}
-                    </>
-                  ) : (
-                    <span className="italic">Not completed</span>
-                  )}
+                  {set.weight !== null && `${set.weight} lb`}
+                  {set.weight !== null && set.reps !== null && ' × '}
+                  {set.reps !== null && `${set.reps} reps`}
+                  {!hasData && <span className="italic">No data recorded</span>}
                   {set.set_type === 'warmup' && <span className="text-yellow-400 ml-1">(warmup)</span>}
                 </div>
-              ))}
+              )})}
             </div>
           )})}
 
