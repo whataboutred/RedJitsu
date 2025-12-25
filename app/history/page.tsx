@@ -227,6 +227,21 @@ function HistoryClient() {
 
   // Combined activities for timeline
   const allActivities = useMemo(() => {
+    // Calculate time cutoff based on workoutFilter
+    const now = new Date()
+    const cutoff = new Date()
+
+    switch (workoutFilter) {
+      case 'week':
+        cutoff.setDate(now.getDate() - 7)
+        break
+      case 'month':
+        cutoff.setMonth(now.getMonth() - 1)
+        break
+      default:
+        cutoff.setFullYear(now.getFullYear() - 1)
+    }
+
     const activities: Array<{
       id: string
       type: 'strength' | 'bjj' | 'cardio'
@@ -274,8 +289,9 @@ function HistoryClient() {
 
     return activities
       .filter(a => activityFilter === 'all' || a.type === activityFilter)
+      .filter(a => a.date >= cutoff)
       .sort((a, b) => b.date.getTime() - a.date.getTime())
-  }, [workouts, bjj, cardio, activityFilter])
+  }, [workouts, bjj, cardio, activityFilter, workoutFilter])
 
   useEffect(() => {
     (async () => {
