@@ -8,6 +8,7 @@ interface BottomSheetProps {
   onClose: () => void;
   children: ReactNode;
   title?: string;
+  header?: ReactNode;
   snapPoints?: number[];
   initialSnap?: number;
   showHandle?: boolean;
@@ -18,6 +19,7 @@ export const BottomSheet = ({
   onClose,
   children,
   title,
+  header,
   snapPoints = [0.5, 0.85],
   initialSnap = 0,
   showHandle = true,
@@ -101,8 +103,15 @@ export const BottomSheet = ({
               </div>
             )}
 
+            {/* Fixed Header (stays above scroll) */}
+            {header && (
+              <div className="flex-shrink-0 px-4 pt-4 pb-2">
+                {header}
+              </div>
+            )}
+
             {/* Content */}
-            <div className="flex-1 overflow-y-auto overscroll-contain p-4 min-h-0">
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4 pt-2 min-h-0">
               {children}
             </div>
           </motion.div>

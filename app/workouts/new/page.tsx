@@ -493,87 +493,85 @@ function ExerciseSelectorSheet({
   }, [exercises, search, category])
 
   // Limit displayed exercises to prevent overflow when keyboard is open
-  const displayedExercises = filtered.slice(0, 8)
-  const hasMore = filtered.length > 8
+  const displayedExercises = filtered.slice(0, 5)
+  const hasMore = filtered.length > 5
+
+  const searchHeader = (
+    <div className="space-y-3">
+      {/* Search */}
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search exercises..."
+        className="input w-full"
+        autoFocus
+      />
+
+      {/* Category Filter */}
+      <div className="flex gap-2 overflow-x-auto no-scrollbar">
+        {categories.map((cat) => (
+          <button
+            key={cat.value}
+            onClick={() => setCategory(cat.value)}
+            className={`
+              px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
+              transition-colors
+              ${category === cat.value
+                ? 'bg-brand-red text-white'
+                : 'bg-zinc-800 text-zinc-400 hover:text-white'
+              }
+            `}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title="Add Exercise">
-      <div className="flex flex-col h-full -m-4">
-        {/* Sticky Search and Filters */}
-        <div className="sticky top-0 bg-zinc-900 z-10 p-4 pb-2 space-y-3">
-          {/* Search */}
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search exercises..."
-            className="input w-full"
-            autoFocus
-          />
+    <BottomSheet isOpen={isOpen} onClose={onClose} title="Add Exercise" header={searchHeader}>
+      <div className="space-y-1">
+        {displayedExercises.map((ex) => (
+          <button
+            key={ex.id}
+            onClick={() => {
+              onSelect(ex)
+              onClose()
+            }}
+            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800 transition-colors text-left"
+          >
+            <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center">
+              <Dumbbell className="w-5 h-5 text-zinc-400" />
+            </div>
+            <div>
+              <p className="font-medium text-white">{ex.name}</p>
+              <p className="text-sm text-zinc-500 capitalize">{ex.category}</p>
+            </div>
+          </button>
+        ))}
 
-          {/* Category Filter */}
-          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-            {categories.map((cat) => (
-              <button
-                key={cat.value}
-                onClick={() => setCategory(cat.value)}
-                className={`
-                  px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
-                  transition-colors
-                  ${category === cat.value
-                    ? 'bg-brand-red text-white'
-                    : 'bg-zinc-800 text-zinc-400 hover:text-white'
-                  }
-                `}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {hasMore && (
+          <p className="text-center text-sm text-zinc-500 py-2">
+            {search ? `${filtered.length - 5} more results...` : `Type to search ${filtered.length - 5} more exercises...`}
+          </p>
+        )}
 
-        {/* Exercise List - Limited height for keyboard visibility */}
-        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-1">
-          {displayedExercises.map((ex) => (
+        {filtered.length === 0 && search && (
+          <div className="text-center py-6">
+            <p className="text-zinc-400 mb-4">No exercises found</p>
             <button
-              key={ex.id}
               onClick={() => {
-                onSelect(ex)
+                onCreateCustom(search)
                 onClose()
               }}
-              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800 transition-colors text-left"
+              className="btn"
             >
-              <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center">
-                <Dumbbell className="w-5 h-5 text-zinc-400" />
-              </div>
-              <div>
-                <p className="font-medium text-white">{ex.name}</p>
-                <p className="text-sm text-zinc-500 capitalize">{ex.category}</p>
-              </div>
+              Create "{search}"
             </button>
-          ))}
-
-          {hasMore && !search && (
-            <p className="text-center text-sm text-zinc-500 py-2">
-              Type to search {filtered.length - 8} more exercises...
-            </p>
-          )}
-
-          {filtered.length === 0 && search && (
-            <div className="text-center py-8">
-              <p className="text-zinc-400 mb-4">No exercises found</p>
-              <button
-                onClick={() => {
-                  onCreateCustom(search)
-                  onClose()
-                }}
-                className="btn"
-              >
-                Create "{search}"
-              </button>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </BottomSheet>
   )
