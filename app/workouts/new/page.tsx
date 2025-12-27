@@ -492,42 +492,49 @@ function ExerciseSelectorSheet({
     })
   }, [exercises, search, category])
 
+  // Limit displayed exercises to prevent overflow when keyboard is open
+  const displayedExercises = filtered.slice(0, 8)
+  const hasMore = filtered.length > 8
+
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title="Add Exercise">
-      <div className="space-y-4">
-        {/* Search */}
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search exercises..."
-          className="input w-full"
-          autoFocus
-        />
+      <div className="flex flex-col h-full -m-4">
+        {/* Sticky Search and Filters */}
+        <div className="sticky top-0 bg-zinc-900 z-10 p-4 pb-2 space-y-3">
+          {/* Search */}
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search exercises..."
+            className="input w-full"
+            autoFocus
+          />
 
-        {/* Category Filter */}
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-          {categories.map((cat) => (
-            <button
-              key={cat.value}
-              onClick={() => setCategory(cat.value)}
-              className={`
-                px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
-                transition-colors
-                ${category === cat.value
-                  ? 'bg-brand-red text-white'
-                  : 'bg-zinc-800 text-zinc-400 hover:text-white'
-                }
-              `}
-            >
-              {cat.label}
-            </button>
-          ))}
+          {/* Category Filter */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            {categories.map((cat) => (
+              <button
+                key={cat.value}
+                onClick={() => setCategory(cat.value)}
+                className={`
+                  px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
+                  transition-colors
+                  ${category === cat.value
+                    ? 'bg-brand-red text-white'
+                    : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                  }
+                `}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Exercise List */}
-        <div className="max-h-[50vh] overflow-y-auto space-y-1">
-          {filtered.map((ex) => (
+        {/* Exercise List - Limited height for keyboard visibility */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-1">
+          {displayedExercises.map((ex) => (
             <button
               key={ex.id}
               onClick={() => {
@@ -545,6 +552,12 @@ function ExerciseSelectorSheet({
               </div>
             </button>
           ))}
+
+          {hasMore && !search && (
+            <p className="text-center text-sm text-zinc-500 py-2">
+              Type to search {filtered.length - 8} more exercises...
+            </p>
+          )}
 
           {filtered.length === 0 && search && (
             <div className="text-center py-8">
