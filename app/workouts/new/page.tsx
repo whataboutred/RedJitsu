@@ -492,10 +492,6 @@ function ExerciseSelectorSheet({
     })
   }, [exercises, search, category])
 
-  // Limit displayed exercises to prevent overflow when keyboard is open
-  const displayedExercises = filtered.slice(0, 5)
-  const hasMore = filtered.length > 5
-
   const searchHeader = (
     <div className="space-y-3">
       {/* Search */}
@@ -531,9 +527,16 @@ function ExerciseSelectorSheet({
   )
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title="Add Exercise" header={searchHeader}>
+    <BottomSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Add Exercise"
+      header={searchHeader}
+      snapPoints={[0.5, 0.95]}
+      initialSnap={0}
+    >
       <div className="space-y-1">
-        {displayedExercises.map((ex) => (
+        {filtered.map((ex) => (
           <button
             key={ex.id}
             onClick={() => {
@@ -552,12 +555,6 @@ function ExerciseSelectorSheet({
           </button>
         ))}
 
-        {hasMore && (
-          <p className="text-center text-sm text-zinc-500 py-2">
-            {search ? `${filtered.length - 5} more results...` : `Type to search ${filtered.length - 5} more exercises...`}
-          </p>
-        )}
-
         {filtered.length === 0 && search && (
           <div className="text-center py-6">
             <p className="text-zinc-400 mb-4">No exercises found</p>
@@ -571,6 +568,10 @@ function ExerciseSelectorSheet({
               Create "{search}"
             </button>
           </div>
+        )}
+
+        {filtered.length === 0 && !search && (
+          <p className="text-center text-zinc-500 py-4">No exercises available</p>
         )}
       </div>
     </BottomSheet>

@@ -778,16 +778,12 @@ export default function EditWorkoutPage() {
     }
   }
 
-  // Filter exercises - limit to 8 to prevent overflow when keyboard is open
+  // Filter exercises
   const filteredExercises = useMemo(() => {
-    if (!exerciseSearch) return allExercises.slice(0, 8)
+    if (!exerciseSearch) return allExercises
     const search = exerciseSearch.toLowerCase()
-    return allExercises.filter(ex => ex.name.toLowerCase().includes(search)).slice(0, 8)
+    return allExercises.filter(ex => ex.name.toLowerCase().includes(search))
   }, [allExercises, exerciseSearch])
-
-  const hasMoreExercises = exerciseSearch
-    ? allExercises.filter(ex => ex.name.toLowerCase().includes(exerciseSearch.toLowerCase())).length > 8
-    : allExercises.length > 8
 
   if (loading) {
     return (
@@ -968,47 +964,46 @@ export default function EditWorkoutPage() {
           setExerciseSearch('')
         }}
         title="Add Exercise"
+        header={
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+            <input
+              type="text"
+              value={exerciseSearch}
+              onChange={(e) => setExerciseSearch(e.target.value)}
+              placeholder="Search exercises..."
+              autoFocus
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-white placeholder-zinc-500 focus:border-brand-red focus:outline-none"
+            />
+          </div>
+        }
+        snapPoints={[0.5, 0.95]}
+        initialSnap={0}
       >
-        <div className="flex flex-col h-full -m-4">
-          {/* Sticky Search */}
-          <div className="sticky top-0 bg-zinc-900 z-10 p-4 pb-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-              <input
-                type="text"
-                value={exerciseSearch}
-                onChange={(e) => setExerciseSearch(e.target.value)}
-                placeholder="Search exercises..."
-                autoFocus
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-white placeholder-zinc-500 focus:border-brand-red focus:outline-none"
-              />
-            </div>
-          </div>
+        <div className="space-y-2">
+          {filteredExercises.map((ex) => (
+            <button
+              key={ex.id}
+              onClick={() => addExercise(ex)}
+              className="w-full flex items-center gap-3 p-3 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 transition-colors text-left"
+            >
+              <div className="w-10 h-10 rounded-lg bg-brand-red/20 flex items-center justify-center">
+                <Dumbbell className="w-5 h-5 text-brand-red" />
+              </div>
+              <div>
+                <div className="font-medium text-white">{ex.name}</div>
+                <div className="text-sm text-zinc-500 capitalize">{ex.category}</div>
+              </div>
+            </button>
+          ))}
 
-          {/* Exercise List - Limited for keyboard visibility */}
-          <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
-            {filteredExercises.map((ex) => (
-              <button
-                key={ex.id}
-                onClick={() => addExercise(ex)}
-                className="w-full flex items-center gap-3 p-3 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 transition-colors text-left"
-              >
-                <div className="w-10 h-10 rounded-lg bg-brand-red/20 flex items-center justify-center">
-                  <Dumbbell className="w-5 h-5 text-brand-red" />
-                </div>
-                <div>
-                  <div className="font-medium text-white">{ex.name}</div>
-                  <div className="text-sm text-zinc-500 capitalize">{ex.category}</div>
-                </div>
-              </button>
-            ))}
+          {filteredExercises.length === 0 && exerciseSearch && (
+            <p className="text-center text-zinc-500 py-4">No exercises found</p>
+          )}
 
-            {hasMoreExercises && !exerciseSearch && (
-              <p className="text-center text-sm text-zinc-500 py-2">
-                Type to search more exercises...
-              </p>
-            )}
-          </div>
+          {filteredExercises.length === 0 && !exerciseSearch && (
+            <p className="text-center text-zinc-500 py-4">No exercises available</p>
+          )}
         </div>
       </BottomSheet>
 
