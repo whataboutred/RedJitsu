@@ -19,6 +19,11 @@ const rateLimiter = new QueryRateLimiter(3) // Max 3 concurrent queries
 /**
  * Optimized function to get last workout sets for multiple exercises
  * Uses a query starting from workouts table to ensure proper ordering
+ *
+ * Location-based loading with fallback:
+ * 1. First tries to find workout data from the specified location
+ * 2. For exercises without location-specific data, falls back to any location
+ * This helps with gym-specific settings (different machine weights, etc.)
  */
 export async function getLastWorkoutSetsForExercises(
   userId: string,
@@ -82,17 +87,15 @@ export async function getLastWorkoutSetsForExercises(
     }
 
     // Group by exercise and find the most recent workout for each
-    const exerciseMap = new Map<string, { date: string; sets: WorkoutSet[] }>()
+    // First pass: prioritize location-specific data
+    const exerciseMapWithLocation = new Map<string, { date: string; sets: WorkoutSet[]; fromLocation: string | null }>()
+    // Second pass: fallback data from any location
+    const exerciseMapAnyLocation = new Map<string, { date: string; sets: WorkoutSet[]; fromLocation: string | null }>()
 
     for (const workout of data) {
       const workoutDate = workout.performed_at
       const workoutLocation = workout.location // May be null
       const workoutExercises = workout.workout_exercises || []
-
-      // Skip if location filter is active and doesn't match
-      if (location && workoutLocation && workoutLocation !== location) {
-        continue
-      }
 
       for (const wex of workoutExercises) {
         const exerciseId = wex.exercise_id
@@ -103,37 +106,62 @@ export async function getLastWorkoutSetsForExercises(
           continue
         }
 
-        // Check if we already have a more recent workout for this exercise
-        // (data is ordered by date desc, so first occurrence is most recent)
-        if (exerciseMap.has(exerciseId)) {
+        // Skip if no sets
+        if (sets.length === 0) {
           continue
         }
 
-        // Store this workout's sets
-        if (sets.length > 0) {
-          const formattedSets = sets
-            .sort((a: any, b: any) => (a.set_index || 0) - (b.set_index || 0))
-            .map((s: any) => ({
-              weight: Number(s.weight),
-              reps: Number(s.reps),
-              set_type: s.set_type as 'warmup' | 'working',
-              set_index: s.set_index,
-            }))
+        const formattedSets = sets
+          .sort((a: any, b: any) => (a.set_index || 0) - (b.set_index || 0))
+          .map((s: any) => ({
+            weight: Number(s.weight),
+            reps: Number(s.reps),
+            set_type: s.set_type as 'warmup' | 'working',
+            set_index: s.set_index,
+          }))
 
-          exerciseMap.set(exerciseId, {
+        // Check if this matches the requested location
+        const matchesLocation = location && workoutLocation === location
+
+        if (matchesLocation && !exerciseMapWithLocation.has(exerciseId)) {
+          // First location-matching workout for this exercise
+          exerciseMapWithLocation.set(exerciseId, {
             date: workoutDate,
             sets: formattedSets,
+            fromLocation: workoutLocation,
           })
-          console.log('[workoutSuggestions] Found previous data for exercise:', exerciseId, '- sets:', formattedSets.length)
+          console.log('[workoutSuggestions] Found location-specific data for exercise:', exerciseId, 'from:', workoutLocation)
+        }
+
+        // Always track the first workout for each exercise (any location)
+        // (data is ordered by date desc, so first occurrence is most recent)
+        if (!exerciseMapAnyLocation.has(exerciseId)) {
+          exerciseMapAnyLocation.set(exerciseId, {
+            date: workoutDate,
+            sets: formattedSets,
+            fromLocation: workoutLocation,
+          })
         }
       }
     }
 
-    // Convert to Map<exerciseId, sets[]>
+    // Build final result: prefer location-specific data, fall back to any location
     const result = new Map<string, WorkoutSet[]>()
-    exerciseMap.forEach((value, key) => {
-      result.set(key, value.sets)
-    })
+
+    for (const exerciseId of exerciseIds) {
+      // First try location-specific data
+      if (exerciseMapWithLocation.has(exerciseId)) {
+        const data = exerciseMapWithLocation.get(exerciseId)!
+        result.set(exerciseId, data.sets)
+        console.log('[workoutSuggestions] Using location-specific data for:', exerciseId)
+      }
+      // Fall back to any location
+      else if (exerciseMapAnyLocation.has(exerciseId)) {
+        const data = exerciseMapAnyLocation.get(exerciseId)!
+        result.set(exerciseId, data.sets)
+        console.log('[workoutSuggestions] Falling back to any-location data for:', exerciseId, 'from:', data.fromLocation || 'no location')
+      }
+    }
 
     console.log('[workoutSuggestions] Returning data for', result.size, 'exercises out of', exerciseIds.length, 'requested')
     return result

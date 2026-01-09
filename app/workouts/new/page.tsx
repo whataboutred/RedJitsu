@@ -634,6 +634,143 @@ function WorkoutSummaryModal({
   )
 }
 
+// Workout Setup Modal - First step when starting a new workout
+function WorkoutSetupModal({
+  isOpen,
+  onConfirm,
+  savedLocations,
+  initialDateTime,
+  initialLocation,
+}: {
+  isOpen: boolean
+  onConfirm: (dateTime: string, location: string) => void
+  savedLocations: string[]
+  initialDateTime: string
+  initialLocation: string
+}) {
+  const [dateTime, setDateTime] = useState(initialDateTime)
+  const [location, setLocation] = useState(initialLocation)
+
+  // Update state when props change
+  useEffect(() => {
+    setDateTime(initialDateTime)
+  }, [initialDateTime])
+
+  useEffect(() => {
+    setLocation(initialLocation)
+  }, [initialLocation])
+
+  const handleConfirm = () => {
+    onConfirm(dateTime, location)
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+
+      {/* Modal */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="relative bg-zinc-900 rounded-2xl p-6 w-full max-w-md border border-white/10 shadow-xl"
+      >
+        {/* Header */}
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-brand-red/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Dumbbell className="w-8 h-8 text-brand-red" />
+          </div>
+          <h2 className="text-xl font-bold text-white">Start Workout</h2>
+          <p className="text-zinc-400 text-sm mt-1">
+            Set the date, time, and location for your workout
+          </p>
+        </div>
+
+        {/* Form */}
+        <div className="space-y-4">
+          {/* Date & Time */}
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-zinc-300 mb-2">
+              <Calendar className="w-4 h-4 text-zinc-400" />
+              Date & Time
+            </label>
+            <input
+              type="datetime-local"
+              value={dateTime}
+              onChange={(e) => setDateTime(e.target.value)}
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:border-brand-red focus:outline-none"
+            />
+          </div>
+
+          {/* Location */}
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-zinc-300 mb-2">
+              <MapPin className="w-4 h-4 text-zinc-400" />
+              Location
+            </label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="e.g., Home Gym, Planet Fitness"
+              list="setup-locations"
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:border-brand-red focus:outline-none"
+            />
+            <datalist id="setup-locations">
+              {savedLocations.map((loc) => (
+                <option key={loc} value={loc} />
+              ))}
+            </datalist>
+            <p className="text-xs text-zinc-500 mt-2">
+              Location helps load previous workout data from the same gym
+            </p>
+          </div>
+
+          {/* Quick Location Buttons */}
+          {savedLocations.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {savedLocations.slice(0, 4).map((loc) => (
+                <button
+                  key={loc}
+                  onClick={() => setLocation(loc)}
+                  className={`
+                    px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                    ${location === loc
+                      ? 'bg-brand-red text-white'
+                      : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+                    }
+                  `}
+                >
+                  {loc}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="mt-6 space-y-3">
+          <button
+            onClick={handleConfirm}
+            className="btn w-full flex items-center justify-center gap-2"
+          >
+            <Play className="w-4 h-4" />
+            Start Workout
+          </button>
+          <Link
+            href="/dashboard"
+            className="block text-center text-sm text-zinc-400 hover:text-white transition-colors"
+          >
+            Cancel
+          </Link>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 // Main Page
 export default function NewWorkoutPage() {
   const router = useRouter()
@@ -662,6 +799,10 @@ export default function NewWorkoutPage() {
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
     return d.toISOString().slice(0, 16)
   })
+
+  // Setup modal - shown first to capture date/time and location
+  const [showSetupModal, setShowSetupModal] = useState(true)
+  const [setupComplete, setSetupComplete] = useState(false)
 
   // Programs
   const [programs, setPrograms] = useState<{ id: string; name: string }[]>([])
@@ -721,6 +862,9 @@ export default function NewWorkoutPage() {
           if (restoredExercises.length > 0) {
             setExpandedId(restoredExercises[0].id)
           }
+          // Skip setup modal since we're restoring a draft
+          setShowSetupModal(false)
+          setSetupComplete(true)
           toast.success('Draft restored!')
         } else {
           clearDraft()
@@ -856,6 +1000,16 @@ export default function NewWorkoutPage() {
       setExpandedId(null)
     }
   }, [expandedId])
+
+  // Handle setup modal confirmation
+  const handleSetupConfirm = useCallback((dateTime: string, loc: string) => {
+    setPerformedAt(dateTime)
+    setLocation(loc)
+    setShowSetupModal(false)
+    setSetupComplete(true)
+    // Start the timer when setup is confirmed
+    startTimeRef.current = new Date()
+  }, [])
 
   // Save workout
   const saveWorkout = async () => {
@@ -1408,6 +1562,15 @@ export default function NewWorkoutPage() {
           )}
         </div>
       </BottomSheet>
+
+      {/* Setup Modal - Shown first to set date/time and location */}
+      <WorkoutSetupModal
+        isOpen={showSetupModal && !loading}
+        onConfirm={handleSetupConfirm}
+        savedLocations={savedLocations}
+        initialDateTime={performedAt}
+        initialLocation={location}
+      />
     </div>
   )
 }
