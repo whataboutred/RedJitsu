@@ -1206,18 +1206,18 @@ export default function NewWorkoutPage() {
       {/* Header */}
       <div className="sticky top-0 z-40 bg-brand-dark/95 backdrop-blur-lg border-b border-white/5">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="p-2 -ml-2 rounded-xl hover:bg-white/5">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <Link href="/dashboard" className="p-2 -ml-2 rounded-xl hover:bg-white/5 flex-shrink-0">
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div>
-              <h1 className="font-bold text-lg">{title || 'New Workout'}</h1>
+            <div className="min-w-0">
+              <h1 className="font-bold text-lg truncate">{title || 'New Workout'}</h1>
               <p className="text-sm text-zinc-400">
                 {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => setShowTemplateSheet(true)}
               className="p-2 rounded-xl hover:bg-white/5 text-zinc-400"
