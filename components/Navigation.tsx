@@ -122,7 +122,10 @@ function DesktopHeader({ signOut }: { signOut: () => Promise<void> }) {
 // Mobile Header (minimal)
 function MobileHeader() {
   return (
-    <header className="md:hidden sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-white/5">
+    <header
+      className="md:hidden sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-white/5"
+      style={{ paddingTop: 'env(safe-area-inset-top)' }}
+    >
       <div className="flex items-center justify-between px-4 h-14">
         <Link href="/dashboard" className="flex items-center gap-2">
           <Image

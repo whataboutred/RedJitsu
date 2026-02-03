@@ -800,7 +800,10 @@ export default function EditWorkoutPage() {
   return (
     <div className="min-h-screen bg-black pb-32">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/5">
+      <div
+        className="sticky top-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/5"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link

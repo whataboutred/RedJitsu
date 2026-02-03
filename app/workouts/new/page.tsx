@@ -1204,7 +1204,10 @@ export default function NewWorkoutPage() {
   return (
     <div className="min-h-screen bg-brand-dark">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-brand-dark/95 backdrop-blur-lg border-b border-white/5">
+      <div
+        className="sticky top-0 z-40 bg-brand-dark/95 backdrop-blur-lg border-b border-white/5"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Link href="/dashboard" className="p-2 -ml-2 rounded-xl hover:bg-white/5 flex-shrink-0">
