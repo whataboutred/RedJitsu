@@ -52,7 +52,6 @@ export default function SafeAutoRefresh() {
         // Handle service worker updates intelligently
         messageHandler = (e: MessageEvent) => {
           if (e.data?.type === 'SW_UPDATED') {
-            console.log('New version available')
             setUpdateAvailable(true)
             setShowUpdateNotification(true)
 

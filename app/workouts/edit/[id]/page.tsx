@@ -666,7 +666,7 @@ export default function EditWorkoutPage() {
         setSavedLocations(uniqueLocations)
       }
     } catch (e) {
-      console.log('Location column not available')
+      // Location column not available
     }
 
     // Load workout
@@ -1021,7 +1021,6 @@ export default function EditWorkoutPage() {
 
             // If the 'completed' column doesn't exist, retry without it
             if (setsError?.message?.includes('completed') && setsError?.message?.includes('schema')) {
-              console.log('[handleSave] Retrying without completed field')
               const rowsWithoutCompleted = ex.sets.map((s, idx) => ({
                 workout_exercise_id: workoutExercise!.id,
                 set_index: idx + 1,

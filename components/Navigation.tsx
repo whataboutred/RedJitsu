@@ -215,7 +215,7 @@ function QuickActionFAB() {
       {/* Action Buttons */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed bottom-28 md:bottom-8 right-4 z-50 flex flex-col-reverse gap-3">
+          <div className="fixed bottom-28 md:bottom-8 right-1/2 translate-x-1/2 md:right-4 md:translate-x-0 z-50 flex flex-col-reverse items-center gap-3">
             {actions.map((action, index) => {
               const Icon = action.icon
               return (
@@ -249,7 +249,7 @@ function QuickActionFAB() {
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         className={`
-          fixed bottom-20 md:bottom-8 right-4 z-50
+          fixed bottom-20 md:bottom-8 right-1/2 translate-x-1/2 md:right-4 md:translate-x-0 z-50
           w-14 h-14 rounded-full
           flex items-center justify-center
           shadow-lg transition-all duration-200

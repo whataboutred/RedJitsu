@@ -81,7 +81,6 @@ export default function EnhancedSettings() {
 
       // If no profile exists, create one with defaults
       if (!p) {
-        console.log('No profile found, creating default profile')
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
           .upsert({
@@ -104,12 +103,10 @@ export default function EnhancedSettings() {
           console.error('Error creating profile:', createError)
         } else {
           p = newProfile
-          console.log('Created default profile:', p)
         }
       }
 
       if (p) {
-        console.log('Loaded profile data:', p)
         setUnit(((p as Profile).unit ?? 'lb') as 'lb'|'kg')
         setWeeklyGoal((p as Profile).weekly_goal ?? 4)
         setTargetWeeks(((p as Profile).target_weeks ?? null) as number|null ?? '')
@@ -119,8 +116,6 @@ export default function EnhancedSettings() {
         setShowStrengthGoal((p as Profile).show_strength_goal ?? true)
         setShowBjjGoal((p as Profile).show_bjj_goal ?? true)
         setShowCardioGoal((p as Profile).show_cardio_goal ?? false)
-      } else {
-        console.log('Still no profile found, using component defaults')
       }
     } catch (err) {
       console.error('Error in loadUserData:', err)
