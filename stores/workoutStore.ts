@@ -88,7 +88,7 @@ interface WorkoutState {
   loadFromTemplate: (exercises: { exerciseId: string; exerciseName: string; sets: number; reps: number }[]) => void;
 }
 
-const generateId = () => Math.random().toString(36).substring(2, 9);
+const generateId = () => crypto.randomUUID();
 
 export const useWorkoutStore = create<WorkoutState>()(
   persist(
@@ -306,6 +306,15 @@ export const useWorkoutStore = create<WorkoutState>()(
       },
 
       updateSet: (exerciseId, setId, updates) => {
+        // Clamp weight and reps to reasonable ranges
+        const clamped = { ...updates };
+        if (clamped.weight !== undefined) {
+          clamped.weight = Math.min(9999, Math.max(0, clamped.weight));
+        }
+        if (clamped.reps !== undefined) {
+          clamped.reps = Math.min(999, Math.max(0, Math.round(clamped.reps)));
+        }
+
         set((state) => {
           if (!state.activeWorkout) return state;
           return {
@@ -316,7 +325,7 @@ export const useWorkoutStore = create<WorkoutState>()(
                   ? {
                       ...e,
                       sets: e.sets.map((s) =>
-                        s.id === setId ? { ...s, ...updates } : s
+                        s.id === setId ? { ...s, ...clamped } : s
                       ),
                     }
                   : e

@@ -1,10 +1,11 @@
 'use client'
 import { useState, useMemo } from 'react'
 
-type Exercise = { 
+type Exercise = {
   id: string
   name: string
   category: 'barbell'|'dumbbell'|'machine'|'cable'|'other'
+  body_part?: string | null
 }
 
 type BodyPartCategory = 'all' | 'chest' | 'back' | 'shoulders' | 'arms' | 'legs' | 'core' | 'other'
@@ -20,7 +21,14 @@ type ExerciseSelectorProps = {
 }
 
 // Map exercise names to body parts for better organization
-function getBodyPart(exerciseName: string): BodyPartCategory {
+// Uses DB body_part column first, falls back to name heuristic
+function getBodyPart(exerciseName: string, dbBodyPart?: string | null): BodyPartCategory {
+  // Use database value if available
+  if (dbBodyPart && ['chest', 'back', 'shoulders', 'arms', 'legs', 'core'].includes(dbBodyPart)) {
+    return dbBodyPart as BodyPartCategory
+  }
+  if (dbBodyPart === 'full_body') return 'legs' // Display full_body exercises under legs for filtering
+
   const name = exerciseName.toLowerCase()
 
   // Check for specific exercise patterns first (most specific to least specific)
@@ -172,7 +180,7 @@ export default function ExerciseSelector({
     const q = search.trim().toLowerCase()
     return exercises.filter(e => {
       const matchText = !q || e.name.toLowerCase().includes(q)
-      const exerciseBodyPart = getBodyPart(e.name)
+      const exerciseBodyPart = getBodyPart(e.name, e.body_part)
       const matchBodyPart = selectedBodyPart === 'all' || exerciseBodyPart === selectedBodyPart
       return matchText && matchBodyPart
     })
@@ -234,7 +242,7 @@ export default function ExerciseSelector({
                 >
                   <div className="font-medium text-white/90">{ex.name}</div>
                   <div className="text-xs text-white/60 mt-1">
-                    {BODY_PART_ICONS[getBodyPart(ex.name)]} {BODY_PART_LABELS[getBodyPart(ex.name)]} • {ex.category}
+                    {BODY_PART_ICONS[getBodyPart(ex.name, ex.body_part)]} {BODY_PART_LABELS[getBodyPart(ex.name, ex.body_part)]} • {ex.category}
                   </div>
                 </button>
               ))}

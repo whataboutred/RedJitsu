@@ -30,6 +30,7 @@ import { Button, IconButton } from '@/components/ui/Button'
 import { BottomSheet, Modal } from '@/components/ui/BottomSheet'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { useToast } from '@/components/Toast'
+import { toDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { supabase } from '@/lib/supabaseClient'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import { useRouter } from 'next/navigation'
@@ -200,11 +201,7 @@ export default function CardioPage() {
   const [saving, setSaving] = useState(false)
 
   // Form state
-  const [performedAt, setPerformedAt] = useState<string>(() => {
-    const d = new Date()
-    d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
-    return d.toISOString().slice(0, 16)
-  })
+  const [performedAt, setPerformedAt] = useState<string>(() => toDatetimeLocal())
   const [session, setSession] = useState<CardioSession>({
     activity: '',
     distance_unit: 'miles',
@@ -341,7 +338,7 @@ export default function CardioPage() {
         intensity: session.intensity,
         calories: session.calories || null,
         notes: session.notes?.trim() || null,
-        performed_at: new Date(performedAt).toISOString()
+        performed_at: datetimeLocalToISO(performedAt)
       }
 
       const { error } = await supabase.from('cardio_sessions').insert(sessionData)

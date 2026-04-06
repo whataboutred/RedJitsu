@@ -48,8 +48,8 @@ export function logToSplunk(event: LogEvent) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(event),
-  }).catch((error) => {
-    console.error('Failed to send log to API:', error)
+  }).catch(() => {
+    // Silently fail — logging should not disrupt the user
   })
 }
 

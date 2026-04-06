@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { getActiveUserId } from '@/lib/activeUser'
 import { X, Edit3, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/Toast'
 
 type CardioSession = {
   id: string
@@ -31,6 +32,7 @@ export default function CardioDetail({
   const [session, setSession] = useState<CardioSession | null>(null)
   const [deleting, setDeleting] = useState(false)
   const router = useRouter()
+  const toast = useToast()
 
   useEffect(() => {
     loadSessionData()
@@ -73,7 +75,7 @@ export default function CardioDetail({
         .eq('user_id', userId)
 
       if (error) {
-        alert('Failed to delete cardio session')
+        toast.error('Failed to delete cardio session')
         console.error('Delete error:', error)
         return
       }
@@ -83,7 +85,7 @@ export default function CardioDetail({
       }
       onClose()
     } catch (error) {
-      alert('Failed to delete cardio session')
+      toast.error('Failed to delete cardio session')
       console.error('Delete error:', error)
     } finally {
       setDeleting(false)
