@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, RefreshCw, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
+import { DEMO } from '@/lib/activeUser'
 
 type InsightsResponse = {
   content: string
@@ -23,7 +24,6 @@ function formatTimeAgo(dateStr: string): string {
 }
 
 function renderMarkdown(text: string) {
-  // Simple markdown renderer for the structured response
   const lines = text.split('\n')
   const elements: JSX.Element[] = []
   let key = 0
@@ -36,16 +36,22 @@ function renderMarkdown(text: string) {
           {line.replace('## ', '')}
         </h3>
       )
-    } else if (line.startsWith('- ') || line.startsWith('* ')) {
+    } else if (line.match(/^[-*] /)) {
       elements.push(
         <p key={key++} className="text-sm text-zinc-300 pl-3 py-0.5 border-l border-zinc-700 ml-1">
-          {line.replace(/^[-*] /, '')}
+          {renderInline(line.replace(/^[-*] /, ''))}
+        </p>
+      )
+    } else if (line.match(/^\d+\.\s/)) {
+      elements.push(
+        <p key={key++} className="text-sm text-zinc-300 pl-3 py-0.5 border-l border-zinc-700 ml-1">
+          {renderInline(line)}
         </p>
       )
     } else if (line.trim()) {
       elements.push(
         <p key={key++} className="text-sm text-zinc-300 leading-relaxed">
-          {renderBold(line)}
+          {renderInline(line)}
         </p>
       )
     }
@@ -54,7 +60,7 @@ function renderMarkdown(text: string) {
   return elements
 }
 
-function renderBold(text: string) {
+function renderInline(text: string) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g)
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
@@ -87,6 +93,9 @@ export default function AIInsights() {
   const [error, setError] = useState<string | null>(null)
   const [expanded, setExpanded] = useState(true)
   const [hasCheckedCache, setHasCheckedCache] = useState(false)
+
+  // Hide in demo mode — requires real auth for API calls
+  if (DEMO) return null
 
   // Auto-load cached insights on mount
   useEffect(() => {
@@ -243,7 +252,7 @@ export default function AIInsights() {
 
               {/* Loading overlay when refreshing with existing content */}
               {insights && loading && (
-                <div className="space-y-0.5 opacity-50">
+                <div className="relative space-y-0.5 opacity-50">
                   {renderMarkdown(insights.content)}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <RefreshCw className="w-6 h-6 animate-spin text-violet-400" />
