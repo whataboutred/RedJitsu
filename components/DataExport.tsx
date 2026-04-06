@@ -50,6 +50,11 @@ function triggerDownload(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
+function csvEscape(value: string | null | undefined): string {
+  const str = (value ?? '').replace(/"/g, '""').replace(/[\r\n]+/g, ' ')
+  return `"${str}"`
+}
+
 function buildCsv(
   workouts: Workout[],
   bjjSessions: BjjSession[],
@@ -66,8 +71,8 @@ function buildCsv(
         lines.push(
           [
             w.performed_at,
-            `"${(w.title ?? '').replace(/"/g, '""')}"`,
-            `"${(ex.display_name ?? '').replace(/"/g, '""')}"`,
+            csvEscape(w.title),
+            csvEscape(ex.display_name),
             s.set_index,
             s.weight ?? '',
             s.reps ?? '',
@@ -90,7 +95,7 @@ function buildCsv(
         b.kind ?? '',
         b.duration_min ?? '',
         b.intensity ?? '',
-        `"${(b.notes ?? '').replace(/"/g, '""')}"`,
+        csvEscape(b.notes),
       ].join(',')
     )
   }
@@ -110,7 +115,7 @@ function buildCsv(
         c.distance_unit ?? '',
         c.intensity ?? '',
         c.calories ?? '',
-        `"${(c.notes ?? '').replace(/"/g, '""')}"`,
+        csvEscape(c.notes),
       ].join(',')
     )
   }
@@ -163,6 +168,12 @@ export default function DataExport() {
     setLoading(format)
     try {
       const { workouts, bjjSessions, cardioSessions } = await fetchAllData()
+
+      if (workouts.length === 0 && bjjSessions.length === 0 && cardioSessions.length === 0) {
+        toast.warning('No data to export yet. Log some workouts first!')
+        setLoading(null)
+        return
+      }
 
       if (format === 'csv') {
         const csv = buildCsv(workouts, bjjSessions, cardioSessions)

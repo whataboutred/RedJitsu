@@ -259,7 +259,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
                   {best1RM > 0 && (
                     <span className="text-xs text-amber-400 flex items-center gap-1">
                       <Trophy className="w-3 h-3" />
-                      1RM: {best1RM} lb
+                      1RM: {best1RM}
                     </span>
                   )}
                   <span className="text-xs text-white/50">{setsWithData}/{totalSets} sets</span>

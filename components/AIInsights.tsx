@@ -103,6 +103,7 @@ export default function AIInsights() {
   }, [])
 
   async function loadInsights(forceRefresh: boolean) {
+    if (loading) return // Prevent concurrent requests
     setLoading(true)
     setError(null)
 

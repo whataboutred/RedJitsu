@@ -35,8 +35,6 @@ export async function getLastWorkoutSetsForExercises(
   }
 
   try {
-    console.log('[workoutSuggestions] Querying for exercises:', exerciseIds, 'userId:', userId, 'location:', location)
-
     // Query from workouts table to ensure proper date ordering
     // The key fix: ordering by performed_at works correctly when querying from workouts table
     let data: any[] = []
@@ -59,7 +57,6 @@ export async function getLastWorkoutSetsForExercises(
         .limit(50)
 
       data = await querySupabase<any>(query, { timeout: 8000, maxRetries: 2 })
-      console.log('[workoutSuggestions] Query returned:', data.length, 'workouts')
     } catch (queryError: any) {
       console.error('[workoutSuggestions] Query error:', queryError?.message || queryError)
       // Try simpler fallback query without location
@@ -79,7 +76,6 @@ export async function getLastWorkoutSetsForExercises(
           .limit(50)
 
         data = await querySupabase<any>(fallbackQuery, { timeout: 8000, maxRetries: 2 })
-        console.log('[workoutSuggestions] Fallback query returned:', data.length, 'workouts')
       } catch (fallbackError) {
         console.error('[workoutSuggestions] Fallback query also failed:', fallbackError)
         throw fallbackError

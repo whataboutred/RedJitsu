@@ -1,8 +1,9 @@
 'use client'
 
+import { memo } from 'react'
 import { motion } from 'framer-motion'
 
-export function ProgressRing({
+export const ProgressRing = memo(function ProgressRing({
   progress,
   size = 48,
   strokeWidth = 4,
@@ -15,9 +16,10 @@ export function ProgressRing({
   color?: string
   showLabel?: boolean
 }) {
+  const clampedProgress = Math.max(0, Math.min(progress, 100))
   const radius = (size - strokeWidth) / 2
   const circumference = radius * 2 * Math.PI
-  const offset = circumference - (Math.min(progress, 100) / 100) * circumference
+  const offset = circumference - (clampedProgress / 100) * circumference
   const isSmall = size <= 60
 
   return (
@@ -48,10 +50,10 @@ export function ProgressRing({
       {showLabel && (
         <div className="absolute inset-0 flex items-center justify-center">
           <span className={`font-bold ${isSmall ? 'text-xs' : 'text-lg'}`}>
-            {Math.round(progress)}%
+            {Math.round(clampedProgress)}%
           </span>
         </div>
       )}
     </div>
   )
-}
+})

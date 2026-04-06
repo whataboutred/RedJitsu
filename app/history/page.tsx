@@ -966,6 +966,15 @@ function HistoryClient() {
             {/* AI Coach Insights */}
             {!loading && <AIInsights />}
 
+            {/* Empty state when no data */}
+            {!loading && workouts.length === 0 && bjj.length === 0 && cardio.length === 0 && (
+              <AnimatedCard className="text-center py-10">
+                <BarChart3 className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
+                <h3 className="font-semibold text-zinc-400 mb-2">No activity data yet</h3>
+                <p className="text-zinc-500 text-sm mb-4">Start logging workouts, BJJ sessions, or cardio to see your analytics here.</p>
+              </AnimatedCard>
+            )}
+
             {/* Exercise Progress Section */}
             <AnimatedCard delay={0}>
               <div className="flex items-center gap-2 mb-4">
@@ -1291,18 +1300,24 @@ function HistoryClient() {
                 ))}
               </div>
               {workoutFilter === 'custom' && (
-                <div className="flex gap-2 mt-2">
+                <div className="flex items-center gap-2 mt-2">
                   <input
                     type="date"
                     value={customDateFrom}
-                    onChange={(e) => setCustomDateFrom(e.target.value)}
+                    onChange={(e) => {
+                      setCustomDateFrom(e.target.value)
+                      if (!customDateTo) setCustomDateTo(new Date().toISOString().split('T')[0])
+                    }}
+                    max={customDateTo || new Date().toISOString().split('T')[0]}
                     className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white"
                   />
-                  <span className="text-zinc-500 text-xs self-center">to</span>
+                  <span className="text-zinc-500 text-xs">to</span>
                   <input
                     type="date"
-                    value={customDateTo}
+                    value={customDateTo || new Date().toISOString().split('T')[0]}
                     onChange={(e) => setCustomDateTo(e.target.value)}
+                    min={customDateFrom}
+                    max={new Date().toISOString().split('T')[0]}
                     className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white"
                   />
                 </div>

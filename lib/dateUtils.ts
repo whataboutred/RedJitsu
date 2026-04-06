@@ -21,12 +21,20 @@ export function toDatetimeLocal(date: Date = new Date()): string {
 
 /**
  * Parse a datetime-local input value to an ISO string (UTC).
- * The input value "2024-01-15T15:00" is treated as LOCAL time
- * and converted to the correct UTC ISO string.
+ * Explicitly constructs a Date from local time components to avoid
+ * cross-browser parsing inconsistencies with new Date(string).
  */
 export function datetimeLocalToISO(value: string): string {
-  // new Date("2024-01-15T15:00") parses as local time in most browsers
-  return new Date(value).toISOString()
+  // Parse "YYYY-MM-DDTHH:MM" explicitly as local time
+  const [datePart, timePart] = value.split('T')
+  if (!datePart || !timePart) return new Date().toISOString()
+
+  const [year, month, day] = datePart.split('-').map(Number)
+  const [hours, minutes] = timePart.split(':').map(Number)
+
+  // Construct Date using local time components (avoids browser parsing quirks)
+  const date = new Date(year, month - 1, day, hours, minutes)
+  return date.toISOString()
 }
 
 /**

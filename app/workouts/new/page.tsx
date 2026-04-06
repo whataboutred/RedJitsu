@@ -874,6 +874,10 @@ export default function NewWorkoutPage() {
 
       // Check for repeat workout (from WorkoutDetail "Repeat" button)
       const repeatParam = new URLSearchParams(window.location.search).get('repeat')
+      if (repeatParam !== 'true') {
+        // Clean up any stale repeat data if not coming from repeat flow
+        sessionStorage.removeItem('repeat-workout')
+      }
       if (repeatParam === 'true') {
         try {
           const repeatData = sessionStorage.getItem('repeat-workout')
