@@ -81,9 +81,11 @@ export async function trySyncPending(userId: string): Promise<{ synced: number; 
       }
 
       if (exerciseFailed) {
-        // Workout was created but some exercises failed — still count as partial sync
+        // Workout record was created but some exercises failed.
+        // Can't re-queue (would create duplicate workout), so count as partial sync.
+        // The user will see "⚠️ No data" on the incomplete exercises in history.
       }
-      synced++
+      synced++  // Workout was created — even if partial, don't re-queue
     } catch {
       failedItems.push(w)
     }

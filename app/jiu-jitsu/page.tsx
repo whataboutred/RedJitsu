@@ -26,6 +26,7 @@ import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { useToast } from '@/components/Toast'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
+import { toDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useRouter } from 'next/navigation'
 
 type Kind = 'Class' | 'Drilling' | 'Open Mat'
@@ -173,11 +174,7 @@ export default function BJJPage() {
   const [loading, setLoading] = useState(true)
 
   // Form state
-  const [performedAt, setPerformedAt] = useState<string>(() => {
-    const d = new Date()
-    d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
-    return d.toISOString().slice(0, 16)
-  })
+  const [performedAt, setPerformedAt] = useState<string>(() => toDatetimeLocal())
   const [kind, setKind] = useState<Kind>('Class')
   const [duration, setDuration] = useState<number>(60)
   const [intensity, setIntensity] = useState<Intensity>('medium')
@@ -352,9 +349,7 @@ export default function BJJPage() {
     toast.success(`Duration set to ${timerMinutes} minutes`)
   }
 
-  function toISO(dtLocal: string) {
-    return new Date(dtLocal).toISOString()
-  }
+  // Use datetimeLocalToISO from lib/dateUtils for timezone-safe conversion
 
   async function saveSession() {
     setIsLoading(true)
@@ -386,7 +381,7 @@ export default function BJJPage() {
       .from('bjj_sessions')
       .insert({
         user_id: userId,
-        performed_at: toISO(performedAt),
+        performed_at: datetimeLocalToISO(performedAt),
         kind: kind === 'Open Mat' ? 'open_mat' : (kind.toLowerCase()),
         duration_min: minutes,
         intensity,
@@ -403,7 +398,7 @@ export default function BJJPage() {
     const temp = Math.random().toString(36).slice(2)
     const session = {
       tempId: temp,
-      performed_at: toISO(performedAt),
+      performed_at: datetimeLocalToISO(performedAt),
       kind: kind === 'Open Mat' ? 'open_mat' : (kind.toLowerCase()),
       duration_min: minutes,
       intensity,

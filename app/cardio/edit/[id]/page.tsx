@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
+import { isoToDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 
 type CardioSession = {
   activity: string
@@ -77,7 +78,7 @@ export default function EditCardioPage() {
           notes: cardioData.notes || ''
         })
         
-        setPerformedAt(new Date(cardioData.performed_at).toISOString().slice(0, 16))
+        setPerformedAt(isoToDatetimeLocal(cardioData.performed_at))
       }
     } catch (error) {
       console.error('Error loading cardio data:', error)
@@ -144,7 +145,7 @@ export default function EditCardioPage() {
           intensity: session.intensity,
           calories: session.calories || null,
           notes: session.notes?.trim() || null,
-          performed_at: new Date(performedAt).toISOString()
+          performed_at: datetimeLocalToISO(performedAt)
         })
         .eq('id', cardioId)
         .eq('user_id', userId)

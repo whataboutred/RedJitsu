@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { isoToDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -682,7 +683,7 @@ export default function EditWorkoutPage() {
       return
     }
 
-    setPerformedAt(new Date(workout.performed_at).toISOString().slice(0, 16))
+    setPerformedAt(isoToDatetimeLocal(workout.performed_at))
     setNotes(workout.note || '')
     setTitle(workout.title || '')
     if (workout.location) setLocation(workout.location)
@@ -937,7 +938,7 @@ export default function EditWorkoutPage() {
 
       // Update workout
       const updateData: any = {
-        performed_at: new Date(performedAt).toISOString(),
+        performed_at: datetimeLocalToISO(performedAt),
         title: title || null,
         note: notes || null,
       }

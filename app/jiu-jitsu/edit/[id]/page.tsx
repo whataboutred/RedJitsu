@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
+import { isoToDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 
 type Kind = 'Class' | 'Drilling' | 'Open Mat'
 type Intensity = 'low' | 'medium' | 'high'
@@ -53,9 +54,7 @@ export default function EditJiuJitsuPage() {
       }
 
       // Set form values from session data
-      const d = new Date(session.performed_at)
-      d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
-      setPerformedAt(d.toISOString().slice(0, 16))
+      setPerformedAt(isoToDatetimeLocal(session.performed_at))
 
       // Convert database kind back to display format
       if (session.kind === 'open_mat') {
@@ -74,9 +73,7 @@ export default function EditJiuJitsuPage() {
     })()
   }, [sessionId, router])
 
-  function toISO(dtLocal: string) {
-    return new Date(dtLocal).toISOString()
-  }
+  // Use datetimeLocalToISO from lib/dateUtils for timezone-safe conversion
 
   async function saveSession() {
     const userId = await getActiveUserId()
@@ -87,7 +84,7 @@ export default function EditJiuJitsuPage() {
       const { error } = await supabase
         .from('bjj_sessions')
         .update({
-          performed_at: toISO(performedAt),
+          performed_at: datetimeLocalToISO(performedAt),
           kind: kind === 'Open Mat' ? 'open_mat' : (kind.toLowerCase()),
           duration_min: minutes,
           intensity,

@@ -30,6 +30,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import { useToast } from '@/components/Toast'
 import { savePendingWorkout, trySyncPending } from '@/lib/offline'
+import { toDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useDraftAutoSave, getTimeAgo } from '@/hooks/useDraftAutoSave'
 import { getLastWorkoutSetsForExercises, WorkoutSet as LastWorkoutSet } from '@/lib/workoutSuggestions'
 import { Button, IconButton } from '@/components/ui/Button'
@@ -794,11 +795,7 @@ export default function NewWorkoutPage() {
   const [notes, setNotes] = useState('')
   const [location, setLocation] = useState('')
   const [savedLocations, setSavedLocations] = useState<string[]>([])
-  const [performedAt, setPerformedAt] = useState(() => {
-    const d = new Date()
-    d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
-    return d.toISOString().slice(0, 16)
-  })
+  const [performedAt, setPerformedAt] = useState(() => toDatetimeLocal())
 
   // Setup modal - shown first to capture date/time and location
   const [showSetupModal, setShowSetupModal] = useState(true)
@@ -845,7 +842,7 @@ export default function NewWorkoutPage() {
         if (shouldRestore) {
           // Convert old draft format to new format
           const restoredExercises: WorkoutExercise[] = draft.items.map((item: any) => ({
-            id: Math.random().toString(36).substring(7),
+            id: crypto.randomUUID(),
             exerciseId: item.id,
             name: item.name,
             sets: item.sets.map((s: any) => ({
@@ -859,6 +856,10 @@ export default function NewWorkoutPage() {
           setTitle(draft.customTitle || '')
           setNotes(draft.note || '')
           setLocation(draft.location || '')
+          // Restore original workout timestamp if available
+          if (draft.performedAt) {
+            setPerformedAt(draft.performedAt)
+          }
           if (restoredExercises.length > 0) {
             setExpandedId(restoredExercises[0].id)
           }
@@ -921,6 +922,7 @@ export default function NewWorkoutPage() {
         note: notes,
         customTitle: title,
         location,
+        performedAt,
       })
     }
   }, [exercises, title, notes, location, saveDraft])
@@ -1025,6 +1027,12 @@ export default function NewWorkoutPage() {
         throw new Error('Add at least one exercise')
       }
 
+      // Filter out exercises with no sets
+      const validExercises = exercises.filter(e => e.sets.length > 0)
+      if (validExercises.length === 0) {
+        throw new Error('Add at least one set to an exercise')
+      }
+
       // Check for duplicate exercise IDs (shouldn't happen but can prevent DB errors)
       const exerciseIds = exercises.map(e => e.exerciseId)
       const uniqueIds = new Set(exerciseIds)
@@ -1041,7 +1049,7 @@ export default function NewWorkoutPage() {
         }
       }
 
-      const iso = performedAt ? new Date(performedAt).toISOString() : new Date().toISOString()
+      const iso = performedAt ? datetimeLocalToISO(performedAt) : new Date().toISOString()
 
       // Create workout
       const insertData: any = {
@@ -1067,8 +1075,8 @@ export default function NewWorkoutPage() {
 
       console.log('[saveWorkout] Created workout:', w.id)
 
-      // Add exercises and sets
-      for (const ex of exercises) {
+      // Add exercises and sets (skip exercises with no sets)
+      for (const ex of validExercises) {
         console.log('[saveWorkout] Adding exercise:', ex.name, 'exerciseId:', ex.exerciseId)
 
         const { data: wex, error: wexError } = await supabase
@@ -1450,7 +1458,7 @@ export default function NewWorkoutPage() {
                         const lastSets = lastWorkoutMap.get(te.exercise_id)
 
                         const newExercise: WorkoutExercise = {
-                          id: Math.random().toString(36).substring(7),
+                          id: crypto.randomUUID(),
                           exerciseId: te.exercise_id,
                           name: te.display_name,
                           // Create empty sets - don't pre-fill weight/reps

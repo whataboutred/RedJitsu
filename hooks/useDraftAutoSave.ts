@@ -5,12 +5,13 @@ export interface WorkoutDraft {
   note: string
   customTitle: string
   location: string
+  performedAt?: string // datetime-local value to preserve original start time
   timestamp: number
 }
 
 interface UseDraftAutoSaveOptions {
   draftKey: string
-  autoSaveInterval?: number // milliseconds, default 30000 (30s)
+  autoSaveInterval?: number // milliseconds, default 10000 (10s)
   enabled?: boolean
 }
 
@@ -26,7 +27,7 @@ interface UseDraftAutoSaveReturn {
 
 export function useDraftAutoSave({
   draftKey,
-  autoSaveInterval = 30000,
+  autoSaveInterval = 10000,
   enabled = true,
 }: UseDraftAutoSaveOptions): UseDraftAutoSaveReturn {
   const [hasDraft, setHasDraft] = useState(false)
@@ -100,27 +101,39 @@ export function useDraftAutoSave({
     setHasUnsavedChanges(false)
   }, [])
 
-  // Auto-save effect
+  // Auto-save effect with save-on-unload and save-on-visibility-change
   useEffect(() => {
     if (!enabled) return
 
-    const autoSave = () => {
+    const saveIfChanged = () => {
       if (draftDataRef.current) {
         const currentHash = JSON.stringify(draftDataRef.current)
-
-        // Only save if data has changed
         if (currentHash !== lastSavedHashRef.current) {
           saveDraft(draftDataRef.current)
         }
       }
     }
 
-    intervalRef.current = setInterval(autoSave, autoSaveInterval)
+    // Periodic auto-save
+    intervalRef.current = setInterval(saveIfChanged, autoSaveInterval)
+
+    // Save immediately when user navigates away or closes tab
+    const handleBeforeUnload = () => saveIfChanged()
+
+    // Save when user switches to another tab/app
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') saveIfChanged()
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      // Final save on unmount
+      saveIfChanged()
     }
   }, [enabled, autoSaveInterval, saveDraft])
 

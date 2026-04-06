@@ -328,7 +328,8 @@ export default function Dashboard() {
     return streak
   }, [wkCounts, weeklyGoal, thisWeekKey])
 
-  const expectedByToday = Math.ceil((weeklyGoal * (dayIndex + 1)) / 7)
+  // On Sunday (day 0), don't expect any workouts yet — the week just started
+  const expectedByToday = dayIndex === 0 ? 0 : Math.ceil((weeklyGoal * dayIndex) / 7)
   const onTrackStrength = thisWeekCount >= expectedByToday
 
   // BJJ stats
@@ -363,7 +364,7 @@ export default function Dashboard() {
     return streak
   }, [bjjWeekCounts, bjjWeeklyGoal, thisWeekKey])
 
-  const bjjExpectedByToday = Math.ceil((bjjWeeklyGoal * (dayIndex + 1)) / 7)
+  const bjjExpectedByToday = dayIndex === 0 ? 0 : Math.ceil((bjjWeeklyGoal * dayIndex) / 7)
   const onTrackBjj = bjjThisWeekCount >= bjjExpectedByToday
 
   // Cardio stats
@@ -398,7 +399,7 @@ export default function Dashboard() {
     return streak
   }, [cardioWeekCounts, cardioWeeklyGoal, thisWeekKey])
 
-  const cardioExpectedByToday = Math.ceil((cardioWeeklyGoal * (dayIndex + 1)) / 7)
+  const cardioExpectedByToday = dayIndex === 0 ? 0 : Math.ceil((cardioWeeklyGoal * dayIndex) / 7)
   const onTrackCardio = cardioThisWeekCount >= cardioExpectedByToday
 
   // Greeting based on time
