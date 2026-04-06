@@ -34,7 +34,7 @@ export default function EditJiuJitsuPage() {
 
       const userId = await getActiveUserId()
       if (!userId && !DEMO) {
-        window.location.href = '/login'
+        router.push('/login')
         return
       }
 

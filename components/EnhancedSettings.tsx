@@ -63,7 +63,7 @@ export default function EnhancedSettings() {
 
   async function loadUserData() {
     const userId = await getActiveUserId()
-    if (!userId) { window.location.href = '/login'; return }
+    if (!userId) { router.push('/login'); return }
 
     try {
       // First, try to get existing profile

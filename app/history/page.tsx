@@ -297,7 +297,7 @@ function HistoryClient() {
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user && !DEMO) { window.location.href = '/login'; return }
+      if (!user && !DEMO) { router.push('/login'); return }
 
       const userId = await getActiveUserId()
       if (!userId) return

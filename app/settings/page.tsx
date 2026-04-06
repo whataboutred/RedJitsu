@@ -153,7 +153,7 @@ export default function SettingsPage() {
 
   async function loadUserData() {
     const userId = await getActiveUserId()
-    if (!userId) { window.location.href = '/login'; return }
+    if (!userId) { router.push('/login'); return }
 
     const { data: { user } } = await supabase.auth.getUser()
     if (user?.email) setUserEmail(user.email)
@@ -307,8 +307,12 @@ export default function SettingsPage() {
       return
     }
 
-    if (newPassword.length < 6) {
-      toast.warning('New password must be at least 6 characters')
+    if (newPassword.length < 12) {
+      toast.warning('New password must be at least 12 characters')
+      return
+    }
+    if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      toast.warning('Password must include uppercase, lowercase, and a number')
       return
     }
 

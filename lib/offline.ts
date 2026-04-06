@@ -33,41 +33,63 @@ export async function clearPendingWorkouts() {
   await localforage.setItem(pendingKey, [])
 }
 
-export async function trySyncPending(userId: string) {
+export async function trySyncPending(userId: string): Promise<{ synced: number; failed: number }> {
   const items = await getPendingWorkouts()
-  if (!items.length) return
+  if (!items.length) return { synced: 0, failed: 0 }
+
+  const failedItems: PendingWorkout[] = []
+  let synced = 0
 
   for (const w of items) {
-    const { data: workout, error } = await supabase
-      .from('workouts')
-      .insert({
-        user_id: userId,
-        performed_at: w.performed_at,
-        title: w.title ?? null,
-        note: w.note ?? null,
-      })
-      .select('id')
-      .single()
-
-    if (error || !workout) continue
-
-    for (const ex of w.exercises) {
-      const { data: wex, error: wexErr } = await supabase
-        .from('workout_exercises')
-        .insert({ workout_id: workout.id, exercise_id: ex.exercise_id, display_name: ex.name })
+    try {
+      const { data: workout, error } = await supabase
+        .from('workouts')
+        .insert({
+          user_id: userId,
+          performed_at: w.performed_at,
+          title: w.title ?? null,
+          note: w.note ?? null,
+        })
         .select('id')
         .single()
-      if (wexErr || !wex) continue
 
-      const rows = ex.sets.map((s, idx) => ({
-        workout_exercise_id: wex.id,
-        set_index: idx + 1,
-        weight: s.weight,
-        reps: s.reps,
-        set_type: s.set_type,
-      }))
-      await supabase.from('sets').insert(rows)
+      if (error || !workout) {
+        failedItems.push(w)
+        continue
+      }
+
+      let exerciseFailed = false
+      for (const ex of w.exercises) {
+        const { data: wex, error: wexErr } = await supabase
+          .from('workout_exercises')
+          .insert({ workout_id: workout.id, exercise_id: ex.exercise_id, display_name: ex.name })
+          .select('id')
+          .single()
+        if (wexErr || !wex) {
+          exerciseFailed = true
+          continue
+        }
+
+        const rows = ex.sets.map((s, idx) => ({
+          workout_exercise_id: wex.id,
+          set_index: idx + 1,
+          weight: s.weight,
+          reps: s.reps,
+          set_type: s.set_type,
+        }))
+        await supabase.from('sets').insert(rows)
+      }
+
+      if (exerciseFailed) {
+        // Workout was created but some exercises failed — still count as partial sync
+      }
+      synced++
+    } catch {
+      failedItems.push(w)
     }
   }
-  await clearPendingWorkouts()
+
+  // Keep failed items for retry on next sync, clear only successful ones
+  await localforage.setItem(pendingKey, failedItems)
+  return { synced, failed: failedItems.length }
 }

@@ -829,7 +829,7 @@ export default function NewWorkoutPage() {
 
       const userId = await getActiveUserId()
       if (!userId) {
-        if (!DEMO) window.location.href = '/login'
+        if (!DEMO) router.push('/login')
         return
       }
 

@@ -11,7 +11,7 @@ type CachedQuote = {
 }
 
 const CACHE_KEY = 'daily_stoic_quote'
-const API_URL = 'https://stoic.tekloon.net/stoic-quote'
+const API_URL = process.env.NEXT_PUBLIC_QUOTE_API_URL || 'https://stoic.tekloon.net/stoic-quote'
 const FETCH_TIMEOUT = 5000 // 5 seconds
 
 // Fallback Stoic quotes

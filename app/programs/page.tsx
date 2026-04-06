@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabaseClient'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { AnimatedCard } from '@/components/ui/Card'
 import {
   Dumbbell,
@@ -80,6 +81,7 @@ const DOWS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] as const
 const CATEGORIES = ['all', 'barbell', 'dumbbell', 'machine', 'cable', 'other'] as const
 
 export default function ProgramsPage() {
+  const router = useRouter()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [programs, setPrograms] = useState<Program[]>([])
   const [selected, setSelected] = useState<Program | null>(null)
@@ -194,7 +196,7 @@ export default function ProgramsPage() {
 
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = '/login'; return }
+    if (!user) { router.push('/login'); return }
 
     const { data: ex } = await supabase.from('exercises').select('id,name,category').order('name')
     setExercises((ex || []) as Exercise[])

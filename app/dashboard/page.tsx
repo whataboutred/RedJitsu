@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId } from '@/lib/activeUser'
 import { logger, EventType } from '@/lib/splunkLogger'
@@ -162,6 +163,7 @@ function GoalCard({
 
 
 export default function Dashboard() {
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [bjj, setBjj] = useState<BJJ[]>([])
@@ -188,7 +190,7 @@ export default function Dashboard() {
     setIsRefreshingQuote(false)
   }
 
-  const loadProfileData = async () => {
+  const loadProfileData = useCallback(async () => {
     const userId = await getActiveUserId()
     if (!userId) return
 
@@ -205,14 +207,17 @@ export default function Dashboard() {
       setShowBjjGoal(prof.show_bjj_goal ?? true)
       setShowCardioGoal(prof.show_cardio_goal ?? false)
     }
-  }
+  }, [])
 
   useEffect(() => {
+    let cancelled = false
+
     ;(async () => {
       const userId = await getActiveUserId()
+      if (cancelled) return
       if (!userId) {
         if (!DEMO) {
-          window.location.href = '/login'
+          router.push('/login')
         }
         setLoading(false)
         return
@@ -269,9 +274,11 @@ export default function Dashboard() {
         }
       }
 
-      setLoading(false)
+      if (!cancelled) setLoading(false)
     })()
-  }, [])
+
+    return () => { cancelled = true }
+  }, [loadProfileData, router])
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -283,7 +290,7 @@ export default function Dashboard() {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('focus', handleVisibilityChange)
     }
-  }, [])
+  }, [loadProfileData])
 
   const now = new Date()
   const thisWeekKey = weekKey(now)

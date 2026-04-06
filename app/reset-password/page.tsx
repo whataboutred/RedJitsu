@@ -19,26 +19,13 @@ function ResetPasswordForm() {
   useEffect(() => {
     (async () => {
       try {
-        // 1) New flow (PKCE): ?code=...
+        // PKCE code exchange flow (secure — no tokens in URL)
         const code = searchParams.get('code')
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code)
           if (error) throw error
-        } else {
-          // 2) Legacy/hash flow: #access_token=...&refresh_token=...
-          const hash = typeof window !== 'undefined' ? window.location.hash : ''
-          if (hash?.includes('access_token')) {
-            const params = new URLSearchParams(hash.replace(/^#/, ''))
-            const access_token = params.get('access_token') || ''
-            const refresh_token = params.get('refresh_token') || ''
-            if (access_token && refresh_token) {
-              const { error } = await supabase.auth.setSession({ access_token, refresh_token })
-              if (error) throw error
-            }
-          }
         }
-
-        // If either path succeeded (or user was already signed in), show the form
+        // If no code param, user may already be signed in from a previous exchange
         setStep('ready')
       } catch (e: any) {
         setError(e?.message || 'The reset link is invalid or has expired.')
@@ -52,8 +39,12 @@ function ResetPasswordForm() {
     e.preventDefault()
     setError('')
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
+    if (password.length < 12) {
+      setError('Password must be at least 12 characters.')
+      return
+    }
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+      setError('Password must include uppercase, lowercase, and a number.')
       return
     }
     if (password !== confirm) {
