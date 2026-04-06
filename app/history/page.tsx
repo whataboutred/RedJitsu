@@ -31,6 +31,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import WorkoutDetail from '@/components/WorkoutDetail'
 import BJJDetail from '@/components/BJJDetail'
 import CardioDetail from '@/components/CardioDetail'
+import AIInsights from '@/components/AIInsights'
 
 type Workout = { id: string; performed_at: string; title: string | null; exercise_count?: number }
 type BJJ = { id: string; performed_at: string; duration_min: number; kind: 'class' | 'drilling' | 'open_mat'; intensity: string | null; notes: string | null }
@@ -987,6 +988,9 @@ function HistoryClient() {
       <div className="p-4 space-y-4">
         {selectedView === 'analytics' ? (
           <>
+            {/* AI Coach Insights */}
+            {!loading && <AIInsights />}
+
             {/* Exercise Progress Section */}
             <AnimatedCard delay={0}>
               <div className="flex items-center gap-2 mb-4">
