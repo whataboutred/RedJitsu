@@ -85,7 +85,7 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
             seenMonths.add(monthKey)
             months.push({
               col,
-              label: d.toLocaleDateString('en-US', { month: 'short' }),
+              label: d.toLocaleDateString('en-US', { month: 'narrow' }),
             })
           }
         }
@@ -151,8 +151,8 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
               return (
                 <div
                   key={col}
-                  className="text-[9px] text-zinc-500 leading-none truncate"
-                  style={{ width: 12 }}
+                  className="text-[10px] text-zinc-500 leading-none text-center"
+                  style={{ width: 12, overflow: 'visible' }}
                 >
                   {month?.label || ''}
                 </div>
