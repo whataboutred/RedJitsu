@@ -22,6 +22,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/Card'
+import { ProgressRing } from '@/components/ui/ProgressRing'
 import { Button } from '@/components/ui/Button'
 import { BottomSheet, ConfirmDialog } from '@/components/ui/BottomSheet'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
@@ -30,6 +31,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { getActiveUserId } from '@/lib/activeUser'
 import { useRouter } from 'next/navigation'
 import DeleteAllData from '@/components/DeleteAllData'
+import DataExport from '@/components/DataExport'
 
 type Profile = {
   unit: 'lb' | 'kg' | null
@@ -76,43 +78,6 @@ function Toggle({ enabled, onChange, color = 'bg-red-500' }: {
   )
 }
 
-// Progress ring
-function ProgressRing({ progress, size = 48, strokeWidth = 4, color = '#ef4444' }: {
-  progress: number
-  size?: number
-  strokeWidth?: number
-  color?: string
-}) {
-  const radius = (size - strokeWidth) / 2
-  const circumference = radius * 2 * Math.PI
-  const offset = circumference - (Math.min(progress, 100) / 100) * circumference
-
-  return (
-    <svg width={size} height={size} className="transform -rotate-90">
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke="rgba(255,255,255,0.1)"
-        strokeWidth={strokeWidth}
-      />
-      <motion.circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        initial={{ strokeDashoffset: circumference }}
-        animate={{ strokeDashoffset: offset }}
-        transition={{ duration: 1, ease: "easeOut" }}
-      />
-    </svg>
-  )
-}
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
@@ -613,6 +578,9 @@ export default function SettingsPage() {
         </AnimatedCard>
 
         {/* Danger Zone */}
+        {/* Data Export */}
+        <DataExport />
+
         <AnimatedCard delay={0.4} className="border border-red-500/20">
           <div className="flex items-center gap-2 mb-4">
             <Trash2 className="w-5 h-5 text-red-400" />

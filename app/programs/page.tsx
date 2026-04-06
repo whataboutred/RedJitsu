@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/Toast'
 import { AnimatedCard } from '@/components/ui/Card'
 import {
   Dumbbell,
@@ -82,6 +83,7 @@ const CATEGORIES = ['all', 'barbell', 'dumbbell', 'machine', 'cable', 'other'] a
 
 export default function ProgramsPage() {
   const router = useRouter()
+  const toast = useToast()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [programs, setPrograms] = useState<Program[]>([])
   const [selected, setSelected] = useState<Program | null>(null)
@@ -504,7 +506,7 @@ export default function ProgramsPage() {
   async function addCustomExerciseToDay(dayIndex: number) {
     const exerciseName = search.trim()
     if (!exerciseName) {
-      alert('Enter an exercise name first')
+      toast.warning('Enter an exercise name first')
       return
     }
 
@@ -512,7 +514,7 @@ export default function ProgramsPage() {
     if (newExercise) {
       addExerciseToDay(dayIndex, newExercise)
     } else {
-      alert('Failed to create exercise')
+      toast.error('Failed to create exercise')
     }
   }
 
@@ -521,18 +523,18 @@ export default function ProgramsPage() {
     if (!userId) return
 
     if (!pName.trim()) {
-      alert('Please enter a program name')
+      toast.warning('Please enter a program name')
       return
     }
 
     if (days.length === 0) {
-      alert('Please add at least one training day')
+      toast.warning('Please add at least one training day')
       return
     }
 
     const validDays = days.filter(day => day.items.length > 0)
     if (validDays.length === 0) {
-      alert('Please add exercises to at least one training day')
+      toast.warning('Please add exercises to at least one training day')
       return
     }
 
@@ -619,12 +621,12 @@ export default function ProgramsPage() {
         }
       }
 
-      alert('Program saved successfully!')
+      toast.success('Program saved successfully!')
       await reloadPrograms()
       backToList()
     } catch (error) {
       console.error('Save error:', error)
-      alert('Failed to save program')
+      toast.error('Failed to save program')
     }
   }
 

@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { getActiveUserId } from '@/lib/activeUser'
-import { X, Edit3, Trash2 } from 'lucide-react'
+import { X, Edit3, Trash2, Copy, Trophy } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/Toast'
+import { estimated1RM } from '@/lib/formulas'
 
 type WorkoutSet = {
   id: string
@@ -27,6 +29,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
   const [workout, setWorkout] = useState<{ performed_at: string; title: string | null } | null>(null)
   const [deleting, setDeleting] = useState(false)
   const router = useRouter()
+  const toast = useToast()
 
   useEffect(() => {
     (async () => {
@@ -136,7 +139,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         .eq('user_id', userId)
 
       if (error) {
-        alert('Failed to delete workout')
+        toast.error('Failed to delete workout')
         console.error('Delete error:', error)
         return
       }
@@ -145,7 +148,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
       onClose()
       window.location.reload()
     } catch (error) {
-      alert('Failed to delete workout')
+      toast.error('Failed to delete workout')
       console.error('Delete error:', error)
     } finally {
       setDeleting(false)
@@ -153,8 +156,24 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
   }
 
   function handleEdit() {
-    // Navigate to edit page with the workout ID
     router.push(`/workouts/edit/${workoutId}`)
+  }
+
+  function handleRepeat() {
+    // Store workout data in sessionStorage for the new workout page to pick up
+    const repeatData = Object.entries(groupedSets).map(([exerciseId, exerciseSets]) => ({
+      exerciseId,
+      exerciseName: getExerciseName(exerciseId),
+      sets: exerciseSets
+        .filter(s => s.set_type !== 'warmup')
+        .map(s => ({ weight: s.weight || 0, reps: s.reps || 0 })),
+    }))
+    sessionStorage.setItem('repeat-workout', JSON.stringify({
+      title: workout?.title || '',
+      exercises: repeatData,
+    }))
+    router.push('/workouts/new?repeat=true')
+    onClose()
   }
 
   if (loading) return (
@@ -192,9 +211,16 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
             <div className="text-sm text-white/70">{new Date(workout.performed_at).toLocaleString()}</div>
           </div>
           <div className="flex items-center gap-2">
-            <button 
+            <button
+              onClick={handleRepeat}
+              className="p-1 hover:bg-white/5 rounded-lg text-emerald-400 hover:text-emerald-300"
+              title="Repeat this workout"
+            >
+              <Copy className="w-5 h-5" />
+            </button>
+            <button
               onClick={handleEdit}
-              className="p-1 hover:bg-white/5 rounded-lg text-blue-400 hover:text-blue-300" 
+              className="p-1 hover:bg-white/5 rounded-lg text-blue-400 hover:text-blue-300"
               title="Edit workout"
             >
               <Edit3 className="w-5 h-5" />
@@ -218,11 +244,26 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
             const workingSets = exerciseSets.filter(s => s.set_type !== 'warmup')
             const setsWithData = workingSets.filter(s => s.weight !== null || s.reps !== null).length
             const totalSets = workingSets.length
+            // Calculate best estimated 1RM for this exercise
+            const best1RM = Math.max(
+              ...workingSets
+                .filter(s => s.weight && s.reps)
+                .map(s => estimated1RM(s.weight!, s.reps!)),
+              0
+            )
             return (
             <div key={exerciseId} className="bg-black/30 rounded-xl p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <div className="font-medium text-white/90">{getExerciseName(exerciseId)}</div>
-                <div className="text-xs text-white/50">{setsWithData}/{totalSets} sets</div>
+                <div className="flex items-center gap-2">
+                  {best1RM > 0 && (
+                    <span className="text-xs text-amber-400 flex items-center gap-1">
+                      <Trophy className="w-3 h-3" />
+                      1RM: {best1RM} lb
+                    </span>
+                  )}
+                  <span className="text-xs text-white/50">{setsWithData}/{totalSets} sets</span>
+                </div>
               </div>
               {exerciseSets.map((set, i) => {
                 const hasData = set.weight !== null || set.reps !== null

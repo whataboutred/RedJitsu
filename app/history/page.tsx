@@ -23,6 +23,7 @@ import {
   Minus
 } from 'lucide-react'
 import { AnimatedCard, StatCard } from '@/components/ui/Card'
+import { ProgressRing } from '@/components/ui/ProgressRing'
 import { Button } from '@/components/ui/Button'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { supabase } from '@/lib/supabaseClient'
@@ -77,43 +78,6 @@ type StreakData = {
 
 export const dynamic = 'force-dynamic'
 
-// Progress ring component
-function ProgressRing({ progress, size = 60, strokeWidth = 5, color = '#ef4444' }: {
-  progress: number
-  size?: number
-  strokeWidth?: number
-  color?: string
-}) {
-  const radius = (size - strokeWidth) / 2
-  const circumference = radius * 2 * Math.PI
-  const offset = circumference - (Math.min(progress, 100) / 100) * circumference
-
-  return (
-    <svg width={size} height={size} className="transform -rotate-90">
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke="rgba(255,255,255,0.1)"
-        strokeWidth={strokeWidth}
-      />
-      <motion.circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        initial={{ strokeDashoffset: circumference }}
-        animate={{ strokeDashoffset: offset }}
-        transition={{ duration: 1, ease: "easeOut" }}
-      />
-    </svg>
-  )
-}
 
 // Mini bar chart for volume
 function MiniBarChart({ data, maxValue }: { data: number[]; maxValue: number }) {
@@ -168,9 +132,11 @@ function HistoryClient() {
   const [activeProgramExercises, setActiveProgramExercises] = useState<Set<string>>(new Set())
   const [hasActiveProgram, setHasActiveProgram] = useState(false)
   const [selectedView, setSelectedView] = useState<'analytics' | 'workouts'>('analytics')
-  const [workoutFilter, setWorkoutFilter] = useState<'all' | 'week' | 'month'>('month')
+  const [workoutFilter, setWorkoutFilter] = useState<'all' | 'week' | 'month' | 'custom'>('month')
   const [selectedExercise, setSelectedExercise] = useState<string>('')
   const [activityFilter, setActivityFilter] = useState<'all' | 'strength' | 'bjj' | 'cardio'>('all')
+  const [customDateFrom, setCustomDateFrom] = useState<string>('')
+  const [customDateTo, setCustomDateTo] = useState<string>('')
 
   const params = useSearchParams()
   const router = useRouter()
@@ -189,8 +155,17 @@ function HistoryClient() {
   // Filter workouts based on selected time period
   const filteredWorkouts = useMemo(() => {
     const now = new Date()
-    const cutoff = new Date()
 
+    if (workoutFilter === 'custom' && customDateFrom) {
+      const from = new Date(customDateFrom)
+      const to = customDateTo ? new Date(customDateTo + 'T23:59:59') : now
+      return workouts.filter(w => {
+        const d = new Date(w.performed_at)
+        return d >= from && d <= to
+      })
+    }
+
+    const cutoff = new Date()
     switch (workoutFilter) {
       case 'week':
         cutoff.setDate(now.getDate() - 7)
@@ -203,7 +178,7 @@ function HistoryClient() {
     }
 
     return workouts.filter(w => new Date(w.performed_at) >= cutoff)
-  }, [workouts, workoutFilter])
+  }, [workouts, workoutFilter, customDateFrom, customDateTo])
 
   // Calculate workout frequency stats
   const workoutStats = useMemo(() => {
@@ -1298,8 +1273,8 @@ function HistoryClient() {
                 </button>
               ))}
 
-              <div className="ml-auto flex gap-2">
-                {(['week', 'month', 'all'] as const).map(filter => (
+              <div className="ml-auto flex gap-2 flex-wrap">
+                {(['week', 'month', 'all', 'custom'] as const).map(filter => (
                   <button
                     key={filter}
                     onClick={() => setWorkoutFilter(filter)}
@@ -1311,9 +1286,27 @@ function HistoryClient() {
                     {filter === 'week' && 'Week'}
                     {filter === 'month' && 'Month'}
                     {filter === 'all' && 'All'}
+                    {filter === 'custom' && 'Custom'}
                   </button>
                 ))}
               </div>
+              {workoutFilter === 'custom' && (
+                <div className="flex gap-2 mt-2">
+                  <input
+                    type="date"
+                    value={customDateFrom}
+                    onChange={(e) => setCustomDateFrom(e.target.value)}
+                    className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white"
+                  />
+                  <span className="text-zinc-500 text-xs self-center">to</span>
+                  <input
+                    type="date"
+                    value={customDateTo}
+                    onChange={(e) => setCustomDateTo(e.target.value)}
+                    className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Activity Timeline */}

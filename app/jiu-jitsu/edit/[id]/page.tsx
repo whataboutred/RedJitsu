@@ -8,6 +8,7 @@ import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { isoToDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
+import { useToast } from '@/components/Toast'
 
 type Kind = 'Class' | 'Drilling' | 'Open Mat'
 type Intensity = 'low' | 'medium' | 'high'
@@ -16,6 +17,7 @@ export default function EditJiuJitsuPage() {
   const router = useRouter()
   const params = useParams()
   const sessionId = params.id as string
+  const toast = useToast()
 
   const [demo, setDemo] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -48,7 +50,7 @@ export default function EditJiuJitsuPage() {
         .single()
 
       if (!session) {
-        alert('Session not found')
+        toast.error('Session not found')
         router.push('/history')
         return
       }
@@ -77,7 +79,7 @@ export default function EditJiuJitsuPage() {
 
   async function saveSession() {
     const userId = await getActiveUserId()
-    if (!userId) { alert('Please sign in again.'); return }
+    if (!userId) { toast.warning('Please sign in again.'); return }
 
     try {
       const minutes = Math.min(600, Math.max(5, Number(duration || 60)))
@@ -95,15 +97,15 @@ export default function EditJiuJitsuPage() {
 
       if (error) {
         console.error('Update error:', error)
-        alert('Failed to update session: ' + error.message)
+        toast.error('Failed to update session: ' + error.message)
         return
       }
 
-      alert('Session updated successfully!')
+      toast.success('Session updated successfully!')
       router.push(`/history?highlight=${sessionId}&type=bjj`)
     } catch (err) {
       console.error('Save error:', err)
-      alert('Failed to update session')
+      toast.error('Failed to update session')
     }
   }
 

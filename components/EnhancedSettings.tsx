@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { getActiveUserId } from '@/lib/activeUser'
+import { useToast } from '@/components/Toast'
 
 type Profile = {
   unit: 'lb'|'kg'|null
@@ -30,6 +31,7 @@ export default function EnhancedSettings() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const router = useRouter()
+  const toast = useToast()
 
   // Profile settings
   const [unit, setUnit] = useState<'lb'|'kg'>('lb')
@@ -236,7 +238,7 @@ export default function EnhancedSettings() {
 
   async function save() {
     const userId = await getActiveUserId()
-    if (!userId) { alert('Please sign in again'); return }
+    if (!userId) { toast.warning('Please sign in again'); return }
     
     setSaving(true)
     try {
@@ -258,15 +260,15 @@ export default function EnhancedSettings() {
       
       if (error) {
         console.error('Save error:', error)
-        alert('Failed to save settings: ' + error.message)
+        toast.error('Failed to save settings: ' + error.message)
         return
       }
       
-      alert('Settings saved successfully!')
+      toast.success('Settings saved successfully!')
       setTimeout(() => router.push('/dashboard'), 500)
     } catch (err) {
       console.error('Save error:', err)
-      alert('Failed to save settings')
+      toast.error('Failed to save settings')
     } finally {
       setSaving(false)
     }
@@ -274,17 +276,17 @@ export default function EnhancedSettings() {
 
   async function changePassword() {
     if (!currentPassword || !newPassword) {
-      alert('Please fill in all password fields')
+      toast.warning('Please fill in all password fields')
       return
     }
 
     if (newPassword !== confirmPassword) {
-      alert('New passwords do not match')
+      toast.warning('New passwords do not match')
       return
     }
 
     if (newPassword.length < 6) {
-      alert('New password must be at least 6 characters long')
+      toast.warning('New password must be at least 6 characters long')
       return
     }
 
@@ -296,7 +298,7 @@ export default function EnhancedSettings() {
       })
 
       if (signInError) {
-        alert('Current password is incorrect')
+        toast.error('Current password is incorrect')
         return
       }
 
@@ -306,18 +308,18 @@ export default function EnhancedSettings() {
 
       if (updateError) {
         console.error('Password update error:', updateError)
-        alert('Failed to change password: ' + updateError.message)
+        toast.error('Failed to change password: ' + updateError.message)
         return
       }
 
-      alert('Password changed successfully!')
+      toast.success('Password changed successfully!')
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
       setShowPasswordSection(false)
     } catch (err) {
       console.error('Password change error:', err)
-      alert('Failed to change password')
+      toast.error('Failed to change password')
     } finally {
       setChangingPassword(false)
     }

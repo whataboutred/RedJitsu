@@ -872,6 +872,35 @@ export default function NewWorkoutPage() {
         }
       }
 
+      // Check for repeat workout (from WorkoutDetail "Repeat" button)
+      const repeatParam = new URLSearchParams(window.location.search).get('repeat')
+      if (repeatParam === 'true') {
+        try {
+          const repeatData = sessionStorage.getItem('repeat-workout')
+          if (repeatData) {
+            const parsed = JSON.parse(repeatData)
+            sessionStorage.removeItem('repeat-workout')
+            const repeatedExercises: WorkoutExercise[] = parsed.exercises.map((ex: any) => ({
+              id: crypto.randomUUID(),
+              exerciseId: ex.exerciseId,
+              name: ex.exerciseName,
+              sets: ex.sets.map((s: any) => ({
+                weight: s.weight,
+                reps: s.reps,
+                isWarmup: false,
+                isCompleted: false,
+              })),
+            }))
+            setExercises(repeatedExercises)
+            setTitle(parsed.title || '')
+            if (repeatedExercises.length > 0) setExpandedId(repeatedExercises[0].id)
+            setShowSetupModal(false)
+            setSetupComplete(true)
+            toast.success('Workout loaded — adjust weights as needed!')
+          }
+        } catch { /* ignore parse errors */ }
+      }
+
       // Load user profile
       const { data: profile } = await supabase.from('profiles').select('unit').eq('id', userId).maybeSingle()
       if (profile?.unit) setUnit(profile.unit as 'lb' | 'kg')

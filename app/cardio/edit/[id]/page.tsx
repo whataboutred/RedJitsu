@@ -8,6 +8,7 @@ import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { isoToDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
+import { useToast } from '@/components/Toast'
 
 type CardioSession = {
   activity: string
@@ -30,6 +31,7 @@ export default function EditCardioPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const router = useRouter()
+  const toast = useToast()
   const params = useParams()
   const cardioId = params.id as string
 
@@ -82,7 +84,7 @@ export default function EditCardioPage() {
       }
     } catch (error) {
       console.error('Error loading cardio data:', error)
-      alert('Failed to load cardio session')
+      toast.error('Failed to load cardio session')
     }
   }
 
@@ -124,12 +126,12 @@ export default function EditCardioPage() {
   const handleSave = async () => {
     const userId = await getActiveUserId()
     if (!userId) {
-      alert('Please sign in to save cardio sessions')
+      toast.warning('Please sign in to save cardio sessions')
       return
     }
 
     if (!session.activity.trim()) {
-      alert('Please enter an activity')
+      toast.warning('Please enter an activity')
       return
     }
 
@@ -152,15 +154,15 @@ export default function EditCardioPage() {
 
       if (error) {
         console.error('Save error:', error)
-        alert(`Failed to update cardio session: ${error.message}`)
+        toast.error(`Failed to update cardio session: ${error.message}`)
         return
       }
 
-      alert('Cardio session updated!')
+      toast.success('Cardio session updated!')
       router.push('/history')
     } catch (error) {
       console.error('Save error:', error)
-      alert('Failed to update cardio session')
+      toast.error('Failed to update cardio session')
     } finally {
       setSaving(false)
     }
