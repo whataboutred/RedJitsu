@@ -502,9 +502,9 @@ export default function Dashboard() {
       {/* Recent Activity */}
       {(() => {
         const recent = [
-          ...workouts.slice(0, 3).map(w => ({ type: 'strength' as const, title: w.title || 'Strength Training', date: w.performed_at })),
-          ...bjj.slice(0, 3).map(b => ({ type: 'bjj' as const, title: b.kind.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()), date: b.performed_at })),
-          ...cardio.slice(0, 3).map(c => ({ type: 'cardio' as const, title: c.activity, date: c.performed_at })),
+          ...workouts.map(w => ({ type: 'strength' as const, title: w.title || 'Strength Training', date: w.performed_at })),
+          ...bjj.map(b => ({ type: 'bjj' as const, title: b.kind.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()), date: b.performed_at })),
+          ...cardio.map(c => ({ type: 'cardio' as const, title: c.activity, date: c.performed_at })),
         ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5)
 
         if (recent.length === 0) return null
