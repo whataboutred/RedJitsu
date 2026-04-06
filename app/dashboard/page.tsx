@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId } from '@/lib/activeUser'
 import { logger, EventType } from '@/lib/splunkLogger'
@@ -16,8 +17,10 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/Card'
+import { ProgressRing } from '@/components/ui/ProgressRing'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { getDailyQuote, refreshQuote, type Quote } from '@/lib/quoteService'
+import ActivityHeatmap from '@/components/ActivityHeatmap'
 
 type Workout = { id: string; performed_at: string; title: string | null }
 type BJJ = {
@@ -49,51 +52,6 @@ function startOfWeekSunday(d: Date) {
 function weekKey(d: Date) {
   return startOfWeekSunday(d).toISOString().slice(0, 10)
 }
-// Progress Ring Component
-function ProgressRing({ progress, size = 80, strokeWidth = 6, color = 'stroke-brand-red' }: {
-  progress: number
-  size?: number
-  strokeWidth?: number
-  color?: string
-}) {
-  const radius = (size - strokeWidth) / 2
-  const circumference = radius * 2 * Math.PI
-  const offset = circumference - (Math.min(progress, 100) / 100) * circumference
-  const isSmall = size <= 60
-
-  return (
-    <div className="progress-ring flex-shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle
-          className="stroke-zinc-800"
-          fill="none"
-          strokeWidth={strokeWidth}
-          r={radius}
-          cx={size / 2}
-          cy={size / 2}
-        />
-        <motion.circle
-          className={color}
-          fill="none"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          r={radius}
-          cx={size / 2}
-          cy={size / 2}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1, ease: 'easeOut' }}
-          style={{
-            strokeDasharray: circumference,
-          }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className={`font-bold ${isSmall ? 'text-xs' : 'text-lg'}`}>{Math.round(progress)}%</span>
-      </div>
-    </div>
-  )
-}
 
 // Goal Card Component - Compact version
 function GoalCard({
@@ -119,9 +77,9 @@ function GoalCard({
 }) {
   const progress = Math.min((current / goal) * 100, 100)
   const colorMap = {
-    strength: { ring: 'stroke-red-500', bg: 'from-red-500/10', border: 'border-red-500/20' },
-    bjj: { ring: 'stroke-purple-500', bg: 'from-purple-500/10', border: 'border-purple-500/20' },
-    cardio: { ring: 'stroke-emerald-500', bg: 'from-emerald-500/10', border: 'border-emerald-500/20' },
+    strength: { ring: '#ef4444', bg: 'from-red-500/10', border: 'border-red-500/20' },
+    bjj: { ring: '#a855f7', bg: 'from-purple-500/10', border: 'border-purple-500/20' },
+    cardio: { ring: '#10b981', bg: 'from-emerald-500/10', border: 'border-emerald-500/20' },
   }
 
   return (
@@ -131,14 +89,14 @@ function GoalCard({
         delay={type === 'strength' ? 0 : type === 'bjj' ? 0.1 : 0.2}
       >
         <div className="flex items-center gap-3">
-          <ProgressRing progress={progress} size={56} strokeWidth={5} color={colorMap[type].ring} />
+          <ProgressRing progress={progress} size={56} strokeWidth={5} color={colorMap[type].ring} showLabel />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <Icon className="w-4 h-4" style={{ color }} />
               <span className="font-medium text-white text-sm">{label}</span>
               {streak > 0 && (
                 <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-500/20 rounded text-xs">
-                  <Flame className="w-3 h-3 text-amber-400" />
+                  <Flame className="w-3 h-3 text-amber-400 animate-pulse-soft" />
                   <span className="font-medium text-amber-400">{streak}w</span>
                 </div>
               )}
@@ -162,6 +120,7 @@ function GoalCard({
 
 
 export default function Dashboard() {
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [bjj, setBjj] = useState<BJJ[]>([])
@@ -188,7 +147,7 @@ export default function Dashboard() {
     setIsRefreshingQuote(false)
   }
 
-  const loadProfileData = async () => {
+  const loadProfileData = useCallback(async () => {
     const userId = await getActiveUserId()
     if (!userId) return
 
@@ -205,14 +164,17 @@ export default function Dashboard() {
       setShowBjjGoal(prof.show_bjj_goal ?? true)
       setShowCardioGoal(prof.show_cardio_goal ?? false)
     }
-  }
+  }, [])
 
   useEffect(() => {
+    let cancelled = false
+
     ;(async () => {
       const userId = await getActiveUserId()
+      if (cancelled) return
       if (!userId) {
         if (!DEMO) {
-          window.location.href = '/login'
+          router.push('/login')
         }
         setLoading(false)
         return
@@ -269,9 +231,11 @@ export default function Dashboard() {
         }
       }
 
-      setLoading(false)
+      if (!cancelled) setLoading(false)
     })()
-  }, [])
+
+    return () => { cancelled = true }
+  }, [loadProfileData, router])
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -283,7 +247,7 @@ export default function Dashboard() {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('focus', handleVisibilityChange)
     }
-  }, [])
+  }, [loadProfileData])
 
   const now = new Date()
   const thisWeekKey = weekKey(now)
@@ -321,7 +285,8 @@ export default function Dashboard() {
     return streak
   }, [wkCounts, weeklyGoal, thisWeekKey])
 
-  const expectedByToday = Math.ceil((weeklyGoal * (dayIndex + 1)) / 7)
+  // On Sunday (day 0), don't expect any workouts yet — the week just started
+  const expectedByToday = dayIndex === 0 ? 0 : Math.ceil((weeklyGoal * dayIndex) / 7)
   const onTrackStrength = thisWeekCount >= expectedByToday
 
   // BJJ stats
@@ -356,7 +321,7 @@ export default function Dashboard() {
     return streak
   }, [bjjWeekCounts, bjjWeeklyGoal, thisWeekKey])
 
-  const bjjExpectedByToday = Math.ceil((bjjWeeklyGoal * (dayIndex + 1)) / 7)
+  const bjjExpectedByToday = dayIndex === 0 ? 0 : Math.ceil((bjjWeeklyGoal * dayIndex) / 7)
   const onTrackBjj = bjjThisWeekCount >= bjjExpectedByToday
 
   // Cardio stats
@@ -391,7 +356,7 @@ export default function Dashboard() {
     return streak
   }, [cardioWeekCounts, cardioWeeklyGoal, thisWeekKey])
 
-  const cardioExpectedByToday = Math.ceil((cardioWeeklyGoal * (dayIndex + 1)) / 7)
+  const cardioExpectedByToday = dayIndex === 0 ? 0 : Math.ceil((cardioWeeklyGoal * dayIndex) / 7)
   const onTrackCardio = cardioThisWeekCount >= cardioExpectedByToday
 
   // Greeting based on time
@@ -523,26 +488,69 @@ export default function Dashboard() {
         </AnimatedCard>
       )}
 
-      {/* Motivational Quote */}
+      {/* Activity Heatmap */}
+      {!loading && (
+        <ActivityHeatmap
+          activities={[
+            ...workouts.map(w => ({ date: w.performed_at.split('T')[0], type: 'strength' as const })),
+            ...bjj.map(b => ({ date: b.performed_at.split('T')[0], type: 'bjj' as const })),
+            ...cardio.map(c => ({ date: c.performed_at.split('T')[0], type: 'cardio' as const })),
+          ]}
+        />
+      )}
+
+      {/* Recent Activity */}
+      {(() => {
+        const recent = [
+          ...workouts.slice(0, 3).map(w => ({ type: 'strength' as const, title: w.title || 'Strength Training', date: w.performed_at })),
+          ...bjj.slice(0, 3).map(b => ({ type: 'bjj' as const, title: b.kind.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()), date: b.performed_at })),
+          ...cardio.slice(0, 3).map(c => ({ type: 'cardio' as const, title: c.activity, date: c.performed_at })),
+        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5)
+
+        if (recent.length === 0) return null
+
+        const typeColors = {
+          strength: 'border-l-red-500 bg-red-500/5',
+          bjj: 'border-l-purple-500 bg-purple-500/5',
+          cardio: 'border-l-emerald-500 bg-emerald-500/5',
+        }
+
+        return (
+          <AnimatedCard delay={0.2}>
+            <h3 className="font-semibold text-white mb-3 text-sm">Recent Activity</h3>
+            <div className="space-y-2">
+              {recent.map((item, i) => (
+                <div key={i} className={`border-l-2 ${typeColors[item.type]} rounded-r-lg px-3 py-2`}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-white">{item.title}</span>
+                    <span className="text-xs text-zinc-500">{new Date(item.date).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </AnimatedCard>
+        )
+      })()}
+
+      {/* Motivational Quote — compact */}
       {todayQuote && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="relative text-center py-6 px-4"
+          className="relative text-center py-4 px-4"
         >
           <button
             onClick={handleRefreshQuote}
             disabled={isRefreshingQuote}
-            className="absolute top-4 right-4 p-2 text-zinc-600 hover:text-zinc-400 transition-colors disabled:opacity-50"
+            className="absolute top-2 right-2 p-1.5 text-zinc-600 hover:text-zinc-400 transition-colors disabled:opacity-50"
             title="Get new quote"
           >
-            <RefreshCw className={`w-4 h-4 ${isRefreshingQuote ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingQuote ? 'animate-spin' : ''}`} />
           </button>
-          <p className="text-zinc-400 italic mb-2 font-serif text-lg leading-relaxed max-w-2xl mx-auto">
-            "{todayQuote.text}"
+          <p className="text-zinc-500 italic text-sm leading-relaxed max-w-xl mx-auto">
+            "{todayQuote.text}" <span className="text-zinc-600 not-italic">— {todayQuote.author}</span>
           </p>
-          <p className="text-zinc-500 text-sm">— {todayQuote.author}</p>
         </motion.div>
       )}
     </div>

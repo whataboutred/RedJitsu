@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { getActiveUserId } from '@/lib/activeUser'
 import { X, Edit3, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/Toast'
 
 type BJJSession = {
   id: string
@@ -20,6 +21,7 @@ export default function BJJDetail({ sessionId, onClose }: { sessionId: string; o
   const [session, setSession] = useState<BJJSession | null>(null)
   const [deleting, setDeleting] = useState(false)
   const router = useRouter()
+  const toast = useToast()
 
   useEffect(() => {
     (async () => {
@@ -56,7 +58,7 @@ export default function BJJDetail({ sessionId, onClose }: { sessionId: string; o
         .eq('user_id', userId)
 
       if (error) {
-        alert('Failed to delete session')
+        toast.error('Failed to delete session')
         console.error('Delete error:', error)
         return
       }
@@ -65,7 +67,7 @@ export default function BJJDetail({ sessionId, onClose }: { sessionId: string; o
       onClose()
       window.location.reload()
     } catch (error) {
-      alert('Failed to delete session')
+      toast.error('Failed to delete session')
       console.error('Delete error:', error)
     } finally {
       setDeleting(false)

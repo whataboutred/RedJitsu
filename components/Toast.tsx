@@ -27,7 +27,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const showToast = useCallback((message: string, type: ToastType, duration = 4000) => {
-    const id = Math.random().toString(36).substring(7)
+    const id = crypto.randomUUID()
     const newToast: Toast = { id, message, type, duration }
 
     setToasts((prev) => [...prev, newToast])
@@ -94,6 +94,8 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -20, scale: 0.95 }}
       transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+      role="alert"
+      aria-live="assertive"
       className={`
         ${colors}
         backdrop-blur-lg border rounded-xl p-4

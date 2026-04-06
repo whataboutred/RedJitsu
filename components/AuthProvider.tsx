@@ -22,7 +22,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const refreshIntervalRef = useRef<NodeJS.Timeout>()
   const lastRefreshRef = useRef<number>(Date.now())
 
-  // Refresh the session
+  const failCountRef = useRef(0)
+
+  // Refresh the session with retry logic
   const refreshSession = useCallback(async () => {
     if (DEMO) return // Skip for demo mode
 
@@ -30,9 +32,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { data, error } = await supabase.auth.getSession()
 
       if (error) {
-        console.warn('Session refresh warning:', error.message)
+        failCountRef.current++
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Session refresh warning:', error.message)
+        }
+        // After 3 consecutive failures, force re-auth
+        if (failCountRef.current >= 3) {
+          await supabase.auth.signOut()
+          window.location.href = '/login'
+        }
         return
       }
+
+      // Reset fail counter on success
+      failCountRef.current = 0
 
       if (data.session) {
         // Session is valid, update last refresh time
@@ -46,14 +59,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           if (expiresAtMs - Date.now() < fiveMinutes) {
             const { error: refreshError } = await supabase.auth.refreshSession()
-            if (refreshError) {
+            if (refreshError && process.env.NODE_ENV === 'development') {
               console.warn('Token refresh warning:', refreshError.message)
             }
           }
         }
       }
     } catch (err) {
-      console.warn('Session check failed:', err)
+      failCountRef.current++
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Session check failed:', err)
+      }
     }
   }, [])
 

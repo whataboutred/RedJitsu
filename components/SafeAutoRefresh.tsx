@@ -56,10 +56,22 @@ export default function SafeAutoRefresh() {
             setUpdateAvailable(true)
             setShowUpdateNotification(true)
 
-            // Only auto-refresh if user has been idle for >15 minutes
+            // Only auto-refresh if user has been idle for >15 minutes AND no active workout
             const checkIdleAndRefresh = () => {
+              // Never reload during an active workout — user would lose their session
+              try {
+                const workoutState = localStorage.getItem('workout-storage')
+                if (workoutState) {
+                  const parsed = JSON.parse(workoutState)
+                  if (parsed?.state?.isWorkoutActive) {
+                    // Workout in progress — check again later, never force reload
+                    setTimeout(checkIdleAndRefresh, 5 * 60 * 1000)
+                    return
+                  }
+                }
+              } catch { /* ignore parse errors */ }
+
               if (isIdle() && document.visibilityState === 'visible') {
-                console.log('Auto-refreshing after idle period')
                 window.location.reload()
               } else {
                 // Check again in 2 minutes if not idle

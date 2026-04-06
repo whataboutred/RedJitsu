@@ -35,8 +35,6 @@ export async function getLastWorkoutSetsForExercises(
   }
 
   try {
-    console.log('[workoutSuggestions] Querying for exercises:', exerciseIds, 'userId:', userId, 'location:', location)
-
     // Query from workouts table to ensure proper date ordering
     // The key fix: ordering by performed_at works correctly when querying from workouts table
     let data: any[] = []
@@ -59,7 +57,6 @@ export async function getLastWorkoutSetsForExercises(
         .limit(50)
 
       data = await querySupabase<any>(query, { timeout: 8000, maxRetries: 2 })
-      console.log('[workoutSuggestions] Query returned:', data.length, 'workouts')
     } catch (queryError: any) {
       console.error('[workoutSuggestions] Query error:', queryError?.message || queryError)
       // Try simpler fallback query without location
@@ -79,7 +76,6 @@ export async function getLastWorkoutSetsForExercises(
           .limit(50)
 
         data = await querySupabase<any>(fallbackQuery, { timeout: 8000, maxRetries: 2 })
-        console.log('[workoutSuggestions] Fallback query returned:', data.length, 'workouts')
       } catch (fallbackError) {
         console.error('[workoutSuggestions] Fallback query also failed:', fallbackError)
         throw fallbackError
@@ -130,7 +126,6 @@ export async function getLastWorkoutSetsForExercises(
             sets: formattedSets,
             fromLocation: workoutLocation,
           })
-          console.log('[workoutSuggestions] Found location-specific data for exercise:', exerciseId, 'from:', workoutLocation)
         }
 
         // Always track the first workout for each exercise (any location)
@@ -153,17 +148,14 @@ export async function getLastWorkoutSetsForExercises(
       if (exerciseMapWithLocation.has(exerciseId)) {
         const data = exerciseMapWithLocation.get(exerciseId)!
         result.set(exerciseId, data.sets)
-        console.log('[workoutSuggestions] Using location-specific data for:', exerciseId)
       }
       // Fall back to any location
       else if (exerciseMapAnyLocation.has(exerciseId)) {
         const data = exerciseMapAnyLocation.get(exerciseId)!
         result.set(exerciseId, data.sets)
-        console.log('[workoutSuggestions] Falling back to any-location data for:', exerciseId, 'from:', data.fromLocation || 'no location')
       }
     }
 
-    console.log('[workoutSuggestions] Returning data for', result.size, 'exercises out of', exerciseIds.length, 'requested')
     return result
   } catch (error) {
     console.error('[workoutSuggestions] Error fetching workout suggestions:', error)

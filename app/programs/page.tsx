@@ -8,6 +8,8 @@ import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabaseClient'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/Toast'
 import { AnimatedCard } from '@/components/ui/Card'
 import {
   Dumbbell,
@@ -80,6 +82,8 @@ const DOWS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] as const
 const CATEGORIES = ['all', 'barbell', 'dumbbell', 'machine', 'cable', 'other'] as const
 
 export default function ProgramsPage() {
+  const router = useRouter()
+  const toast = useToast()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [programs, setPrograms] = useState<Program[]>([])
   const [selected, setSelected] = useState<Program | null>(null)
@@ -194,7 +198,7 @@ export default function ProgramsPage() {
 
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = '/login'; return }
+    if (!user) { router.push('/login'); return }
 
     const { data: ex } = await supabase.from('exercises').select('id,name,category').order('name')
     setExercises((ex || []) as Exercise[])
@@ -329,7 +333,13 @@ export default function ProgramsPage() {
   async function deleteProgram(id: string) {
     const ok = confirm('Delete this program and all its days/templates? This cannot be undone.')
     if (!ok) return
-    
+
+    // If deleting the active program, deactivate it first to avoid broken dashboard state
+    const programToDelete = programs.find(p => p.id === id)
+    if (programToDelete?.is_active) {
+      await supabase.from('programs').update({ is_active: false }).eq('id', id)
+    }
+
     await supabase.from('programs').delete().eq('id', id)
     if (selected?.id === id) setSelected(null)
     await reloadPrograms()
@@ -496,7 +506,7 @@ export default function ProgramsPage() {
   async function addCustomExerciseToDay(dayIndex: number) {
     const exerciseName = search.trim()
     if (!exerciseName) {
-      alert('Enter an exercise name first')
+      toast.warning('Enter an exercise name first')
       return
     }
 
@@ -504,7 +514,7 @@ export default function ProgramsPage() {
     if (newExercise) {
       addExerciseToDay(dayIndex, newExercise)
     } else {
-      alert('Failed to create exercise')
+      toast.error('Failed to create exercise')
     }
   }
 
@@ -513,18 +523,18 @@ export default function ProgramsPage() {
     if (!userId) return
 
     if (!pName.trim()) {
-      alert('Please enter a program name')
+      toast.warning('Please enter a program name')
       return
     }
 
     if (days.length === 0) {
-      alert('Please add at least one training day')
+      toast.warning('Please add at least one training day')
       return
     }
 
     const validDays = days.filter(day => day.items.length > 0)
     if (validDays.length === 0) {
-      alert('Please add exercises to at least one training day')
+      toast.warning('Please add exercises to at least one training day')
       return
     }
 
@@ -533,38 +543,47 @@ export default function ProgramsPage() {
         // Update existing program
         await supabase.from('programs').update({ name: pName }).eq('id', selected.id)
 
-        // Delete existing days and exercises
-        const { data: pd } = await supabase.from('program_days').select('id').eq('program_id', selected.id)
-        const oldDayIds = (pd || []).map(r => r.id)
-        if (oldDayIds.length) {
-          await supabase.from('template_exercises').delete().in('program_day_id', oldDayIds)
-        }
-        await supabase.from('program_days').delete().eq('program_id', selected.id)
-
-        // Create new days and exercises
+        // Create new days first, then delete old ones (prevents data loss on failure)
+        const newDayIds: string[] = []
         for (let i = 0; i < validDays.length; i++) {
           const day = validDays[i]
-          const { data: insDay } = await supabase.from('program_days').insert({
+          const { data: insDay, error: dayError } = await supabase.from('program_days').insert({
             program_id: selected.id,
             name: day.name || `Day ${i + 1}`,
             dows: day.dows,
             order_index: i
           }).select('id').single()
 
-          if (insDay) {
-            for (let j = 0; j < day.items.length; j++) {
-              const item = day.items[j]
-              await supabase.from('template_exercises').insert({
-                program_day_id: insDay.id,
-                exercise_id: item.exercise_id,
-                display_name: item.display_name,
-                default_sets: item.default_sets,
-                default_reps: item.default_reps,
-                set_type: 'working',
-                order_index: j
-              })
+          if (dayError || !insDay) {
+            // Cleanup any newly created days on failure
+            if (newDayIds.length) {
+              await supabase.from('template_exercises').delete().in('program_day_id', newDayIds)
+              await supabase.from('program_days').delete().in('id', newDayIds)
             }
+            throw new Error('Failed to save program days')
           }
+
+          newDayIds.push(insDay.id)
+          for (let j = 0; j < day.items.length; j++) {
+            const item = day.items[j]
+            await supabase.from('template_exercises').insert({
+              program_day_id: insDay.id,
+              exercise_id: item.exercise_id,
+              display_name: item.display_name,
+              default_sets: item.default_sets,
+              default_reps: item.default_reps,
+              set_type: 'working',
+              order_index: j
+            })
+          }
+        }
+
+        // New data created successfully — now delete old days/exercises
+        const { data: pd } = await supabase.from('program_days').select('id').eq('program_id', selected.id)
+        const oldDayIds = (pd || []).map(r => r.id).filter(id => !newDayIds.includes(id))
+        if (oldDayIds.length) {
+          await supabase.from('template_exercises').delete().in('program_day_id', oldDayIds)
+          await supabase.from('program_days').delete().in('id', oldDayIds)
         }
       } else {
         // Create new program
@@ -602,12 +621,12 @@ export default function ProgramsPage() {
         }
       }
 
-      alert('Program saved successfully!')
+      toast.success('Program saved successfully!')
       await reloadPrograms()
       backToList()
     } catch (error) {
       console.error('Save error:', error)
-      alert('Failed to save program')
+      toast.error('Failed to save program')
     }
   }
 

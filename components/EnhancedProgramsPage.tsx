@@ -7,6 +7,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/Toast'
 
 type Exercise = {
   id: string
@@ -63,6 +65,8 @@ type ProgramTemplate = {
 const DOWS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] as const
 
 export default function EnhancedProgramsPage() {
+  const router = useRouter()
+  const toast = useToast()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [programs, setPrograms] = useState<ProgramWithStats[]>([])
   const [selected, setSelected] = useState<Program | null>(null)
@@ -119,7 +123,7 @@ export default function EnhancedProgramsPage() {
 
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = '/login'; return }
+    if (!user) { router.push('/login'); return }
 
     const { data: ex } = await supabase.from('exercises').select('id,name,category').order('name')
     setExercises((ex || []) as Exercise[])
@@ -321,7 +325,7 @@ export default function EnhancedProgramsPage() {
       await reloadPrograms()
     }
 
-    alert('Program saved successfully!')
+    toast.success('Program saved successfully!')
     backToList()
   }
 
