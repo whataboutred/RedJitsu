@@ -1093,8 +1093,6 @@ export default function NewWorkoutPage() {
       }
       if (location) insertData.location = location
 
-      console.log('[saveWorkout] Creating workout:', insertData)
-
       const { data: w, error } = await supabase
         .from('workouts')
         .insert(insertData)
@@ -1106,12 +1104,8 @@ export default function NewWorkoutPage() {
         throw new Error(error?.message || 'Failed to create workout')
       }
 
-      console.log('[saveWorkout] Created workout:', w.id)
-
       // Add exercises and sets (skip exercises with no sets)
       for (const ex of validExercises) {
-        console.log('[saveWorkout] Adding exercise:', ex.name, 'exerciseId:', ex.exerciseId)
-
         const { data: wex, error: wexError } = await supabase
           .from('workout_exercises')
           .insert({ workout_id: w.id, exercise_id: ex.exerciseId, display_name: ex.name })
@@ -1123,13 +1117,9 @@ export default function NewWorkoutPage() {
           throw new Error(`Failed to add ${ex.name}: ${wexError?.message || 'Unknown error'}`)
         }
 
-        console.log('[saveWorkout] Added exercise:', ex.name, 'wex.id:', wex.id)
-
         // Save ALL sets to preserve the workout template structure
         // This ensures incomplete workouts show correct X/Y sets (e.g., 1/3 not 1/1)
         const setsToSave = ex.sets
-
-        console.log('[saveWorkout] Sets to save for', ex.name, ':', setsToSave.length)
 
         if (setsToSave.length > 0) {
           // Try with completed field first, fall back without it if column doesn't exist
@@ -1142,13 +1132,10 @@ export default function NewWorkoutPage() {
             completed: s.isCompleted,
           }))
 
-          console.log('[saveWorkout] Inserting sets:', rowsWithCompleted)
-
           let { error: setsError } = await supabase.from('sets').insert(rowsWithCompleted)
 
           // If the 'completed' column doesn't exist, retry without it
           if (setsError?.message?.includes('completed') && setsError?.message?.includes('schema')) {
-            console.log('[saveWorkout] Retrying without completed field')
             const rowsWithoutCompleted = setsToSave.map((s, idx) => ({
               workout_exercise_id: wex.id,
               set_index: idx + 1,
@@ -1165,7 +1152,6 @@ export default function NewWorkoutPage() {
             throw new Error(`Failed to save sets for ${ex.name}: ${setsError.message || 'Unknown error'}`)
           }
 
-          console.log('[saveWorkout] Saved', setsToSave.length, 'sets for', ex.name)
         }
       }
 
@@ -1179,8 +1165,6 @@ export default function NewWorkoutPage() {
         .from('sets')
         .select('id')
         .in('workout_exercise_id', verifyWex?.map(we => we.id) || [])
-
-      console.log('[saveWorkout] Verification - workout_exercises:', verifyWex?.length, 'sets:', verifySets?.length)
 
       if (!verifyWex?.length) {
         console.error('[saveWorkout] WARNING: No workout_exercises found after save!')

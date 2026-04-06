@@ -60,8 +60,6 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         .select('id, exercise_id, display_name, order_index')
         .eq('workout_id', workoutId)
 
-      console.log('[WorkoutDetail] Exercise data:', exerciseData, 'error:', exerciseError)
-
       if (exerciseData && exerciseData.length > 0) {
         // Build exercise name map
         const exerciseNameMap: Exercise[] = exerciseData.map((wex: any) => ({
@@ -78,8 +76,6 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
           .in('workout_exercise_id', wexIds)
           .order('set_index')
 
-        console.log('[WorkoutDetail] Sets data:', setsData, 'error:', setsError)
-
         // Build workout_exercise_id to exercise_id map
         const wexToExercise = new Map(exerciseData.map((wex: any) => [wex.id, wex.exercise_id]))
 
@@ -93,10 +89,8 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
           set_index: set.set_index
         }))
 
-        console.log('[WorkoutDetail] Total sets found:', allSets.length)
         setSets(allSets)
       } else {
-        console.log('[WorkoutDetail] No workout_exercises found')
         setSets([])
       }
 
