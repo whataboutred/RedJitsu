@@ -34,9 +34,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
   useEffect(() => {
     (async () => {
       const userId = await getActiveUserId()
-      console.log('[WorkoutDetail] Loading workout:', workoutId, 'userId:', userId)
       if (!userId) {
-        console.log('[WorkoutDetail] No userId, aborting')
         return
       }
 
@@ -48,11 +46,8 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         .eq('user_id', userId)
         .limit(1)
 
-      console.log('[WorkoutDetail] Workout query result:', workoutResults, 'error:', workoutError)
-
       const workoutData = workoutResults?.[0]
       if (!workoutData) {
-        console.log('[WorkoutDetail] Workout not found. userId:', userId, 'workoutId:', workoutId)
         setLoading(false)
         return
       }
