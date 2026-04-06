@@ -3,6 +3,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { buildAnalyticsDigest } from '@/lib/analyticsDigest'
 
+const RATE_LIMIT_SECONDS = 300 // 5 minute cooldown between refreshes
+
 const SYSTEM_PROMPT = `You are a strength & conditioning coach analyzing a trainee's workout data from the last 90 days. Give specific, actionable insights based on their actual numbers.
 
 Structure your response with these sections using markdown headers:
@@ -56,7 +58,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
     }
 
-    // Check for cached insight (less than 24 hours old)
+    // Check for cached insight
     const { data: cached } = await supabase
       .from('ai_insights')
       .select('content, created_at')
@@ -64,10 +66,21 @@ export async function POST(req: NextRequest) {
       .eq('insight_type', 'full')
       .single()
 
-    if (cached && !body.forceRefresh) {
+    if (cached) {
       const cacheAge = Date.now() - new Date(cached.created_at).getTime()
       const twentyFourHours = 24 * 60 * 60 * 1000
-      if (cacheAge < twentyFourHours) {
+
+      // Rate limit: reject forced refreshes within cooldown period
+      if (body.forceRefresh && cacheAge < RATE_LIMIT_SECONDS * 1000) {
+        const waitSeconds = Math.ceil((RATE_LIMIT_SECONDS * 1000 - cacheAge) / 1000)
+        return NextResponse.json(
+          { error: `Please wait ${Math.ceil(waitSeconds / 60)} more minute(s) before refreshing.` },
+          { status: 429 }
+        )
+      }
+
+      // Serve cache if fresh and not force-refreshing
+      if (!body.forceRefresh && cacheAge < twentyFourHours) {
         return NextResponse.json({
           content: cached.content,
           cached: true,
@@ -76,8 +89,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Build the analytics digest
-    const digest = await buildAnalyticsDigest(user.id, accessToken)
+    // Build the analytics digest (RLS ensures only this user's data is returned)
+    const digest = await buildAnalyticsDigest(accessToken)
 
     // Check if there's enough data to analyze
     const totalActivity = digest.strength.totalWorkouts + digest.bjj.totalSessions + digest.cardio.totalSessions
@@ -89,7 +102,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Call Claude Haiku
+    // Call Claude Haiku with timeout
     const anthropic = new Anthropic({ apiKey })
 
     const message = await anthropic.messages.create({
@@ -99,15 +112,15 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: `Here is my training data from the last 90 days:\n\n${JSON.stringify(digest, null, 2)}`,
+          content: `Here is my training data from the last 90 days:\n\n${JSON.stringify(digest)}`,
         },
       ],
-    })
+    }, { timeout: 15000 })
 
     const content = message.content[0].type === 'text' ? message.content[0].text : ''
 
-    // Cache the result (upsert)
-    await supabase
+    // Cache the result (upsert) — log on failure but don't block response
+    const { error: cacheError } = await supabase
       .from('ai_insights')
       .upsert(
         {
@@ -119,6 +132,10 @@ export async function POST(req: NextRequest) {
         { onConflict: 'user_id,insight_type' }
       )
 
+    if (cacheError) {
+      console.warn('Failed to cache AI insight:', cacheError.message)
+    }
+
     return NextResponse.json({
       content,
       cached: false,
@@ -127,7 +144,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Insights API error:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to generate insights' },
+      { error: 'Failed to generate insights. Please try again later.' },
       { status: 500 }
     )
   }
