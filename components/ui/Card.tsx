@@ -11,10 +11,10 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const cardVariants = {
-  default: 'bg-zinc-900/80 border-white/5',
-  elevated: 'bg-zinc-800/90 border-white/10 shadow-card-hover',
-  outline: 'bg-transparent border-zinc-700',
-  ghost: 'bg-zinc-900/40 border-transparent',
+  default: 'bg-surface/80 border-white/[0.07]',
+  elevated: 'bg-surface-elevated/90 border-white/10 shadow-card-hover',
+  outline: 'bg-transparent border-white/10',
+  ghost: 'bg-surface/40 border-transparent',
 };
 
 const paddingVariants = {
@@ -41,7 +41,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       transition-all duration-200
       ${cardVariants[variant]}
       ${paddingVariants[padding]}
-      ${interactive ? 'cursor-pointer hover:bg-zinc-800/90 hover:border-white/10 active:scale-[0.99]' : ''}
+      ${interactive ? 'cursor-pointer hover:bg-surface-elevated/90 hover:border-red-500/10 active:scale-[0.99]' : ''}
       ${className}
     `;
 
@@ -90,7 +90,7 @@ export const AnimatedCard = forwardRef<HTMLDivElement, AnimatedCardProps>(
           transition-colors duration-200
           ${cardVariants[variant]}
           ${paddingVariants[padding]}
-          ${interactive ? 'cursor-pointer hover:bg-zinc-800/90 hover:border-white/10' : ''}
+          ${interactive ? 'cursor-pointer hover:bg-surface-elevated/90 hover:border-red-500/10' : ''}
           ${className}
         `}
         {...props}

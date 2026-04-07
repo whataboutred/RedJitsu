@@ -54,7 +54,7 @@ function DesktopHeader({ signOut }: { signOut: () => Promise<void> }) {
   ]
 
   return (
-    <header className="hidden md:block sticky top-0 z-50 bg-brand-dark/80 backdrop-blur-lg border-b border-white/5">
+    <header className="hidden md:block sticky top-0 z-50 bg-brand-dark/80 backdrop-blur-lg border-b border-red-500/10">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -84,7 +84,7 @@ function DesktopHeader({ signOut }: { signOut: () => Promise<void> }) {
                     flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium
                     transition-all duration-200
                     ${isActive
-                      ? 'bg-white/10 text-white'
+                      ? 'bg-brand-red/10 text-white border-b-2 border-brand-red'
                       : 'text-zinc-400 hover:text-white hover:bg-white/5'
                     }
                   `}
@@ -100,7 +100,7 @@ function DesktopHeader({ signOut }: { signOut: () => Promise<void> }) {
           <div className="flex items-center gap-2">
             <Link
               href="/workouts/new"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-red text-white font-medium hover:bg-red-600 transition-colors"
+              className="btn text-sm"
             >
               <Dumbbell className="w-4 h-4" />
               Start Workout
@@ -123,7 +123,7 @@ function DesktopHeader({ signOut }: { signOut: () => Promise<void> }) {
 function MobileHeader() {
   return (
     <header
-      className="md:hidden sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-white/5"
+      className="md:hidden sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-red-500/10"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       <div className="flex items-center justify-between px-4 h-14">
@@ -156,7 +156,7 @@ function BottomNav() {
   ]
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-900/95 backdrop-blur-lg border-t border-white/5 pb-safe-bottom">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-lg border-t border-red-500/10 pb-safe-bottom">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const Icon = item.icon
@@ -167,10 +167,13 @@ function BottomNav() {
               href={item.href}
               className={`
                 flex flex-col items-center justify-center gap-1 flex-1 py-2
-                transition-colors duration-200
+                transition-colors duration-200 relative
                 ${isActive ? 'text-brand-red' : 'text-zinc-500'}
               `}
             >
+              {isActive && (
+                <div className="absolute top-0 w-8 h-0.5 bg-brand-red rounded-full" />
+              )}
               <Icon className="w-5 h-5" />
               <span className="text-2xs font-medium">{item.label}</span>
             </Link>
@@ -254,8 +257,8 @@ function QuickActionFAB() {
           flex items-center justify-center
           shadow-lg transition-all duration-200
           ${isOpen
-            ? 'bg-zinc-800 rotate-45'
-            : 'bg-brand-red shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40'
+            ? 'bg-surface-elevated rotate-45'
+            : 'bg-brand-red shadow-glow-red hover:shadow-xl hover:shadow-red-500/40'
           }
         `}
         whileTap={{ scale: 0.95 }}

@@ -35,7 +35,7 @@ export const Skeleton = ({
         {Array.from({ length: lines }).map((_, i) => (
           <div
             key={i}
-            className={`bg-zinc-800 animate-pulse ${variants[variant]} ${className}`}
+            className={`bg-surface-elevated animate-pulse ${variants[variant]} ${className}`}
             style={{
               ...style,
               width: i === lines - 1 ? '75%' : style.width,
@@ -48,7 +48,7 @@ export const Skeleton = ({
 
   return (
     <div
-      className={`bg-zinc-800 animate-pulse ${variants[variant]} ${className}`}
+      className={`bg-surface-elevated animate-pulse ${variants[variant]} ${className}`}
       style={style}
     />
   );
@@ -57,7 +57,7 @@ export const Skeleton = ({
 // Skeleton Card
 export const SkeletonCard = ({ className = '' }: { className?: string }) => {
   return (
-    <div className={`bg-zinc-900/80 rounded-2xl p-4 border border-white/5 ${className}`}>
+    <div className={`bg-surface/80 rounded-2xl p-4 border border-white/[0.07] ${className}`}>
       <div className="flex items-start gap-3">
         <Skeleton variant="circular" width={40} height={40} />
         <div className="flex-1 space-y-2">
@@ -76,8 +76,8 @@ export const SkeletonCard = ({ className = '' }: { className?: string }) => {
 // Skeleton Exercise Card
 export const SkeletonExerciseCard = () => {
   return (
-    <div className="bg-zinc-900 rounded-2xl overflow-hidden border border-white/5">
-      <div className="p-4 bg-zinc-800/50">
+    <div className="bg-surface rounded-2xl overflow-hidden border border-white/[0.07]">
+      <div className="p-4 bg-surface-elevated/50">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <Skeleton width={150} height={18} />
