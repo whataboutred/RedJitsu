@@ -125,7 +125,7 @@ function RestTimer({ onComplete }: { onComplete?: () => void }) {
       <div className="flex items-center gap-2">
         <button
           onClick={() => setIsRunning(!isRunning)}
-          className="p-2 rounded-full bg-zinc-800 hover:bg-zinc-700"
+          className="p-2 rounded-full bg-surface-elevated hover:bg-surface-pressed"
         >
           {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
         </button>
@@ -134,7 +134,7 @@ function RestTimer({ onComplete }: { onComplete?: () => void }) {
             setSeconds(initialSeconds)
             setIsRunning(false)
           }}
-          className="p-2 rounded-full bg-zinc-800 hover:bg-zinc-700"
+          className="p-2 rounded-full bg-surface-elevated hover:bg-surface-pressed"
         >
           <RotateCcw className="w-4 h-4" />
         </button>
@@ -143,7 +143,7 @@ function RestTimer({ onComplete }: { onComplete?: () => void }) {
             setSeconds(initialSeconds)
             setIsRunning(false)
           }}
-          className="p-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-red-400"
+          className="p-2 rounded-full bg-surface-elevated hover:bg-surface-pressed text-red-400"
         >
           <X className="w-4 h-4" />
         </button>

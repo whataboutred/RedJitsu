@@ -82,7 +82,7 @@ h1, h2, h3, h4, h5, h6 {
 .btn-secondary {
   @apply inline-flex items-center justify-center gap-2;
   @apply rounded-xl px-5 py-3 font-semibold;
-  @apply bg-surface-elevated text-white hover:bg-surface-pressed active:bg-zinc-600;
+  @apply bg-surface-elevated text-white hover:bg-surface-pressed active:bg-surface-pressed;
   @apply transition-all duration-200 ease-out;
   @apply active:scale-[0.98];
   @apply border border-white/10;
@@ -434,7 +434,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .progress-bar {
-  @apply h-2 bg-zinc-800 rounded-full overflow-hidden;
+  @apply h-2 bg-surface-elevated rounded-full overflow-hidden;
 }
 
 .progress-bar-fill {

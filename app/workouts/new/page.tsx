@@ -126,7 +126,7 @@ function RestTimer({ onComplete }: { onComplete?: () => void }) {
       <div className="flex items-center gap-2">
         <button
           onClick={() => setIsRunning(!isRunning)}
-          className="p-2 rounded-full bg-zinc-800 hover:bg-zinc-700"
+          className="p-2 rounded-full bg-surface-elevated hover:bg-surface-pressed"
         >
           {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
         </button>
@@ -135,7 +135,7 @@ function RestTimer({ onComplete }: { onComplete?: () => void }) {
             setSeconds(initialSeconds)
             setIsRunning(false)
           }}
-          className="p-2 rounded-full bg-zinc-800 hover:bg-zinc-700"
+          className="p-2 rounded-full bg-surface-elevated hover:bg-surface-pressed"
         >
           <RotateCcw className="w-4 h-4" />
         </button>
@@ -144,7 +144,7 @@ function RestTimer({ onComplete }: { onComplete?: () => void }) {
             setSeconds(initialSeconds)
             setIsRunning(false)
           }}
-          className="p-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-red-400"
+          className="p-2 rounded-full bg-surface-elevated hover:bg-surface-pressed text-red-400"
         >
           <X className="w-4 h-4" />
         </button>
@@ -1589,7 +1589,7 @@ export default function NewWorkoutPage() {
                       setLoadingTemplate(false)
                     }
                   }}
-                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 transition-colors text-left"
+                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-surface-elevated/50 hover:bg-surface-elevated transition-colors text-left"
                 >
                   <Calendar className="w-5 h-5 text-brand-red" />
                   <span className="font-medium">{day.name}</span>
@@ -1641,7 +1641,7 @@ export default function NewWorkoutPage() {
                       setLoadingTemplate(false)
                     }
                   }}
-                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 transition-colors text-left disabled:opacity-50"
+                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-surface-elevated/50 hover:bg-surface-elevated transition-colors text-left disabled:opacity-50"
                 >
                   <FileText className={`w-5 h-5 text-zinc-400 ${loadingTemplate ? 'animate-pulse' : ''}`} />
                   <span className="font-medium">{prog.name}</span>

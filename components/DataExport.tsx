@@ -219,8 +219,8 @@ export default function DataExport() {
           onClick={() => handleExport('csv')}
           disabled={loading !== null}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
-            bg-zinc-800 border border-white/10 text-white text-sm font-medium
-            hover:bg-zinc-700 hover:border-red-500/30 transition-all duration-200
+            bg-surface-elevated border border-white/10 text-white text-sm font-medium
+            hover:bg-surface-pressed hover:border-red-500/30 transition-all duration-200
             disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading === 'csv' ? (
@@ -235,8 +235,8 @@ export default function DataExport() {
           onClick={() => handleExport('json')}
           disabled={loading !== null}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
-            bg-zinc-800 border border-white/10 text-white text-sm font-medium
-            hover:bg-zinc-700 hover:border-red-500/30 transition-all duration-200
+            bg-surface-elevated border border-white/10 text-white text-sm font-medium
+            hover:bg-surface-pressed hover:border-red-500/30 transition-all duration-200
             disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading === 'json' ? (

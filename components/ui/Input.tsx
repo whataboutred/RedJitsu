@@ -111,7 +111,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
               ${sizes.button} rounded-full
               bg-surface-elevated text-white font-bold text-xl
               flex items-center justify-center
-              hover:bg-surface-pressed active:bg-zinc-600 active:scale-95
+              hover:bg-surface-pressed active:bg-surface-pressed active:scale-95
               transition-all duration-150
               disabled:opacity-30 disabled:cursor-not-allowed
             `}
@@ -148,7 +148,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
               ${sizes.button} rounded-full
               bg-surface-elevated text-white font-bold text-xl
               flex items-center justify-center
-              hover:bg-surface-pressed active:bg-zinc-600 active:scale-95
+              hover:bg-surface-pressed active:bg-surface-pressed active:scale-95
               transition-all duration-150
               disabled:opacity-30 disabled:cursor-not-allowed
             `}
