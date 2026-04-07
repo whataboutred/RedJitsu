@@ -190,7 +190,7 @@ function QuickActionFAB() {
   const pathname = usePathname()
 
   // Don't show FAB on certain pages
-  if (pathname?.includes('/workouts/new') || pathname?.includes('/workouts/edit')) {
+  if (pathname?.includes('/workouts/new') || pathname?.includes('/workouts/edit') || pathname === '/settings') {
     return null
   }
 
