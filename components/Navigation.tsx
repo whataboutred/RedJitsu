@@ -215,7 +215,7 @@ function QuickActionFAB() {
       {/* Action Buttons */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed bottom-28 md:bottom-8 right-1/2 translate-x-1/2 md:right-4 md:translate-x-0 z-50 flex flex-col-reverse items-center gap-3">
+          <div className="fixed bottom-36 md:bottom-24 right-1/2 translate-x-1/2 md:right-4 md:translate-x-0 z-50 flex flex-col-reverse items-center gap-3">
             {actions.map((action, index) => {
               const Icon = action.icon
               return (
