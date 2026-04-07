@@ -907,7 +907,7 @@ function HistoryClient() {
       case 'strength': return { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' }
       case 'bjj': return { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' }
       case 'cardio': return { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30' }
-      default: return { bg: 'bg-zinc-500/20', text: 'text-zinc-400', border: 'border-zinc-500/30' }
+      default: return { bg: 'bg-zinc-500/20', text: 'text-zinc-500', border: 'border-zinc-500/30' }
     }
   }
 
@@ -916,18 +916,18 @@ function HistoryClient() {
   return (
     <div className="min-h-screen bg-brand-dark pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-white/5">
+      <div className="sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-red-500/10">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-white">Analytics</h1>
-              <p className="text-sm text-zinc-400 mt-0.5">Track your progress</p>
+              <p className="text-sm text-zinc-500 mt-0.5">Track your progress</p>
             </div>
             <div className="flex gap-2">
               <button
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedView === 'analytics'
                   ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                  : 'text-zinc-400 hover:text-white'
+                  : 'text-zinc-500 hover:text-white'
                   }`}
                 onClick={() => setSelectedView('analytics')}
               >
@@ -937,7 +937,7 @@ function HistoryClient() {
               <button
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedView === 'workouts'
                   ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                  : 'text-zinc-400 hover:text-white'
+                  : 'text-zinc-500 hover:text-white'
                   }`}
                 onClick={() => setSelectedView('workouts')}
               >
@@ -970,7 +970,7 @@ function HistoryClient() {
             {!loading && workouts.length === 0 && bjj.length === 0 && cardio.length === 0 && (
               <AnimatedCard className="text-center py-10">
                 <BarChart3 className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                <h3 className="font-semibold text-zinc-400 mb-2">No activity data yet</h3>
+                <h3 className="font-semibold text-zinc-500 mb-2">No activity data yet</h3>
                 <p className="text-zinc-500 text-sm mb-4">Start logging workouts, BJJ sessions, or cardio to see your analytics here.</p>
               </AnimatedCard>
             )}
@@ -988,7 +988,7 @@ function HistoryClient() {
               {exerciseProgress.length === 0 ? (
                 <div className="text-center py-8">
                   <Dumbbell className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                  <p className="text-zinc-400">
+                  <p className="text-zinc-500">
                     {hasActiveProgram
                       ? 'Complete more workouts with your program exercises to see progress!'
                       : 'Complete a few workouts to see your progress!'}
@@ -1020,7 +1020,7 @@ function HistoryClient() {
                                 +{exercise.percentChange}%
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-zinc-400">
+                            <div className="flex items-center gap-2 text-xs text-zinc-500">
                               <span>{exercise.firstWeight} → {exercise.latestWeight} lb</span>
                               <span className="text-zinc-600">•</span>
                               <span>{exercise.sessionCount} sessions</span>
@@ -1029,7 +1029,7 @@ function HistoryClient() {
                         ))}
                       </div>
                     ) : (
-                      <div className="p-4 bg-zinc-900/50 rounded-xl text-center">
+                      <div className="p-4 bg-surface/50 rounded-xl text-center">
                         <p className="text-zinc-500 text-sm">No improving exercises yet</p>
                       </div>
                     )}
@@ -1072,7 +1072,7 @@ function HistoryClient() {
                                 </span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-zinc-400">
+                            <div className="flex items-center gap-2 text-xs text-zinc-500">
                               <span>{exercise.firstWeight} → {exercise.latestWeight} lb</span>
                               <span className="text-zinc-600">•</span>
                               <span>{exercise.trend === 'stagnant' ? 'Stagnant' : 'Regressed'}</span>
@@ -1081,7 +1081,7 @@ function HistoryClient() {
                         ))}
                       </div>
                     ) : (
-                      <div className="p-4 bg-zinc-900/50 rounded-xl text-center">
+                      <div className="p-4 bg-surface/50 rounded-xl text-center">
                         <p className="text-zinc-500 text-sm">All exercises progressing well!</p>
                       </div>
                     )}
@@ -1108,10 +1108,10 @@ function HistoryClient() {
                     <div className="flex items-center justify-center gap-1">
                       <Flame className="w-4 h-4 text-amber-400" />
                       <span className="text-xl font-bold text-white">{streakData.strength.current}</span>
-                      <span className="text-xs text-zinc-400">wks</span>
+                      <span className="text-xs text-zinc-500">wks</span>
                     </div>
                     <div className="mt-2 text-xs">
-                      <span className="text-zinc-400">{streakData.strength.thisWeek}/{streakData.strength.goal} this week</span>
+                      <span className="text-zinc-500">{streakData.strength.thisWeek}/{streakData.strength.goal} this week</span>
                       <div className={`mt-1 ${streakData.strength.isOnTrack ? 'text-emerald-400' : 'text-amber-400'}`}>
                         {streakData.strength.isOnTrack ? 'On Track' : 'Catch Up'}
                       </div>
@@ -1127,10 +1127,10 @@ function HistoryClient() {
                     <div className="flex items-center justify-center gap-1">
                       <Flame className="w-4 h-4 text-amber-400" />
                       <span className="text-xl font-bold text-white">{streakData.bjj.current}</span>
-                      <span className="text-xs text-zinc-400">wks</span>
+                      <span className="text-xs text-zinc-500">wks</span>
                     </div>
                     <div className="mt-2 text-xs">
-                      <span className="text-zinc-400">{streakData.bjj.thisWeek}/{streakData.bjj.goal} this week</span>
+                      <span className="text-zinc-500">{streakData.bjj.thisWeek}/{streakData.bjj.goal} this week</span>
                       <div className={`mt-1 ${streakData.bjj.isOnTrack ? 'text-emerald-400' : 'text-amber-400'}`}>
                         {streakData.bjj.isOnTrack ? 'On Track' : 'Catch Up'}
                       </div>
@@ -1146,10 +1146,10 @@ function HistoryClient() {
                     <div className="flex items-center justify-center gap-1">
                       <Flame className="w-4 h-4 text-amber-400" />
                       <span className="text-xl font-bold text-white">{streakData.cardio.current}</span>
-                      <span className="text-xs text-zinc-400">wks</span>
+                      <span className="text-xs text-zinc-500">wks</span>
                     </div>
                     <div className="mt-2 text-xs">
-                      <span className="text-zinc-400">{streakData.cardio.thisWeek}/{streakData.cardio.goal} this week</span>
+                      <span className="text-zinc-500">{streakData.cardio.thisWeek}/{streakData.cardio.goal} this week</span>
                       <div className={`mt-1 ${streakData.cardio.isOnTrack ? 'text-emerald-400' : 'text-amber-400'}`}>
                         {streakData.cardio.isOnTrack ? 'On Track' : 'Catch Up'}
                       </div>
@@ -1180,10 +1180,10 @@ function HistoryClient() {
                         transition={{ delay: index * 0.05 }}
                         className="flex items-center gap-3"
                       >
-                        <div className="w-16 text-xs text-zinc-400">
+                        <div className="w-16 text-xs text-zinc-500">
                           {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </div>
-                        <div className="flex-1 h-6 bg-zinc-900 rounded-full overflow-hidden flex">
+                        <div className="flex-1 h-6 bg-surface rounded-full overflow-hidden flex">
                           <motion.div
                             className="bg-gradient-to-r from-red-500 to-orange-500 h-full"
                             initial={{ width: 0 }}
@@ -1197,7 +1197,7 @@ function HistoryClient() {
                             transition={{ delay: 0.3 + index * 0.05, duration: 0.5 }}
                           />
                         </div>
-                        <div className="w-14 text-xs text-zinc-400 text-right">
+                        <div className="w-14 text-xs text-zinc-500 text-right">
                           {day.totalSets} sets
                         </div>
                       </motion.div>
@@ -1205,7 +1205,7 @@ function HistoryClient() {
                   })}
                 </div>
 
-                <div className="flex gap-4 text-xs text-zinc-500 mt-4 pt-4 border-t border-white/5">
+                <div className="flex gap-4 text-xs text-zinc-500 mt-4 pt-4 border-t border-red-500/10">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-gradient-to-r from-red-500 to-orange-500" />
                     Upper Body
@@ -1227,7 +1227,7 @@ function HistoryClient() {
                   </div>
                 </div>
                 <p className="text-2xl font-bold text-red-400">{workoutStats.thisWeek}</p>
-                <p className="text-xs text-zinc-400">This Week</p>
+                <p className="text-xs text-zinc-500">This Week</p>
               </AnimatedCard>
 
               <AnimatedCard delay={0.3} className="text-center">
@@ -1237,7 +1237,7 @@ function HistoryClient() {
                   </div>
                 </div>
                 <p className="text-2xl font-bold text-blue-400">{workoutStats.thisMonth}</p>
-                <p className="text-xs text-zinc-400">This Month</p>
+                <p className="text-xs text-zinc-500">This Month</p>
               </AnimatedCard>
 
               <AnimatedCard delay={0.35} className="text-center">
@@ -1247,7 +1247,7 @@ function HistoryClient() {
                   </div>
                 </div>
                 <p className="text-2xl font-bold text-emerald-400">{workoutStats.avgPerWeek}</p>
-                <p className="text-xs text-zinc-400">Avg/Week</p>
+                <p className="text-xs text-zinc-500">Avg/Week</p>
               </AnimatedCard>
 
               <AnimatedCard delay={0.4} className="text-center">
@@ -1257,7 +1257,7 @@ function HistoryClient() {
                   </div>
                 </div>
                 <p className="text-2xl font-bold text-purple-400">{workoutStats.total}</p>
-                <p className="text-xs text-zinc-400">Total</p>
+                <p className="text-xs text-zinc-500">Total</p>
               </AnimatedCard>
             </div>
           </>
@@ -1272,7 +1272,7 @@ function HistoryClient() {
                   onClick={() => setActivityFilter(filter)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activityFilter === filter
                     ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                    : 'bg-zinc-900 text-zinc-400 hover:text-white'
+                    : 'bg-surface text-zinc-500 hover:text-white'
                     }`}
                 >
                   {filter === 'all' && 'All'}
@@ -1288,7 +1288,7 @@ function HistoryClient() {
                     key={filter}
                     onClick={() => setWorkoutFilter(filter)}
                     className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${workoutFilter === filter
-                      ? 'bg-zinc-700 text-white'
+                      ? 'bg-surface-pressed text-white'
                       : 'text-zinc-500 hover:text-white'
                       }`}
                   >
@@ -1309,7 +1309,7 @@ function HistoryClient() {
                       if (!customDateTo) setCustomDateTo(new Date().toISOString().split('T')[0])
                     }}
                     max={customDateTo || new Date().toISOString().split('T')[0]}
-                    className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white"
+                    className="bg-surface-elevated border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white"
                   />
                   <span className="text-zinc-500 text-xs">to</span>
                   <input
@@ -1318,7 +1318,7 @@ function HistoryClient() {
                     onChange={(e) => setCustomDateTo(e.target.value)}
                     min={customDateFrom}
                     max={new Date().toISOString().split('T')[0]}
-                    className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white"
+                    className="bg-surface-elevated border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white"
                   />
                 </div>
               )}
@@ -1330,7 +1330,7 @@ function HistoryClient() {
                 <AnimatedCard>
                   <div className="text-center py-8">
                     <Calendar className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                    <p className="text-zinc-400">No activities found</p>
+                    <p className="text-zinc-500">No activities found</p>
                   </div>
                 </AnimatedCard>
               ) : (
@@ -1362,7 +1362,7 @@ function HistoryClient() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-white truncate">{activity.title}</p>
-                            <p className="text-xs text-zinc-400">
+                            <p className="text-xs text-zinc-500">
                               {activity.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                               {activity.subtitle && ` • ${activity.subtitle}`}
                             </p>

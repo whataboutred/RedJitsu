@@ -66,7 +66,7 @@ function Toggle({ enabled, onChange, color = 'bg-red-500' }: {
       role="switch"
       aria-checked={enabled}
       onClick={() => onChange(!enabled)}
-      className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${enabled ? color : 'bg-zinc-700'
+      className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${enabled ? color : 'bg-surface-pressed'
         }`}
     >
       <motion.span
@@ -333,10 +333,10 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-brand-dark pb-32">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-white/5">
+      <div className="sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-red-500/10">
         <div className="px-4 py-4">
           <h1 className="text-2xl font-bold text-white">Settings</h1>
-          <p className="text-sm text-zinc-400 mt-0.5">Customize your experience</p>
+          <p className="text-sm text-zinc-500 mt-0.5">Customize your experience</p>
         </div>
       </div>
 
@@ -350,7 +350,7 @@ export default function SettingsPage() {
             <div className="flex-1">
               <p className="text-lg font-semibold text-white">{userEmail || 'User'}</p>
               {userStats && (
-                <p className="text-sm text-zinc-400">
+                <p className="text-sm text-zinc-500">
                   Member since {new Date(userStats.joinedDate).toLocaleDateString()}
                 </p>
               )}
@@ -371,28 +371,28 @@ export default function SettingsPage() {
                   <ProgressRing progress={(userStats.totalWorkouts / 20) * 100} color="#ef4444" />
                   <span className="absolute text-sm font-bold text-white">{userStats.totalWorkouts}</span>
                 </div>
-                <p className="text-xs text-zinc-400 mt-1">Workouts</p>
+                <p className="text-xs text-zinc-500 mt-1">Workouts</p>
               </div>
               <div className="text-center">
                 <div className="relative inline-flex items-center justify-center">
                   <ProgressRing progress={(userStats.totalBjjSessions / 10) * 100} color="#a855f7" />
                   <span className="absolute text-sm font-bold text-white">{userStats.totalBjjSessions}</span>
                 </div>
-                <p className="text-xs text-zinc-400 mt-1">BJJ</p>
+                <p className="text-xs text-zinc-500 mt-1">BJJ</p>
               </div>
               <div className="text-center">
                 <div className="relative inline-flex items-center justify-center">
                   <ProgressRing progress={(userStats.currentStreak / 7) * 100} color="#10b981" />
                   <span className="absolute text-sm font-bold text-white">{userStats.currentStreak}</span>
                 </div>
-                <p className="text-xs text-zinc-400 mt-1">Streak</p>
+                <p className="text-xs text-zinc-500 mt-1">Streak</p>
               </div>
               <div className="text-center">
                 <div className="relative inline-flex items-center justify-center">
                   <ProgressRing progress={(userStats.avgWeeklyWorkouts / 7) * 100} color="#3b82f6" />
                   <span className="absolute text-sm font-bold text-white">{userStats.avgWeeklyWorkouts}</span>
                 </div>
-                <p className="text-xs text-zinc-400 mt-1">Avg/Week</p>
+                <p className="text-xs text-zinc-500 mt-1">Avg/Week</p>
               </div>
             </div>
           </AnimatedCard>
@@ -409,7 +409,7 @@ export default function SettingsPage() {
               onClick={() => setUnit('lb')}
               className={`p-4 rounded-xl border-2 transition-all ${unit === 'lb'
                 ? 'bg-red-500/20 border-red-500/50 text-white'
-                : 'bg-zinc-900/50 border-white/5 text-zinc-400 hover:border-white/20'
+                : 'bg-surface/50 border-white/[0.07] text-zinc-500 hover:border-white/20'
                 }`}
             >
               <p className="font-semibold">Pounds (lb)</p>
@@ -419,7 +419,7 @@ export default function SettingsPage() {
               onClick={() => setUnit('kg')}
               className={`p-4 rounded-xl border-2 transition-all ${unit === 'kg'
                 ? 'bg-red-500/20 border-red-500/50 text-white'
-                : 'bg-zinc-900/50 border-white/5 text-zinc-400 hover:border-white/20'
+                : 'bg-surface/50 border-white/[0.07] text-zinc-500 hover:border-white/20'
                 }`}
             >
               <p className="font-semibold">Kilograms (kg)</p>
@@ -437,7 +437,7 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-zinc-400">Sessions per week</p>
+                <p className="text-sm text-zinc-500">Sessions per week</p>
                 <span className="text-lg font-bold text-red-400">{weeklyGoal}</span>
               </div>
               <input
@@ -446,7 +446,7 @@ export default function SettingsPage() {
                 max={14}
                 value={weeklyGoal}
                 onChange={(e) => setWeeklyGoal(Number(e.target.value))}
-                className="w-full h-2 bg-zinc-800 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-red-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer"
+                className="w-full h-2 bg-surface-elevated rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-red-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer"
               />
             </div>
           </div>
@@ -461,7 +461,7 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-zinc-400">Sessions per week</p>
+                <p className="text-sm text-zinc-500">Sessions per week</p>
                 <span className="text-lg font-bold text-purple-400">{bjjWeeklyGoal}</span>
               </div>
               <input
@@ -470,7 +470,7 @@ export default function SettingsPage() {
                 max={14}
                 value={bjjWeeklyGoal}
                 onChange={(e) => setBjjWeeklyGoal(Number(e.target.value))}
-                className="w-full h-2 bg-zinc-800 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-purple-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer"
+                className="w-full h-2 bg-surface-elevated rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-purple-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer"
               />
             </div>
           </div>
@@ -485,7 +485,7 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-zinc-400">Sessions per week</p>
+                <p className="text-sm text-zinc-500">Sessions per week</p>
                 <span className="text-lg font-bold text-emerald-400">{cardioWeeklyGoal}</span>
               </div>
               <input
@@ -494,7 +494,7 @@ export default function SettingsPage() {
                 max={14}
                 value={cardioWeeklyGoal}
                 onChange={(e) => setCardioWeeklyGoal(Number(e.target.value))}
-                className="w-full h-2 bg-zinc-800 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer"
+                className="w-full h-2 bg-surface-elevated rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer"
               />
             </div>
           </div>
@@ -506,40 +506,40 @@ export default function SettingsPage() {
             <Eye className="w-5 h-5 text-blue-400" />
             <h3 className="font-semibold text-white">Dashboard Goals</h3>
           </div>
-          <p className="text-sm text-zinc-400 mb-4">Choose which goals to show on your dashboard</p>
+          <p className="text-sm text-zinc-500 mb-4">Choose which goals to show on your dashboard</p>
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-zinc-900/50 rounded-xl">
+            <div className="flex items-center justify-between p-3 bg-surface/50 rounded-xl">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center">
                   <Dumbbell className="w-5 h-5 text-red-400" />
                 </div>
                 <div>
                   <p className="font-medium text-white">Strength</p>
-                  <p className="text-xs text-zinc-400">Weekly workout tracking</p>
+                  <p className="text-xs text-zinc-500">Weekly workout tracking</p>
                 </div>
               </div>
               <Toggle enabled={showStrengthGoal} onChange={setShowStrengthGoal} color="bg-red-500" />
             </div>
-            <div className="flex items-center justify-between p-3 bg-zinc-900/50 rounded-xl">
+            <div className="flex items-center justify-between p-3 bg-surface/50 rounded-xl">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
                   <Target className="w-5 h-5 text-purple-400" />
                 </div>
                 <div>
                   <p className="font-medium text-white">Jiu Jitsu</p>
-                  <p className="text-xs text-zinc-400">Weekly BJJ sessions</p>
+                  <p className="text-xs text-zinc-500">Weekly BJJ sessions</p>
                 </div>
               </div>
               <Toggle enabled={showBjjGoal} onChange={setShowBjjGoal} color="bg-purple-500" />
             </div>
-            <div className="flex items-center justify-between p-3 bg-zinc-900/50 rounded-xl">
+            <div className="flex items-center justify-between p-3 bg-surface/50 rounded-xl">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                   <Activity className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div>
                   <p className="font-medium text-white">Cardio</p>
-                  <p className="text-xs text-zinc-400">Weekly cardio sessions</p>
+                  <p className="text-xs text-zinc-500">Weekly cardio sessions</p>
                 </div>
               </div>
               <Toggle enabled={showCardioGoal} onChange={setShowCardioGoal} color="bg-emerald-500" />
@@ -550,26 +550,26 @@ export default function SettingsPage() {
         {/* Account Section */}
         <AnimatedCard delay={0.35}>
           <div className="flex items-center gap-2 mb-4">
-            <Lock className="w-5 h-5 text-zinc-400" />
+            <Lock className="w-5 h-5 text-zinc-500" />
             <h3 className="font-semibold text-white">Account</h3>
           </div>
           <div className="space-y-2">
             <button
               onClick={() => setShowPasswordSheet(true)}
-              className="w-full p-4 rounded-xl bg-zinc-900/50 hover:bg-zinc-800 transition-colors flex items-center justify-between"
+              className="w-full p-4 rounded-xl bg-surface/50 hover:bg-surface-elevated transition-colors flex items-center justify-between"
             >
               <div className="flex items-center gap-3">
-                <Lock className="w-5 h-5 text-zinc-400" />
+                <Lock className="w-5 h-5 text-zinc-500" />
                 <span className="text-white">Change Password</span>
               </div>
               <ChevronRight className="w-5 h-5 text-zinc-500" />
             </button>
             <button
               onClick={() => setShowLogoutConfirm(true)}
-              className="w-full p-4 rounded-xl bg-zinc-900/50 hover:bg-zinc-800 transition-colors flex items-center justify-between"
+              className="w-full p-4 rounded-xl bg-surface/50 hover:bg-surface-elevated transition-colors flex items-center justify-between"
             >
               <div className="flex items-center gap-3">
-                <LogOut className="w-5 h-5 text-zinc-400" />
+                <LogOut className="w-5 h-5 text-zinc-500" />
                 <span className="text-white">Sign Out</span>
               </div>
               <ChevronRight className="w-5 h-5 text-zinc-500" />
@@ -616,30 +616,30 @@ export default function SettingsPage() {
       >
         <div className="space-y-4 py-4">
           <div>
-            <label className="block text-sm text-zinc-400 mb-2">Current Password</label>
+            <label className="block text-sm text-zinc-500 mb-2">Current Password</label>
             <input
               type="password"
-              className="w-full px-4 py-3 bg-zinc-900 border border-white/10 rounded-xl text-white focus:border-red-500 focus:outline-none"
+              className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-red-500 focus:outline-none"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               placeholder="Enter current password"
             />
           </div>
           <div>
-            <label className="block text-sm text-zinc-400 mb-2">New Password</label>
+            <label className="block text-sm text-zinc-500 mb-2">New Password</label>
             <input
               type="password"
-              className="w-full px-4 py-3 bg-zinc-900 border border-white/10 rounded-xl text-white focus:border-red-500 focus:outline-none"
+              className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-red-500 focus:outline-none"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="At least 6 characters"
             />
           </div>
           <div>
-            <label className="block text-sm text-zinc-400 mb-2">Confirm New Password</label>
+            <label className="block text-sm text-zinc-500 mb-2">Confirm New Password</label>
             <input
               type="password"
-              className="w-full px-4 py-3 bg-zinc-900 border border-white/10 rounded-xl text-white focus:border-red-500 focus:outline-none"
+              className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-red-500 focus:outline-none"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Repeat new password"
