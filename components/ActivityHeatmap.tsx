@@ -16,7 +16,7 @@ const DAYS = WEEKS * 7
 const DAY_LABELS: Record<number, string> = { 1: 'M', 3: 'W', 5: 'F' }
 
 function getColor(types: ActivityType[]): string {
-  if (types.length === 0) return 'bg-zinc-800/50'
+  if (types.length === 0) return 'bg-surface-elevated/50'
 
   const unique = [...new Set(types)]
 
@@ -84,7 +84,7 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4"
+      className="bg-surface/80 border border-white/[0.07] rounded-xl p-4"
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-3">

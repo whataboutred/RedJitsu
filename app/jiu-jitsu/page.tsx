@@ -432,21 +432,21 @@ export default function BJJPage() {
   return (
     <div className="min-h-screen bg-brand-dark pb-32">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-white/5">
+      <div className="sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-red-500/10">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                 Jiu Jitsu Training
               </h1>
-              <p className="text-sm text-zinc-400 mt-0.5">Log your mat time</p>
+              <p className="text-sm text-zinc-500 mt-0.5">Log your mat time</p>
             </div>
             <div className="flex gap-2">
               <button
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   mode === 'quick'
                     ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                    : 'text-zinc-400 hover:text-white'
+                    : 'text-zinc-500 hover:text-white'
                 }`}
                 onClick={() => setMode('quick')}
               >
@@ -456,7 +456,7 @@ export default function BJJPage() {
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   mode === 'manual'
                     ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                    : 'text-zinc-400 hover:text-white'
+                    : 'text-zinc-500 hover:text-white'
                 }`}
                 onClick={() => setMode('manual')}
               >
@@ -497,11 +497,11 @@ export default function BJJPage() {
               <div className="grid grid-cols-2 gap-4 mt-2">
                 <div>
                   <p className="text-xl font-bold text-white">{weekStats.sessions}/{weekStats.weeklyGoal}</p>
-                  <p className="text-xs text-zinc-400">Sessions</p>
+                  <p className="text-xs text-zinc-500">Sessions</p>
                 </div>
                 <div>
                   <p className="text-xl font-bold text-purple-400">{weekStats.totalMinutes}</p>
-                  <p className="text-xs text-zinc-400">Mat Minutes</p>
+                  <p className="text-xs text-zinc-500">Mat Minutes</p>
                 </div>
               </div>
             </div>
@@ -526,7 +526,7 @@ export default function BJJPage() {
                       <p className="text-3xl font-bold text-purple-400 font-mono">
                         {formatTimer(sessionTimer)}
                       </p>
-                      <p className="text-xs text-zinc-400">Session Timer</p>
+                      <p className="text-xs text-zinc-500">Session Timer</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -574,7 +574,7 @@ export default function BJJPage() {
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.1 }}
-                        className={`flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r ${sessionType?.gradient} border border-white/5 hover:border-white/20 transition-all text-left group`}
+                        className={`flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r ${sessionType?.gradient} border border-white/[0.07] hover:border-white/20 transition-all text-left group`}
                         onClick={() => handleQuickStart({
                           kind: pattern.kind,
                           duration: pattern.avgDuration,
@@ -587,7 +587,7 @@ export default function BJJPage() {
                         <div className="flex-1">
                           <p className="font-semibold text-white">{pattern.kind}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-zinc-400">{pattern.avgDuration} min</span>
+                            <span className="text-xs text-zinc-500">{pattern.avgDuration} min</span>
                             <span className={`text-xs px-2 py-0.5 rounded ${intensityOption?.color} ${intensityOption?.textColor}`}>
                               {pattern.commonIntensity}
                             </span>
@@ -608,7 +608,7 @@ export default function BJJPage() {
                   <Sparkles className="w-5 h-5 text-purple-400" />
                   <h3 className="font-semibold text-white">Quick Start</h3>
                 </div>
-                <p className="text-sm text-zinc-400 mb-4">
+                <p className="text-sm text-zinc-500 mb-4">
                   Select a session type to get started
                 </p>
                 <div className="grid grid-cols-1 gap-3">
@@ -618,7 +618,7 @@ export default function BJJPage() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className={`flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r ${sessionType.gradient} border border-white/5 hover:border-white/20 transition-all text-left group`}
+                      className={`flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r ${sessionType.gradient} border border-white/[0.07] hover:border-white/20 transition-all text-left group`}
                       onClick={() => handleQuickStart({
                         kind: sessionType.value,
                         duration: sessionType.suggestedDuration,
@@ -630,7 +630,7 @@ export default function BJJPage() {
                       </div>
                       <div className="flex-1">
                         <p className="font-semibold text-white">{sessionType.label}</p>
-                        <p className="text-xs text-zinc-400">{sessionType.description}</p>
+                        <p className="text-xs text-zinc-500">{sessionType.description}</p>
                         <p className="text-xs text-zinc-500 mt-1">
                           {sessionType.suggestedDuration} min • {sessionType.suggestedIntensity}
                         </p>
@@ -659,7 +659,7 @@ export default function BJJPage() {
               </div>
               <input
                 type="datetime-local"
-                className="w-full px-4 py-3 bg-zinc-900 border border-white/10 rounded-xl text-white focus:border-purple-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-purple-500 focus:outline-none transition-colors"
                 value={performedAt}
                 onChange={(e) => setPerformedAt(e.target.value)}
               />
@@ -678,7 +678,7 @@ export default function BJJPage() {
                     className={`p-3 rounded-xl border-2 transition-all text-center ${
                       kind === sessionType.value
                         ? `bg-gradient-to-br ${sessionType.activeGradient} ${sessionType.borderColor}`
-                        : `bg-zinc-900/50 border-white/5 hover:border-white/20`
+                        : `bg-surface/50 border-white/[0.07] hover:border-white/20`
                     }`}
                     onClick={() => handleSessionTypeSelect(sessionType)}
                   >
@@ -717,7 +717,7 @@ export default function BJJPage() {
                     className={`py-3 rounded-lg text-center transition-all ${
                       duration === preset
                         ? 'bg-purple-500 text-white font-medium'
-                        : 'bg-zinc-900/50 text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                        : 'bg-surface/50 text-zinc-500 hover:bg-surface-elevated hover:text-white'
                     }`}
                     onClick={() => setDuration(preset)}
                   >
@@ -729,7 +729,7 @@ export default function BJJPage() {
               {/* Custom Duration */}
               <div className="flex items-center gap-3">
                 <button
-                  className="w-12 h-12 rounded-xl bg-zinc-800 text-white font-bold hover:bg-zinc-700 transition-colors"
+                  className="w-12 h-12 rounded-xl bg-surface-elevated text-white font-bold hover:bg-surface-pressed transition-colors"
                   onClick={() => setDuration(Math.max(5, duration - 15))}
                 >
                   -15
@@ -743,10 +743,10 @@ export default function BJJPage() {
                     value={duration}
                     onChange={(e) => setDuration(Number(e.target.value || 60))}
                   />
-                  <p className="text-xs text-zinc-400 mt-1">minutes</p>
+                  <p className="text-xs text-zinc-500 mt-1">minutes</p>
                 </div>
                 <button
-                  className="w-12 h-12 rounded-xl bg-zinc-800 text-white font-bold hover:bg-zinc-700 transition-colors"
+                  className="w-12 h-12 rounded-xl bg-surface-elevated text-white font-bold hover:bg-surface-pressed transition-colors"
                   onClick={() => setDuration(Math.min(600, duration + 15))}
                 >
                   +15
@@ -776,7 +776,7 @@ export default function BJJPage() {
                         <p className={`font-semibold ${intensity === option.value ? 'text-white' : option.textColor}`}>
                           {option.label}
                         </p>
-                        <p className={`text-sm ${intensity === option.value ? 'text-white/80' : 'text-zinc-400'}`}>
+                        <p className={`text-sm ${intensity === option.value ? 'text-white/80' : 'text-zinc-500'}`}>
                           {option.description}
                         </p>
                       </div>
@@ -804,7 +804,7 @@ export default function BJJPage() {
                 </button>
               </div>
               <textarea
-                className="w-full px-4 py-3 bg-zinc-900 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none transition-colors resize-none"
+                className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none transition-colors resize-none"
                 placeholder="Techniques practiced, key insights..."
                 rows={3}
                 value={notes}
@@ -826,11 +826,11 @@ export default function BJJPage() {
                 <div className={`w-10 h-10 rounded-lg ${selectedSessionType?.iconBg} flex items-center justify-center mx-auto mb-2 ${selectedSessionType?.iconColor}`}>
                   {selectedSessionType?.icon}
                 </div>
-                <p className="text-xs text-zinc-400">{kind}</p>
+                <p className="text-xs text-zinc-500">{kind}</p>
               </div>
               <div>
                 <p className="text-2xl font-bold text-purple-400">{duration}</p>
-                <p className="text-xs text-zinc-400">Minutes</p>
+                <p className="text-xs text-zinc-500">Minutes</p>
               </div>
               <div>
                 <div className={`w-10 h-10 rounded-lg ${INTENSITY_OPTIONS.find(i => i.value === intensity)?.color} flex items-center justify-center mx-auto mb-2`}>
@@ -838,12 +838,12 @@ export default function BJJPage() {
                    intensity === 'medium' ? <span className="text-amber-400 font-bold">M</span> :
                    <span className="text-red-400 font-bold">H</span>}
                 </div>
-                <p className="text-xs text-zinc-400 capitalize">{intensity}</p>
+                <p className="text-xs text-zinc-500 capitalize">{intensity}</p>
               </div>
             </div>
             {notes && (
               <div className="mt-3 pt-3 border-t border-white/10">
-                <p className="text-xs text-zinc-400">{notes}</p>
+                <p className="text-xs text-zinc-500">{notes}</p>
               </div>
             )}
             <button
@@ -895,7 +895,7 @@ export default function BJJPage() {
           {NOTE_TEMPLATES.map((template, index) => (
             <button
               key={index}
-              className="w-full text-left p-4 bg-zinc-800 rounded-xl hover:bg-zinc-700 transition-colors"
+              className="w-full text-left p-4 bg-surface-elevated rounded-xl hover:bg-surface-pressed transition-colors"
               onClick={() => {
                 setNotes(notes ? `${notes}\n${template}` : template)
                 setShowNotesSheet(false)
@@ -922,19 +922,19 @@ export default function BJJPage() {
             <Check className="w-10 h-10 text-white" />
           </motion.div>
           <h2 className="text-2xl font-bold text-white mb-2">Session Saved!</h2>
-          <p className="text-zinc-400 mb-6">
+          <p className="text-zinc-500 mb-6">
             {kind} • {duration} minutes • {intensity} intensity
           </p>
 
           {/* Updated week stats */}
-          <div className="bg-zinc-800 rounded-xl p-4 mb-6">
-            <p className="text-sm text-zinc-400 mb-2">This week's progress</p>
+          <div className="bg-surface-elevated rounded-xl p-4 mb-6">
+            <p className="text-sm text-zinc-500 mb-2">This week's progress</p>
             <div className="flex items-center justify-center gap-4">
               <div className="text-center">
                 <p className="text-2xl font-bold text-purple-400">{weekStats.sessions + 1}</p>
                 <p className="text-xs text-zinc-500">Sessions</p>
               </div>
-              <div className="w-px h-10 bg-zinc-700" />
+              <div className="w-px h-10 bg-surface-pressed" />
               <div className="text-center">
                 <p className="text-2xl font-bold text-purple-400">{weekStats.totalMinutes + duration}</p>
                 <p className="text-xs text-zinc-500">Minutes</p>

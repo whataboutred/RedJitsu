@@ -382,7 +382,7 @@ export default function CardioPage() {
           <div className="text-center py-8">
             <Footprints className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-white mb-2">Demo Mode</h2>
-            <p className="text-zinc-400 mb-4">
+            <p className="text-zinc-500 mb-4">
               Sign in to log cardio sessions and track your progress.
             </p>
             <Link href="/login">
@@ -397,14 +397,14 @@ export default function CardioPage() {
   return (
     <div className="min-h-screen bg-brand-dark pb-32">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-white/5">
+      <div className="sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-red-500/10">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
                 Cardio Session
               </h1>
-              <p className="text-sm text-zinc-400 mt-0.5">Track your cardio workout</p>
+              <p className="text-sm text-zinc-500 mt-0.5">Track your cardio workout</p>
             </div>
             <Link href="/history" className="text-sm text-emerald-400 hover:text-emerald-300">
               History
@@ -468,13 +468,13 @@ export default function CardioPage() {
                       setSelectedCategory(category)
                       setShowActivitySheet(true)
                     }}
-                    className={`p-4 rounded-xl bg-gradient-to-r ${data.gradient} border border-white/5 hover:border-white/20 transition-all text-left group`}
+                    className={`p-4 rounded-xl bg-gradient-to-r ${data.gradient} border border-white/[0.07] hover:border-white/20 transition-all text-left group`}
                   >
                     <div className={`w-10 h-10 rounded-lg ${data.iconBg} flex items-center justify-center mb-2 ${data.iconColor}`}>
                       {data.icon}
                     </div>
                     <p className="font-medium text-sm text-white">{category}</p>
-                    <p className="text-xs text-zinc-400">{data.activities.length} activities</p>
+                    <p className="text-xs text-zinc-500">{data.activities.length} activities</p>
                   </button>
                 ))}
               </div>
@@ -482,14 +482,14 @@ export default function CardioPage() {
               {/* Custom Activity Button */}
               <button
                 onClick={() => setShowActivitySheet(true)}
-                className="w-full p-4 rounded-xl bg-zinc-900/50 border border-white/5 hover:border-white/20 transition-all flex items-center gap-3"
+                className="w-full p-4 rounded-xl bg-surface/50 border border-white/[0.07] hover:border-white/20 transition-all flex items-center gap-3"
               >
-                <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center">
-                  <Plus className="w-5 h-5 text-zinc-400" />
+                <div className="w-10 h-10 rounded-lg bg-surface-elevated flex items-center justify-center">
+                  <Plus className="w-5 h-5 text-zinc-500" />
                 </div>
                 <div className="text-left">
                   <p className="font-medium text-white">Custom Activity</p>
-                  <p className="text-xs text-zinc-400">Enter your own activity</p>
+                  <p className="text-xs text-zinc-500">Enter your own activity</p>
                 </div>
               </button>
             </div>
@@ -502,7 +502,7 @@ export default function CardioPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-white">{session.activity}</p>
-                    <p className="text-xs text-zinc-400">Selected activity</p>
+                    <p className="text-xs text-zinc-500">Selected activity</p>
                   </div>
                 </div>
                 <button
@@ -538,7 +538,7 @@ export default function CardioPage() {
                       <p className="text-4xl font-bold text-white font-mono">
                         {formatTimeDisplay(elapsedSeconds)}
                       </p>
-                      <p className="text-sm text-zinc-400">
+                      <p className="text-sm text-zinc-500">
                         {timerRunning ? 'Running' : elapsedSeconds > 0 ? 'Paused' : 'Ready'}
                       </p>
                     </div>
@@ -580,7 +580,7 @@ export default function CardioPage() {
 
                   {/* Target Duration */}
                   <div className="mt-4 flex items-center gap-2">
-                    <span className="text-xs text-zinc-400">Target:</span>
+                    <span className="text-xs text-zinc-500">Target:</span>
                     <div className="flex gap-1">
                       {[15, 30, 45, 60].map(mins => (
                         <button
@@ -589,7 +589,7 @@ export default function CardioPage() {
                           className={`px-2 py-1 rounded text-xs transition-colors ${
                             targetDuration === mins
                               ? 'bg-emerald-500 text-white'
-                              : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                              : 'bg-surface-elevated text-zinc-500 hover:bg-surface-pressed'
                           }`}
                         >
                           {mins}m
@@ -620,7 +620,7 @@ export default function CardioPage() {
                 </div>
                 <input
                   type="datetime-local"
-                  className="w-full px-4 py-3 bg-zinc-900 border border-white/10 rounded-xl text-white focus:border-emerald-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-emerald-500 focus:outline-none transition-colors"
                   value={performedAt}
                   onChange={(e) => setPerformedAt(e.target.value)}
                 />
@@ -640,7 +640,7 @@ export default function CardioPage() {
                       className={`py-3 rounded-lg text-center transition-all ${
                         session.duration_minutes === preset
                           ? 'bg-emerald-500 text-white font-medium'
-                          : 'bg-zinc-900/50 text-zinc-400 hover:bg-zinc-800'
+                          : 'bg-surface/50 text-zinc-500 hover:bg-surface-elevated'
                       }`}
                     >
                       {preset}
@@ -650,7 +650,7 @@ export default function CardioPage() {
                 <input
                   type="number"
                   min="1"
-                  className="w-full px-4 py-3 bg-zinc-900 border border-white/10 rounded-xl text-white text-center text-xl font-bold focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white text-center text-xl font-bold focus:border-emerald-500 focus:outline-none"
                   value={session.duration_minutes || ''}
                   onChange={(e) => setSession(prev => ({
                     ...prev,
@@ -671,7 +671,7 @@ export default function CardioPage() {
                     type="number"
                     min="0"
                     step="0.1"
-                    className="flex-1 px-4 py-3 bg-zinc-900 border border-white/10 rounded-xl text-white focus:border-emerald-500 focus:outline-none"
+                    className="flex-1 px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-emerald-500 focus:outline-none"
                     value={session.distance || ''}
                     onChange={(e) => setSession(prev => ({
                       ...prev,
@@ -679,12 +679,12 @@ export default function CardioPage() {
                     }))}
                     placeholder="Optional"
                   />
-                  <div className="flex bg-zinc-900 rounded-xl border border-white/10 overflow-hidden">
+                  <div className="flex bg-surface rounded-xl border border-white/[0.07] overflow-hidden">
                     <button
                       className={`px-4 py-3 transition-colors ${
                         session.distance_unit === 'miles'
                           ? 'bg-emerald-500 text-white'
-                          : 'text-zinc-400 hover:bg-zinc-800'
+                          : 'text-zinc-500 hover:bg-surface-elevated'
                       }`}
                       onClick={() => setSession(prev => ({ ...prev, distance_unit: 'miles' }))}
                     >
@@ -694,7 +694,7 @@ export default function CardioPage() {
                       className={`px-4 py-3 transition-colors ${
                         session.distance_unit === 'km'
                           ? 'bg-emerald-500 text-white'
-                          : 'text-zinc-400 hover:bg-zinc-800'
+                          : 'text-zinc-500 hover:bg-surface-elevated'
                       }`}
                       onClick={() => setSession(prev => ({ ...prev, distance_unit: 'km' }))}
                     >
@@ -726,7 +726,7 @@ export default function CardioPage() {
                           <p className={`font-semibold ${session.intensity === option.value ? 'text-white' : option.textColor}`}>
                             {option.label}
                           </p>
-                          <p className={`text-sm ${session.intensity === option.value ? 'text-white/80' : 'text-zinc-400'}`}>
+                          <p className={`text-sm ${session.intensity === option.value ? 'text-white/80' : 'text-zinc-500'}`}>
                             {option.description}
                           </p>
                         </div>
@@ -748,7 +748,7 @@ export default function CardioPage() {
                 <input
                   type="number"
                   min="1"
-                  className="w-full px-4 py-3 bg-zinc-900 border border-white/10 rounded-xl text-white focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-emerald-500 focus:outline-none"
                   value={session.calories || ''}
                   onChange={(e) => setSession(prev => ({
                     ...prev,
@@ -765,7 +765,7 @@ export default function CardioPage() {
                   <h3 className="font-semibold text-white">Notes</h3>
                 </div>
                 <textarea
-                  className="w-full px-4 py-3 bg-zinc-900 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none resize-none"
+                  className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none resize-none"
                   rows={3}
                   value={session.notes || ''}
                   onChange={(e) => setSession(prev => ({ ...prev, notes: e.target.value }))}
@@ -824,26 +824,26 @@ export default function CardioPage() {
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className="w-full p-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors flex items-center gap-3"
+                  className="w-full p-4 rounded-xl bg-surface-elevated hover:bg-surface-pressed transition-colors flex items-center gap-3"
                 >
                   <div className={`w-10 h-10 rounded-lg ${data.iconBg} flex items-center justify-center ${data.iconColor}`}>
                     {data.icon}
                   </div>
                   <div className="flex-1 text-left">
                     <p className="font-medium text-white">{category}</p>
-                    <p className="text-xs text-zinc-400">{data.activities.length} activities</p>
+                    <p className="text-xs text-zinc-500">{data.activities.length} activities</p>
                   </div>
                   <ChevronRight className="w-5 h-5 text-zinc-500" />
                 </button>
               ))}
 
               {/* Custom Input */}
-              <div className="pt-4 border-t border-zinc-800">
-                <p className="text-sm text-zinc-400 mb-2">Or enter custom activity</p>
+              <div className="pt-4 border-t border-white/[0.07]">
+                <p className="text-sm text-zinc-500 mb-2">Or enter custom activity</p>
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    className="flex-1 px-4 py-3 bg-zinc-900 border border-white/10 rounded-xl text-white focus:border-emerald-500 focus:outline-none"
+                    className="flex-1 px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-emerald-500 focus:outline-none"
                     value={customActivity}
                     onChange={(e) => setCustomActivity(e.target.value)}
                     placeholder="Activity name..."
@@ -872,7 +872,7 @@ export default function CardioPage() {
                   <button
                     key={activity}
                     onClick={() => handleActivitySelect(activity)}
-                    className="p-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors text-left"
+                    className="p-4 rounded-xl bg-surface-elevated hover:bg-surface-pressed transition-colors text-left"
                   >
                     <p className="font-medium text-white">{activity}</p>
                   </button>
@@ -898,21 +898,21 @@ export default function CardioPage() {
             <Check className="w-10 h-10 text-white" />
           </motion.div>
           <h2 className="text-2xl font-bold text-white mb-2">Workout Saved!</h2>
-          <p className="text-zinc-400 mb-6">
+          <p className="text-zinc-500 mb-6">
             {session.activity}
             {session.duration_minutes ? ` • ${session.duration_minutes} min` : ''}
             {session.distance ? ` • ${session.distance} ${session.distance_unit}` : ''}
           </p>
 
           {/* Updated stats */}
-          <div className="bg-zinc-800 rounded-xl p-4 mb-6">
-            <p className="text-sm text-zinc-400 mb-2">This week's cardio</p>
+          <div className="bg-surface-elevated rounded-xl p-4 mb-6">
+            <p className="text-sm text-zinc-500 mb-2">This week's cardio</p>
             <div className="flex items-center justify-center gap-4">
               <div className="text-center">
                 <p className="text-2xl font-bold text-emerald-400">{weekStats.sessions + 1}</p>
                 <p className="text-xs text-zinc-500">Sessions</p>
               </div>
-              <div className="w-px h-10 bg-zinc-700" />
+              <div className="w-px h-10 bg-surface-pressed" />
               <div className="text-center">
                 <p className="text-2xl font-bold text-emerald-400">
                   {weekStats.totalMinutes + (session.duration_minutes || 0)}

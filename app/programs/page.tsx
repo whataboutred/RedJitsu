@@ -138,7 +138,7 @@ export default function ProgramsPage() {
                 <Target className="w-8 h-8 text-brand-red" />
               </div>
               <h1 className="text-xl font-semibold mb-2">Demo Mode</h1>
-              <p className="text-zinc-400 mb-6">
+              <p className="text-zinc-500 mb-6">
                 You're viewing the app in read-only demo mode. To create your own
                 programs, please sign in.
               </p>
@@ -162,30 +162,30 @@ export default function ProgramsPage() {
         <Nav />
         <main className="relative z-10 max-w-6xl mx-auto p-4 space-y-6">
           <div className="flex items-center justify-between">
-            <div className="h-8 bg-zinc-800 rounded-lg w-48 animate-pulse"></div>
+            <div className="h-8 bg-surface-elevated rounded-lg w-48 animate-pulse"></div>
             <div className="flex gap-3">
-              <div className="h-10 bg-zinc-800 rounded-full w-32 animate-pulse"></div>
-              <div className="h-10 bg-zinc-800 rounded-xl w-36 animate-pulse"></div>
+              <div className="h-10 bg-surface-elevated rounded-full w-32 animate-pulse"></div>
+              <div className="h-10 bg-surface-elevated rounded-xl w-36 animate-pulse"></div>
             </div>
           </div>
-          <div className="bg-zinc-900/80 rounded-2xl p-6 border border-white/5">
+          <div className="bg-surface/80 rounded-2xl p-6 border border-white/[0.07]">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="bg-black/30 rounded-2xl p-5 border border-white/10">
                   <div className="flex justify-between mb-4">
                     <div className="space-y-2">
-                      <div className="h-5 bg-zinc-800 rounded w-32 animate-pulse"></div>
-                      <div className="h-4 bg-zinc-800/50 rounded w-20 animate-pulse"></div>
+                      <div className="h-5 bg-surface-elevated rounded w-32 animate-pulse"></div>
+                      <div className="h-4 bg-surface-elevated/50 rounded w-20 animate-pulse"></div>
                     </div>
-                    <div className="h-10 w-10 bg-zinc-800 rounded-full animate-pulse"></div>
+                    <div className="h-10 w-10 bg-surface-elevated rounded-full animate-pulse"></div>
                   </div>
                   <div className="space-y-2 mb-4">
-                    <div className="h-4 bg-zinc-800/50 rounded w-24 animate-pulse"></div>
-                    <div className="h-4 bg-zinc-800/50 rounded w-28 animate-pulse"></div>
+                    <div className="h-4 bg-surface-elevated/50 rounded w-24 animate-pulse"></div>
+                    <div className="h-4 bg-surface-elevated/50 rounded w-28 animate-pulse"></div>
                   </div>
                   <div className="flex gap-2">
-                    <div className="h-9 bg-zinc-800 rounded-full flex-1 animate-pulse"></div>
-                    <div className="h-9 bg-zinc-800 rounded-xl w-20 animate-pulse"></div>
+                    <div className="h-9 bg-surface-elevated rounded-full flex-1 animate-pulse"></div>
+                    <div className="h-9 bg-surface-elevated rounded-xl w-20 animate-pulse"></div>
                   </div>
                 </div>
               ))}
@@ -685,9 +685,9 @@ export default function ProgramsPage() {
               <AnimatedCard>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
-                    <LayoutGrid className="w-5 h-5 text-zinc-400" />
+                    <LayoutGrid className="w-5 h-5 text-zinc-500" />
                     <span className="font-semibold text-white">Your Programs</span>
-                    <span className="text-xs bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full">
+                    <span className="text-xs bg-surface-elevated text-zinc-500 px-2 py-0.5 rounded-full">
                       {programs.length}
                     </span>
                   </div>
@@ -734,15 +734,15 @@ export default function ProgramsPage() {
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
                           p.is_active
                             ? 'bg-brand-red/20 group-hover:bg-brand-red/30'
-                            : 'bg-zinc-800 group-hover:bg-zinc-700'
+                            : 'bg-surface-elevated group-hover:bg-surface-pressed'
                         }`}>
                           <Dumbbell className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${
-                            p.is_active ? 'text-brand-red' : 'text-zinc-400'
+                            p.is_active ? 'text-brand-red' : 'text-zinc-500'
                           }`} />
                         </div>
                       </div>
 
-                      <div className="text-sm text-zinc-400 mb-4 space-y-1.5">
+                      <div className="text-sm text-zinc-500 mb-4 space-y-1.5">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-zinc-500" />
                           <span>{p.total_days} training day{p.total_days !== 1 ? 's' : ''}</span>
@@ -798,7 +798,7 @@ export default function ProgramsPage() {
                   <Dumbbell className="w-10 h-10 text-brand-red" />
                 </div>
                 <h2 className="text-xl font-semibold text-white mb-2">Start Your Training Journey</h2>
-                <p className="text-zinc-400 mb-8 max-w-md mx-auto">
+                <p className="text-zinc-500 mb-8 max-w-md mx-auto">
                   Choose from proven templates or create your own custom program to reach your fitness goals
                 </p>
                 <div className="flex gap-3 justify-center flex-wrap">
@@ -865,7 +865,7 @@ export default function ProgramsPage() {
                 <Target className="w-7 h-7 text-brand-red" />
               </div>
               <h3 className="font-semibold text-white mb-2">Need Something Different?</h3>
-              <p className="text-zinc-400 mb-6 max-w-sm mx-auto">
+              <p className="text-zinc-500 mb-6 max-w-sm mx-auto">
                 Create a fully custom program tailored to your specific goals
               </p>
               <button className="btn" onClick={startManualMode}>
@@ -926,11 +926,11 @@ export default function ProgramsPage() {
         >
           <AnimatedCard>
             <div className="flex items-center gap-2 mb-4">
-              <Dumbbell className="w-5 h-5 text-zinc-400" />
+              <Dumbbell className="w-5 h-5 text-zinc-500" />
               <span className="font-semibold text-white">Program Details</span>
             </div>
             <label className="block">
-              <div className="mb-2 text-sm text-zinc-400 font-medium">Program Name</div>
+              <div className="mb-2 text-sm text-zinc-500 font-medium">Program Name</div>
               <input
                 type="text"
                 className="input w-full max-w-md"
@@ -951,9 +951,9 @@ export default function ProgramsPage() {
           <AnimatedCard>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-zinc-400" />
+                <Calendar className="w-5 h-5 text-zinc-500" />
                 <span className="font-semibold text-white">Training Days</span>
-                <span className="text-xs bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full">
+                <span className="text-xs bg-surface-elevated text-zinc-500 px-2 py-0.5 rounded-full">
                   {days.length}
                 </span>
               </div>
@@ -978,7 +978,7 @@ export default function ProgramsPage() {
                     className={`rounded-2xl overflow-hidden border transition-all duration-300 ${
                       isExpanded
                         ? 'bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 border-white/10'
-                        : 'bg-black/30 border-white/5 hover:border-white/10'
+                        : 'bg-black/30 border-white/[0.07] hover:border-white/10'
                     }`}
                   >
                     {/* Collapsible Header */}
@@ -988,17 +988,17 @@ export default function ProgramsPage() {
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
-                          isExpanded ? 'bg-brand-red/20' : 'bg-zinc-800'
+                          isExpanded ? 'bg-brand-red/20' : 'bg-surface-elevated'
                         }`}>
                           <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${
-                            isExpanded ? 'rotate-0 text-brand-red' : '-rotate-90 text-zinc-400'
+                            isExpanded ? 'rotate-0 text-brand-red' : '-rotate-90 text-zinc-500'
                           }`} />
                         </div>
                         <div>
                           <div className="font-semibold text-white flex items-center gap-2">
                             {dayName}
                             {day.items.length > 0 && (
-                              <span className="text-xs bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full">
+                              <span className="text-xs bg-surface-elevated text-zinc-500 px-2 py-0.5 rounded-full">
                                 {day.items.length} exercise{day.items.length !== 1 ? 's' : ''}
                               </span>
                             )}
@@ -1034,7 +1034,7 @@ export default function ProgramsPage() {
                       >
                         <div className="pt-4">
                           <label className="block">
-                            <div className="mb-2 text-sm text-zinc-400 font-medium">Day Name</div>
+                            <div className="mb-2 text-sm text-zinc-500 font-medium">Day Name</div>
                             <input
                               type="text"
                               className="input w-full max-w-xs"
@@ -1047,7 +1047,7 @@ export default function ProgramsPage() {
 
                         {/* Days of Week Selector */}
                         <div>
-                          <div className="mb-2 text-sm text-zinc-400 font-medium flex items-center gap-2">
+                          <div className="mb-2 text-sm text-zinc-500 font-medium flex items-center gap-2">
                             <Calendar className="w-4 h-4" />
                             Schedule
                           </div>
@@ -1059,7 +1059,7 @@ export default function ProgramsPage() {
                                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                                   day.dows.includes(dowIdx)
                                     ? 'bg-brand-red/20 border-brand-red/50 text-white border shadow-sm shadow-brand-red/10'
-                                    : 'bg-zinc-900 border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-300'
+                                    : 'bg-surface border border-white/10 text-zinc-500 hover:bg-surface-elevated hover:text-zinc-300'
                                 }`}
                                 onClick={() => toggleDayOfWeek(dayIdx, dowIdx)}
                               >
@@ -1071,7 +1071,7 @@ export default function ProgramsPage() {
 
                         {/* Exercise Selection */}
                         <div>
-                          <div className="mb-3 text-sm text-zinc-400 font-medium flex items-center gap-2">
+                          <div className="mb-3 text-sm text-zinc-500 font-medium flex items-center gap-2">
                             <Target className="w-4 h-4" />
                             Exercises
                           </div>
@@ -1111,11 +1111,11 @@ export default function ProgramsPage() {
                               <div className="text-xs text-zinc-500 mb-2 font-medium uppercase tracking-wide">
                                 Available Exercises
                               </div>
-                              <div className="max-h-52 overflow-y-auto bg-zinc-900/50 rounded-xl p-2 space-y-1">
+                              <div className="max-h-52 overflow-y-auto bg-surface/50 rounded-xl p-2 space-y-1">
                                 {filteredExercises.slice(0, 50).map(exercise => (
                                   <button
                                     key={exercise.id}
-                                    className="w-full text-left bg-zinc-800/50 hover:bg-zinc-800 rounded-lg p-3 text-sm transition-all duration-200 group border border-transparent hover:border-zinc-700"
+                                    className="w-full text-left bg-surface-elevated/50 hover:bg-surface-elevated rounded-lg p-3 text-sm transition-all duration-200 group border border-transparent hover:border-white/10"
                                     onClick={() => addExerciseToDay(dayIdx, exercise)}
                                   >
                                     <div className="flex items-center justify-between">
@@ -1139,7 +1139,7 @@ export default function ProgramsPage() {
                                       <Plus className="w-4 h-4" />
                                       Create "{search.trim()}"
                                     </div>
-                                    <div className="text-xs text-zinc-400 mt-1 ml-6">
+                                    <div className="text-xs text-zinc-500 mt-1 ml-6">
                                       Add as new {selectedCategory === 'all' ? 'other' : selectedCategory} exercise
                                     </div>
                                   </button>
@@ -1163,7 +1163,7 @@ export default function ProgramsPage() {
                                 {day.items.map((item, itemIdx) => (
                                   <div
                                     key={itemIdx}
-                                    className="bg-zinc-900/50 rounded-xl p-3 border border-zinc-800 hover:border-zinc-700 transition-all duration-200"
+                                    className="bg-surface/50 rounded-xl p-3 border border-white/[0.07] hover:border-white/10 transition-all duration-200"
                                   >
                                     <div className="flex items-start justify-between mb-3">
                                       <div className="flex items-center gap-2">
@@ -1174,21 +1174,21 @@ export default function ProgramsPage() {
                                       </div>
                                       <div className="flex items-center gap-1">
                                         <button
-                                          className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center transition-colors disabled:opacity-30"
+                                          className="w-7 h-7 rounded-lg bg-surface-elevated hover:bg-surface-pressed flex items-center justify-center transition-colors disabled:opacity-30"
                                           onClick={() => moveExercise(dayIdx, itemIdx, 'up')}
                                           disabled={itemIdx === 0}
                                         >
-                                          <ArrowUp className="w-3 h-3 text-zinc-400" />
+                                          <ArrowUp className="w-3 h-3 text-zinc-500" />
                                         </button>
                                         <button
-                                          className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center transition-colors disabled:opacity-30"
+                                          className="w-7 h-7 rounded-lg bg-surface-elevated hover:bg-surface-pressed flex items-center justify-center transition-colors disabled:opacity-30"
                                           onClick={() => moveExercise(dayIdx, itemIdx, 'down')}
                                           disabled={itemIdx === day.items.length - 1}
                                         >
-                                          <ArrowDown className="w-3 h-3 text-zinc-400" />
+                                          <ArrowDown className="w-3 h-3 text-zinc-500" />
                                         </button>
                                         <button
-                                          className="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-red-500/20 flex items-center justify-center transition-colors"
+                                          className="w-7 h-7 rounded-lg bg-surface-elevated hover:bg-red-500/20 flex items-center justify-center transition-colors"
                                           onClick={() => removeExerciseFromDay(dayIdx, itemIdx)}
                                         >
                                           <X className="w-3 h-3 text-red-400" />
@@ -1229,7 +1229,7 @@ export default function ProgramsPage() {
                                 ))}
 
                                 {day.items.length === 0 && (
-                                  <div className="text-zinc-500 text-center py-8 text-sm bg-zinc-900/50 rounded-xl border border-dashed border-zinc-700">
+                                  <div className="text-zinc-500 text-center py-8 text-sm bg-surface/50 rounded-xl border border-dashed border-white/10">
                                     <Dumbbell className="w-8 h-8 mx-auto mb-2 opacity-50" />
                                     No exercises added yet
                                   </div>
@@ -1254,7 +1254,7 @@ export default function ProgramsPage() {
           transition={{ delay: 0.3 }}
           className="fixed bottom-4 left-4 right-4 max-w-6xl mx-auto z-30"
         >
-          <div className="bg-zinc-900/95 backdrop-blur-lg rounded-2xl p-4 border border-white/10 shadow-2xl shadow-black/50">
+          <div className="bg-surface/95 backdrop-blur-lg rounded-2xl p-4 border border-white/10 shadow-2xl shadow-black/50">
             <div className="flex gap-3">
               <button className="btn flex-1" onClick={saveProgram}>
                 <Check className="w-4 h-4" />

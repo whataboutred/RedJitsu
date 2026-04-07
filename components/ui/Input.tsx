@@ -34,12 +34,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               props.onBlur?.(e);
             }}
             className={`
-              w-full bg-zinc-900 border rounded-xl
+              w-full bg-surface border rounded-xl
               px-4 py-3 text-white placeholder-zinc-500
               outline-none transition-all duration-200
               ${icon && iconPosition === 'left' ? 'pl-10' : ''}
               ${icon && iconPosition === 'right' ? 'pr-10' : ''}
-              ${error ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-zinc-700 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20'}
+              ${error ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-white/10 focus:border-brand-red focus:ring-2 focus:ring-brand-red/25'}
               disabled:opacity-50 disabled:cursor-not-allowed
               ${className}
             `}
@@ -109,9 +109,9 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
             onClick={decrement}
             className={`
               ${sizes.button} rounded-full
-              bg-zinc-800 text-white font-bold text-xl
+              bg-surface-elevated text-white font-bold text-xl
               flex items-center justify-center
-              hover:bg-zinc-700 active:bg-zinc-600 active:scale-95
+              hover:bg-surface-pressed active:bg-surface-pressed active:scale-95
               transition-all duration-150
               disabled:opacity-30 disabled:cursor-not-allowed
             `}
@@ -126,10 +126,10 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
               value={value}
               onChange={handleChange}
               className={`
-                w-full bg-zinc-900 border border-zinc-700 rounded-xl
+                w-full bg-surface border border-white/10 rounded-xl
                 ${sizes.input} text-center font-semibold text-white
                 outline-none transition-all duration-200
-                focus:border-brand-red focus:ring-2 focus:ring-brand-red/20
+                focus:border-brand-red focus:ring-2 focus:ring-brand-red/25
                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
                 ${className}
               `}
@@ -146,9 +146,9 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
             onClick={increment}
             className={`
               ${sizes.button} rounded-full
-              bg-zinc-800 text-white font-bold text-xl
+              bg-surface-elevated text-white font-bold text-xl
               flex items-center justify-center
-              hover:bg-zinc-700 active:bg-zinc-600 active:scale-95
+              hover:bg-surface-pressed active:bg-surface-pressed active:scale-95
               transition-all duration-150
               disabled:opacity-30 disabled:cursor-not-allowed
             `}
@@ -181,10 +181,10 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           ref={ref}
           className={`
-            w-full bg-zinc-900 border rounded-xl
+            w-full bg-surface border rounded-xl
             px-4 py-3 text-white placeholder-zinc-500
             outline-none transition-all duration-200 resize-none
-            ${error ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-zinc-700 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20'}
+            ${error ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-white/10 focus:border-brand-red focus:ring-2 focus:ring-brand-red/25'}
             disabled:opacity-50 disabled:cursor-not-allowed
             ${className}
           `}
@@ -221,10 +221,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           <select
             ref={ref}
             className={`
-              w-full bg-zinc-900 border rounded-xl
+              w-full bg-surface border rounded-xl
               px-4 py-3 text-white appearance-none
               outline-none transition-all duration-200
-              ${error ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-zinc-700 focus:border-brand-red focus:ring-2 focus:ring-brand-red/20'}
+              ${error ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-white/10 focus:border-brand-red focus:ring-2 focus:ring-brand-red/25'}
               disabled:opacity-50 disabled:cursor-not-allowed
               ${className}
             `}
@@ -284,7 +284,7 @@ export const ToggleGroup = ({ options, value, onChange, variant = 'default' }: T
             ${
               value === opt.value
                 ? toggleVariants[variant]
-                : 'bg-zinc-800/50 text-zinc-400 border-zinc-700/50 hover:bg-zinc-700/50 hover:text-zinc-300'
+                : 'bg-surface-elevated/50 text-zinc-400 border-white/[0.07] hover:bg-surface-pressed/50 hover:text-zinc-300'
             }
           `}
         >

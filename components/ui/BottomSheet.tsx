@@ -157,7 +157,7 @@ export const BottomSheet = ({
             animate={{ y: 0, height: `${currentHeight * 100}dvh` }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-zinc-900 rounded-t-3xl border-t border-white/10 flex flex-col"
+            className="fixed bottom-0 left-0 right-0 z-50 bg-surface rounded-t-3xl border-t border-red-500/15 flex flex-col"
             style={{
               maxHeight: `${maxSnap * 100}dvh`,
               paddingBottom: 'env(safe-area-inset-bottom, 0px)'
@@ -182,7 +182,7 @@ export const BottomSheet = ({
 
               {/* Title */}
               {title && (
-                <div className="px-4 pb-3 border-b border-white/5">
+                <div className="px-4 pb-3 border-b border-white/[0.07]">
                   <h2 className="text-lg font-semibold text-white">{title}</h2>
                 </div>
               )}
@@ -288,7 +288,7 @@ export const Modal = ({ isOpen, onClose, children, title, size = 'md' }: ModalPr
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               className={`
                 w-full ${modalSizes[size]}
-                bg-zinc-900 rounded-2xl border border-white/10
+                bg-surface rounded-2xl border border-white/10
                 shadow-2xl overflow-hidden pointer-events-auto
                 box-border
               `}
@@ -299,7 +299,7 @@ export const Modal = ({ isOpen, onClose, children, title, size = 'md' }: ModalPr
             >
               {/* Header */}
               {title && (
-                <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 flex-shrink-0">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.07] flex-shrink-0">
                   <h2 className="text-lg font-semibold text-white truncate pr-2">{title}</h2>
                   <button
                     onClick={onClose}
@@ -365,7 +365,7 @@ export const ConfirmDialog = ({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 rounded-xl bg-zinc-800 text-white font-medium hover:bg-zinc-700 transition-colors"
+            className="flex-1 px-4 py-3 rounded-xl bg-surface-elevated text-white font-medium hover:bg-surface-pressed transition-colors"
           >
             {cancelText}
           </button>

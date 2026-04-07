@@ -17,9 +17,9 @@ interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
 }
 
 const variants: Record<ButtonVariant, string> = {
-  primary: 'bg-brand-red hover:bg-red-600 active:bg-red-700 text-white shadow-lg shadow-red-500/20',
-  secondary: 'bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-white border border-zinc-700',
-  ghost: 'bg-transparent hover:bg-white/5 active:bg-white/10 text-zinc-300 hover:text-white',
+  primary: 'bg-gradient-to-r from-red-600 to-brand-red hover:from-red-500 hover:to-red-600 active:from-red-700 active:to-red-800 text-white shadow-lg shadow-red-500/25',
+  secondary: 'bg-surface-elevated hover:bg-surface-pressed active:bg-surface-pressed text-white border border-white/10',
+  ghost: 'bg-transparent hover:bg-red-500/5 active:bg-white/10 text-zinc-300 hover:text-white',
   danger: 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white',
   success: 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white',
 };
@@ -95,7 +95,7 @@ const iconSizes = {
 };
 
 const iconVariants = {
-  default: 'bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700',
+  default: 'bg-surface-elevated text-zinc-300 hover:text-white hover:bg-surface-pressed',
   ghost: 'bg-transparent text-zinc-400 hover:text-white hover:bg-white/10',
   danger: 'bg-red-500/10 text-red-400 hover:bg-red-500/20',
 };

@@ -25,6 +25,8 @@ import {
   Timer,
   TrendingUp,
   Calendar,
+  Minus,
+  MoreHorizontal,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
@@ -124,7 +126,7 @@ function RestTimer({ onComplete }: { onComplete?: () => void }) {
       <div className="flex items-center gap-2">
         <button
           onClick={() => setIsRunning(!isRunning)}
-          className="p-2 rounded-full bg-zinc-800 hover:bg-zinc-700"
+          className="p-2 rounded-full bg-surface-elevated hover:bg-surface-pressed"
         >
           {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
         </button>
@@ -133,7 +135,7 @@ function RestTimer({ onComplete }: { onComplete?: () => void }) {
             setSeconds(initialSeconds)
             setIsRunning(false)
           }}
-          className="p-2 rounded-full bg-zinc-800 hover:bg-zinc-700"
+          className="p-2 rounded-full bg-surface-elevated hover:bg-surface-pressed"
         >
           <RotateCcw className="w-4 h-4" />
         </button>
@@ -142,7 +144,7 @@ function RestTimer({ onComplete }: { onComplete?: () => void }) {
             setSeconds(initialSeconds)
             setIsRunning(false)
           }}
-          className="p-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-red-400"
+          className="p-2 rounded-full bg-surface-elevated hover:bg-surface-pressed text-red-400"
         >
           <X className="w-4 h-4" />
         </button>
@@ -151,7 +153,7 @@ function RestTimer({ onComplete }: { onComplete?: () => void }) {
   )
 }
 
-// Set Row Component
+// Set Row Component — Mobile-first two-row layout
 function SetRow({
   set,
   setIndex,
@@ -172,101 +174,155 @@ function SetRow({
   suggestedSet?: { weight: number; reps: number }
 }) {
   const weightStep = unit === 'kg' ? 2.5 : 5
+  const [showActions, setShowActions] = useState(false)
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
       className={`
-        flex items-center gap-2 p-3 rounded-xl
-        ${set.isCompleted ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-zinc-800/50'}
-        ${set.isWarmup ? 'border-l-4 border-l-amber-500' : ''}
+        rounded-xl overflow-hidden transition-all duration-200
+        ${set.isCompleted
+          ? 'bg-emerald-500/10 border border-emerald-500/20'
+          : set.isWarmup
+            ? 'bg-amber-500/[0.07] border border-amber-500/15'
+            : 'bg-surface-elevated/50 border border-white/[0.05]'
+        }
       `}
     >
-      {/* Set Number */}
-      <div className="w-8 text-center">
-        <span className={`text-sm font-medium ${set.isWarmup ? 'text-amber-400' : 'text-zinc-400'}`}>
-          {set.isWarmup ? 'W' : setIndex + 1}
-        </span>
-      </div>
-
-      {/* Weight Input */}
-      <div className="flex-1">
-        <div className="flex items-center gap-1">
+      {/* Top row: Set number, warmup toggle, actions, complete */}
+      <div className="flex items-center justify-between px-3 pt-3 pb-1">
+        <div className="flex items-center gap-2">
+          <div className={`
+            w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold
+            ${set.isWarmup
+              ? 'bg-amber-500/20 text-amber-400'
+              : set.isCompleted
+                ? 'bg-emerald-500/20 text-emerald-400'
+                : 'bg-brand-red/15 text-brand-red'
+            }
+          `}>
+            {set.isWarmup ? 'W' : setIndex + 1}
+          </div>
           <button
-            onClick={() => onUpdate({ ...set, weight: Math.max(0, set.weight - weightStep) })}
-            className="w-8 h-10 rounded-lg bg-zinc-700 text-white font-bold hover:bg-zinc-600 active:scale-95 transition-all"
+            onClick={() => onUpdate({ ...set, isWarmup: !set.isWarmup })}
+            className={`
+              px-2.5 py-1 rounded-lg text-xs font-medium transition-all
+              ${set.isWarmup
+                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                : 'bg-transparent text-zinc-500 border border-transparent hover:text-zinc-400'
+              }
+            `}
           >
-            -
-          </button>
-          <input
-            type="number"
-            value={set.weight || ''}
-            onChange={(e) => onUpdate({ ...set, weight: parseFloat(e.target.value) || 0 })}
-            className="w-16 h-10 bg-zinc-900 border border-zinc-700 rounded-lg text-center font-semibold focus:border-brand-red focus:outline-none"
-            placeholder="0"
-          />
-          <button
-            onClick={() => onUpdate({ ...set, weight: set.weight + weightStep })}
-            className="w-8 h-10 rounded-lg bg-zinc-700 text-white font-bold hover:bg-zinc-600 active:scale-95 transition-all"
-          >
-            +
+            Warmup
           </button>
         </div>
-        <span className="text-2xs text-zinc-500 block text-center mt-0.5">{unit}</span>
-      </div>
-
-      {/* Reps Input */}
-      <div className="flex-1">
         <div className="flex items-center gap-1">
           <button
-            onClick={() => onUpdate({ ...set, reps: Math.max(0, set.reps - 1) })}
-            className="w-8 h-10 rounded-lg bg-zinc-700 text-white font-bold hover:bg-zinc-600 active:scale-95 transition-all"
+            onClick={() => setShowActions(!showActions)}
+            className="p-2 text-zinc-500 hover:text-zinc-300 transition-colors"
           >
-            -
+            <MoreHorizontal className="w-4 h-4" />
           </button>
-          <input
-            type="number"
-            value={set.reps || ''}
-            onChange={(e) => onUpdate({ ...set, reps: parseInt(e.target.value) || 0 })}
-            className="w-12 h-10 bg-zinc-900 border border-zinc-700 rounded-lg text-center font-semibold focus:border-brand-red focus:outline-none"
-            placeholder="0"
-          />
           <button
-            onClick={() => onUpdate({ ...set, reps: set.reps + 1 })}
-            className="w-8 h-10 rounded-lg bg-zinc-700 text-white font-bold hover:bg-zinc-600 active:scale-95 transition-all"
+            onClick={onComplete}
+            className={`
+              w-10 h-10 rounded-xl flex items-center justify-center
+              transition-all duration-200 active:scale-95
+              ${set.isCompleted
+                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                : 'bg-surface-pressed text-zinc-400 hover:text-white'
+              }
+            `}
           >
-            +
+            <Check className="w-5 h-5" />
           </button>
         </div>
-        <span className="text-2xs text-zinc-500 block text-center mt-0.5">reps</span>
       </div>
 
-      {/* Complete Button */}
-      <button
-        onClick={onComplete}
-        className={`
-          w-10 h-10 rounded-full flex items-center justify-center
-          transition-all duration-200
-          ${set.isCompleted
-            ? 'bg-emerald-500 text-white'
-            : 'bg-zinc-700 text-zinc-400 hover:bg-zinc-600'
-          }
-        `}
-      >
-        <Check className="w-5 h-5" />
-      </button>
+      {/* Delete action row (toggleable) */}
+      <AnimatePresence>
+        {showActions && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="px-3 overflow-hidden"
+          >
+            <button
+              onClick={() => { onRemove(); setShowActions(false) }}
+              className="flex items-center gap-2 px-3 py-2 text-red-400 hover:bg-red-500/10 rounded-lg text-sm transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Remove Set
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Actions */}
-      <div className="flex items-center">
-        <button
-          onClick={onRemove}
-          className="p-2 text-zinc-500 hover:text-red-400 transition-colors"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+      {/* Bottom row: Weight + Reps inputs side by side */}
+      <div className="grid grid-cols-2 gap-3 px-3 pb-3 pt-1">
+        {/* Weight */}
+        <div>
+          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1 block">
+            Weight ({unit})
+          </label>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onUpdate({ ...set, weight: Math.max(0, set.weight - weightStep) })}
+              className="w-11 h-11 rounded-xl bg-surface-pressed text-white font-bold hover:bg-zinc-500/30 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <input
+              type="number"
+              inputMode="decimal"
+              value={set.weight || ''}
+              onChange={(e) => onUpdate({ ...set, weight: parseFloat(e.target.value) || 0 })}
+              onFocus={(e) => e.target.select()}
+              className="flex-1 min-w-0 h-11 bg-surface border border-white/10 rounded-xl text-center text-lg font-semibold focus:border-brand-red focus:ring-1 focus:ring-brand-red/25 focus:outline-none transition-all"
+              placeholder="0"
+            />
+            <button
+              onClick={() => onUpdate({ ...set, weight: set.weight + weightStep })}
+              className="w-11 h-11 rounded-xl bg-surface-pressed text-white font-bold hover:bg-zinc-500/30 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Reps */}
+        <div>
+          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1 block">
+            Reps
+          </label>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onUpdate({ ...set, reps: Math.max(0, set.reps - 1) })}
+              className="w-11 h-11 rounded-xl bg-surface-pressed text-white font-bold hover:bg-zinc-500/30 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <input
+              type="number"
+              inputMode="numeric"
+              value={set.reps || ''}
+              onChange={(e) => onUpdate({ ...set, reps: parseInt(e.target.value) || 0 })}
+              onFocus={(e) => e.target.select()}
+              className="flex-1 min-w-0 h-11 bg-surface border border-white/10 rounded-xl text-center text-lg font-semibold focus:border-brand-red focus:ring-1 focus:ring-brand-red/25 focus:outline-none transition-all"
+              placeholder="0"
+            />
+            <button
+              onClick={() => onUpdate({ ...set, reps: set.reps + 1 })}
+              className="w-11 h-11 rounded-xl bg-surface-pressed text-white font-bold hover:bg-zinc-500/30 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </div>
     </motion.div>
   )
@@ -325,40 +381,42 @@ function ExerciseCard({
   return (
     <motion.div
       layout
-      className="bg-zinc-900 rounded-2xl overflow-hidden border border-white/5"
+      className="bg-surface rounded-2xl overflow-hidden border border-white/[0.07] border-l-2 border-l-brand-red/40"
     >
       {/* Header */}
       <div
         onClick={onToggle}
-        className="flex items-center justify-between p-4 bg-zinc-800/50 cursor-pointer"
+        className="flex items-center justify-between p-4 bg-surface-elevated/50 cursor-pointer active:bg-surface-elevated/70 transition-colors"
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-brand-red/20 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-xl bg-brand-red/15 flex items-center justify-center">
             <Dumbbell className="w-5 h-5 text-brand-red" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-white truncate">{exercise.name}</h3>
-            <div className="flex items-center gap-2 text-sm text-zinc-400">
-              <span>{completedSets}/{totalSets} sets</span>
+            <h3 className="font-semibold text-white truncate text-base">{exercise.name}</h3>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="px-2 py-0.5 rounded-md bg-brand-red/10 text-brand-red text-xs font-medium">
+                {completedSets}/{totalSets} sets
+              </span>
               {exercise.lastWorkout && (
-                <span className="text-zinc-500">
+                <span className="text-zinc-500 text-xs">
                   Last: {new Date(exercise.lastWorkout.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </span>
               )}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
             onClick={(e) => {
               e.stopPropagation()
               onRemove()
             }}
-            className="p-2 text-zinc-500 hover:text-red-400 transition-colors"
+            className="p-2.5 text-zinc-500 hover:text-red-400 transition-colors rounded-xl"
           >
             <X className="w-5 h-5" />
           </button>
-          <motion.div animate={{ rotate: isExpanded ? 180 : 0 }}>
+          <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} className="p-1">
             <ChevronDown className="w-5 h-5 text-zinc-400" />
           </motion.div>
         </div>
@@ -375,76 +433,70 @@ function ExerciseCard({
           >
             <div className="p-4 space-y-3">
               {/* Last Workout Reference */}
-              <div className={`rounded-xl p-3 ${
-                exercise.lastWorkout && exercise.lastWorkout.sets.length > 0
-                  ? 'bg-blue-500/10 border border-blue-500/20'
-                  : 'bg-zinc-800/50 border border-zinc-700/50'
-              }`}>
-                <div className={`flex items-center gap-2 text-sm font-medium mb-2 ${
-                  exercise.lastWorkout && exercise.lastWorkout.sets.length > 0
-                    ? 'text-blue-400'
-                    : 'text-zinc-500'
-                }`}>
-                  <TrendingUp className="w-4 h-4" />
-                  {exercise.lastWorkout && exercise.lastWorkout.sets.length > 0
-                    ? 'Previous Workout'
-                    : 'No Previous Data'}
-                </div>
-                {exercise.lastWorkout && exercise.lastWorkout.sets.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
+              {exercise.lastWorkout && exercise.lastWorkout.sets.length > 0 ? (
+                <div className="rounded-xl p-3 bg-blue-500/[0.07] border border-blue-500/15">
+                  <div className="flex items-center gap-2 text-xs font-medium mb-2 text-blue-400">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    Previous Workout
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
                     {exercise.lastWorkout.sets.slice(0, 5).map((s, i) => (
-                      <span key={i} className="px-3 py-1.5 bg-blue-500/20 rounded-lg text-sm text-blue-300 font-medium">
-                        {s.weight}{unit} × {s.reps}
+                      <span key={i} className="px-2.5 py-1 bg-blue-500/15 rounded-lg text-xs text-blue-300 font-medium">
+                        {s.weight}{unit} x {s.reps}
                       </span>
                     ))}
                     {exercise.lastWorkout.sets.length > 5 && (
-                      <span className="px-2 py-1 text-sm text-blue-400">
+                      <span className="px-2 py-1 text-xs text-blue-400">
                         +{exercise.lastWorkout.sets.length - 5} more
                       </span>
                     )}
                   </div>
-                ) : (
-                  <p className="text-sm text-zinc-500">
-                    This is your first time doing this exercise. Enter your sets below.
+                </div>
+              ) : (
+                <div className="rounded-xl p-3 bg-surface-elevated/50 border border-white/[0.05]">
+                  <p className="text-xs text-zinc-500">
+                    First time — enter your sets below.
                   </p>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Sets */}
-              <AnimatePresence>
-                {exercise.sets.map((set, index) => (
-                  <SetRow
-                    key={index}
-                    set={set}
-                    setIndex={exercise.sets.filter((s, i) => i < index && !s.isWarmup).length}
-                    unit={unit}
-                    onUpdate={(s) => updateSet(index, s)}
-                    onRemove={() => removeSet(index)}
-                    onComplete={() => handleSetComplete(index)}
-                    previousSet={index > 0 ? exercise.sets[index - 1] : undefined}
-                    suggestedSet={exercise.lastWorkout?.sets[index]}
-                  />
-                ))}
-              </AnimatePresence>
+              <div className="space-y-2">
+                <AnimatePresence>
+                  {exercise.sets.map((set, index) => (
+                    <SetRow
+                      key={index}
+                      set={set}
+                      setIndex={exercise.sets.filter((s, i) => i < index && !s.isWarmup).length}
+                      unit={unit}
+                      onUpdate={(s) => updateSet(index, s)}
+                      onRemove={() => removeSet(index)}
+                      onComplete={() => handleSetComplete(index)}
+                      previousSet={index > 0 ? exercise.sets[index - 1] : undefined}
+                      suggestedSet={exercise.lastWorkout?.sets[index]}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
 
-              {/* Add Set Buttons */}
-              <div className="flex gap-2 pt-2">
-                <button
-                  onClick={() => addSet(false)}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Set
-                </button>
+              {/* Add Set Buttons — stacked for mobile */}
+              <div className="space-y-2 pt-1">
                 {exercise.sets.length > 0 && (
                   <button
                     onClick={() => addSet(true)}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-brand-red/10 text-brand-red font-medium hover:bg-brand-red/15 active:scale-[0.99] transition-all border border-brand-red/20"
                   >
                     <Copy className="w-4 h-4" />
-                    Copy Last
+                    Copy Last Set
                   </button>
                 )}
+                <button
+                  onClick={() => addSet(false)}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-surface-elevated/50 text-zinc-400 hover:text-zinc-300 hover:bg-surface-elevated transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Empty Set
+                </button>
               </div>
             </div>
           </motion.div>
@@ -476,6 +528,14 @@ function ExerciseSelectorSheet({
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<string>('all')
 
+  // Reset search and category when sheet opens
+  useEffect(() => {
+    if (isOpen) {
+      setSearch('')
+      setCategory('all')
+    }
+  }, [isOpen])
+
   const categories = [
     { value: 'all', label: 'All' },
     { value: 'barbell', label: 'Barbell' },
@@ -496,27 +556,37 @@ function ExerciseSelectorSheet({
   const searchHeader = (
     <div className="space-y-3">
       {/* Search */}
-      <input
-        type="text"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search exercises..."
-        className="input w-full"
-        autoFocus
-      />
+      <div className="relative">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search exercises..."
+          className="input w-full pl-4 pr-10"
+          autoFocus
+        />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-500 hover:text-white"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
 
       {/* Category Filter */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar">
+      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
         {categories.map((cat) => (
           <button
             key={cat.value}
             onClick={() => setCategory(cat.value)}
             className={`
               px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
-              transition-colors
+              transition-all active:scale-95
               ${category === cat.value
-                ? 'bg-brand-red text-white'
-                : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                ? 'bg-brand-red text-white shadow-sm shadow-red-500/20'
+                : 'bg-surface-elevated text-zinc-400 hover:text-white'
               }
             `}
           >
@@ -544,20 +614,21 @@ function ExerciseSelectorSheet({
               onSelect(ex)
               onClose()
             }}
-            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800 transition-colors text-left"
+            className="w-full flex items-center gap-3 p-3.5 rounded-xl hover:bg-surface-elevated active:bg-surface-pressed transition-colors text-left"
           >
-            <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center">
-              <Dumbbell className="w-5 h-5 text-zinc-400" />
+            <div className="w-11 h-11 rounded-xl bg-brand-red/10 flex items-center justify-center flex-shrink-0">
+              <Dumbbell className="w-5 h-5 text-brand-red/70" />
             </div>
-            <div>
-              <p className="font-medium text-white">{ex.name}</p>
-              <p className="text-sm text-zinc-500 capitalize">{ex.category}</p>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-white truncate">{ex.name}</p>
+              <p className="text-xs text-zinc-500 capitalize">{ex.category}</p>
             </div>
+            <ChevronDown className="w-4 h-4 text-zinc-600 -rotate-90 flex-shrink-0" />
           </button>
         ))}
 
         {filtered.length === 0 && search && (
-          <div className="text-center py-6">
+          <div className="text-center py-8">
             <p className="text-zinc-400 mb-4">No exercises found</p>
             <button
               onClick={() => {
@@ -566,7 +637,7 @@ function ExerciseSelectorSheet({
               }}
               className="btn"
             >
-              Create "{search}"
+              Create &ldquo;{search}&rdquo;
             </button>
           </div>
         )}
@@ -599,31 +670,31 @@ function WorkoutSummaryModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Workout Complete!">
       <div className="text-center space-y-6">
-        <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto">
+        <div className="w-20 h-20 bg-emerald-500/15 rounded-2xl flex items-center justify-center mx-auto">
           <Check className="w-10 h-10 text-emerald-400" />
         </div>
 
         <div className="max-w-full overflow-hidden">
           <h3 className="text-xl font-bold text-white mb-1 break-words">{summary.title || 'Workout'}</h3>
-          <p className="text-zinc-400">Great job! Here&apos;s your summary:</p>
+          <p className="text-zinc-400 text-sm">Great job! Here&apos;s your summary:</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-zinc-800 rounded-xl p-3 min-w-0">
+          <div className="bg-surface-elevated rounded-xl p-3 min-w-0">
             <p className="text-xl sm:text-2xl font-bold text-white truncate">{summary.duration}m</p>
-            <p className="text-xs sm:text-sm text-zinc-400">Duration</p>
+            <p className="text-xs sm:text-sm text-zinc-500">Duration</p>
           </div>
-          <div className="bg-zinc-800 rounded-xl p-3 min-w-0">
+          <div className="bg-surface-elevated rounded-xl p-3 min-w-0">
             <p className="text-xl sm:text-2xl font-bold text-white truncate">{summary.exercises}</p>
-            <p className="text-xs sm:text-sm text-zinc-400">Exercises</p>
+            <p className="text-xs sm:text-sm text-zinc-500">Exercises</p>
           </div>
-          <div className="bg-zinc-800 rounded-xl p-3 min-w-0">
+          <div className="bg-surface-elevated rounded-xl p-3 min-w-0">
             <p className="text-xl sm:text-2xl font-bold text-white truncate">{summary.sets}</p>
-            <p className="text-xs sm:text-sm text-zinc-400">Sets</p>
+            <p className="text-xs sm:text-sm text-zinc-500">Sets</p>
           </div>
-          <div className="bg-zinc-800 rounded-xl p-3 min-w-0">
+          <div className="bg-surface-elevated rounded-xl p-3 min-w-0">
             <p className="text-xl sm:text-2xl font-bold text-white truncate">{summary.volume.toLocaleString()}</p>
-            <p className="text-xs sm:text-sm text-zinc-400">Volume ({summary.unit})</p>
+            <p className="text-xs sm:text-sm text-zinc-500">Volume ({summary.unit})</p>
           </div>
         </div>
 
@@ -676,15 +747,15 @@ function WorkoutSetupModal({
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative bg-zinc-900 rounded-2xl p-6 w-full max-w-md border border-white/10 shadow-xl"
+        className="relative bg-surface rounded-2xl p-6 w-full max-w-md border border-white/10 shadow-xl"
       >
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-brand-red/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-brand-red/15 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Dumbbell className="w-8 h-8 text-brand-red" />
           </div>
           <h2 className="text-xl font-bold text-white">Start Workout</h2>
-          <p className="text-zinc-400 text-sm mt-1">
+          <p className="text-zinc-500 text-sm mt-1">
             Set the date, time, and location for your workout
           </p>
         </div>
@@ -694,21 +765,21 @@ function WorkoutSetupModal({
           {/* Date & Time */}
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-zinc-300 mb-2">
-              <Calendar className="w-4 h-4 text-zinc-400" />
+              <Calendar className="w-4 h-4 text-zinc-500" />
               Date & Time
             </label>
             <input
               type="datetime-local"
               value={dateTime}
               onChange={(e) => setDateTime(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:border-brand-red focus:outline-none"
+              className="input"
             />
           </div>
 
           {/* Location */}
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-zinc-300 mb-2">
-              <MapPin className="w-4 h-4 text-zinc-400" />
+              <MapPin className="w-4 h-4 text-zinc-500" />
               Location
             </label>
             <input
@@ -717,7 +788,7 @@ function WorkoutSetupModal({
               onChange={(e) => setLocation(e.target.value)}
               placeholder="e.g., Home Gym, Planet Fitness"
               list="setup-locations"
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:border-brand-red focus:outline-none"
+              className="input"
             />
             <datalist id="setup-locations">
               {savedLocations.map((loc) => (
@@ -737,10 +808,10 @@ function WorkoutSetupModal({
                   key={loc}
                   onClick={() => setLocation(loc)}
                   className={`
-                    px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                    px-3 py-2 rounded-xl text-sm font-medium transition-all active:scale-95
                     ${location === loc
-                      ? 'bg-brand-red text-white'
-                      : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+                      ? 'bg-brand-red text-white shadow-sm shadow-red-500/20'
+                      : 'bg-surface-elevated text-zinc-400 hover:text-white'
                     }
                   `}
                 >
@@ -1230,25 +1301,25 @@ export default function NewWorkoutPage() {
     <div className="min-h-screen bg-brand-dark">
       {/* Header */}
       <div
-        className="sticky top-0 z-40 bg-brand-dark/95 backdrop-blur-lg border-b border-white/5"
+        className="sticky top-0 z-40 bg-brand-dark/95 backdrop-blur-lg border-b border-red-500/10"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <Link href="/dashboard" className="p-2 -ml-2 rounded-xl hover:bg-white/5 flex-shrink-0">
+            <Link href="/dashboard" className="p-2.5 -ml-2 rounded-xl hover:bg-white/5 flex-shrink-0 active:scale-95 transition-all">
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div className="min-w-0">
               <h1 className="font-bold text-lg truncate">{title || 'New Workout'}</h1>
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-zinc-500">
                 {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <button
               onClick={() => setShowTemplateSheet(true)}
-              className="p-2 rounded-xl hover:bg-white/5 text-zinc-400"
+              className="p-2.5 rounded-xl hover:bg-white/5 text-zinc-400 active:scale-95 transition-all"
             >
               <FileText className="w-5 h-5" />
             </button>
@@ -1325,7 +1396,7 @@ export default function NewWorkoutPage() {
         {/* Add Exercise Button */}
         <button
           onClick={() => setShowExerciseSelector(true)}
-          className="w-full py-4 rounded-2xl border-2 border-dashed border-zinc-700 text-zinc-400 hover:border-brand-red hover:text-brand-red transition-colors flex items-center justify-center gap-2"
+          className="w-full py-4 rounded-2xl border-2 border-dashed border-red-500/20 text-zinc-400 hover:border-brand-red/40 hover:text-brand-red active:scale-[0.99] transition-all flex items-center justify-center gap-2"
         >
           <Plus className="w-5 h-5" />
           Add Exercise
@@ -1333,11 +1404,13 @@ export default function NewWorkoutPage() {
 
         {/* Empty State */}
         {exercises.length === 0 && (
-          <div className="text-center py-12">
-            <Dumbbell className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-zinc-400 mb-2">No exercises yet</h3>
-            <p className="text-zinc-500 mb-6">Add exercises to start building your workout</p>
-            <button onClick={() => setShowExerciseSelector(true)} className="btn">
+          <div className="text-center py-16">
+            <div className="w-20 h-20 rounded-2xl bg-brand-red/10 flex items-center justify-center mx-auto mb-5">
+              <Dumbbell className="w-10 h-10 text-brand-red/50" />
+            </div>
+            <h3 className="text-lg font-semibold text-zinc-300 mb-2">No exercises yet</h3>
+            <p className="text-zinc-500 mb-6 text-sm">Tap below to start building your workout</p>
+            <button onClick={() => setShowExerciseSelector(true)} className="btn px-8">
               Add First Exercise
             </button>
           </div>
@@ -1346,16 +1419,16 @@ export default function NewWorkoutPage() {
 
       {/* Save Footer */}
       {exercises.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-zinc-900/95 backdrop-blur-lg border-t border-white/5 p-4 z-30">
+        <div className="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-lg border-t border-red-500/10 p-4 z-30" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
           <div className="max-w-2xl mx-auto flex items-center justify-between">
             <div>
-              <p className="font-medium">{summary.exercises} exercises</p>
-              <p className="text-sm text-zinc-400">{summary.sets} sets</p>
+              <p className="font-medium text-sm">{summary.exercises} exercises</p>
+              <p className="text-xs text-zinc-500">{summary.sets} sets &middot; {summary.volume.toLocaleString()} {summary.unit}</p>
             </div>
             <button
               onClick={saveWorkout}
               disabled={!canSave || saving}
-              className="btn flex items-center gap-2 disabled:opacity-50"
+              className="btn flex items-center gap-2 disabled:opacity-50 shadow-glow-red"
             >
               {saving ? (
                 <>
@@ -1516,7 +1589,7 @@ export default function NewWorkoutPage() {
                       setLoadingTemplate(false)
                     }
                   }}
-                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 transition-colors text-left"
+                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-surface-elevated/50 hover:bg-surface-elevated transition-colors text-left"
                 >
                   <Calendar className="w-5 h-5 text-brand-red" />
                   <span className="font-medium">{day.name}</span>
@@ -1568,7 +1641,7 @@ export default function NewWorkoutPage() {
                       setLoadingTemplate(false)
                     }
                   }}
-                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-zinc-800/50 hover:bg-zinc-800 transition-colors text-left disabled:opacity-50"
+                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-surface-elevated/50 hover:bg-surface-elevated transition-colors text-left disabled:opacity-50"
                 >
                   <FileText className={`w-5 h-5 text-zinc-400 ${loadingTemplate ? 'animate-pulse' : ''}`} />
                   <span className="font-medium">{prog.name}</span>

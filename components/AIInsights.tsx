@@ -38,13 +38,13 @@ function renderMarkdown(text: string) {
       )
     } else if (line.match(/^[-*] /)) {
       elements.push(
-        <p key={key++} className="text-sm text-zinc-300 pl-3 py-0.5 border-l border-zinc-700 ml-1">
+        <p key={key++} className="text-sm text-zinc-300 pl-3 py-0.5 border-l border-white/10 ml-1">
           {renderInline(line.replace(/^[-*] /, ''))}
         </p>
       )
     } else if (line.match(/^\d+\.\s/)) {
       elements.push(
-        <p key={key++} className="text-sm text-zinc-300 pl-3 py-0.5 border-l border-zinc-700 ml-1">
+        <p key={key++} className="text-sm text-zinc-300 pl-3 py-0.5 border-l border-white/10 ml-1">
           {renderInline(line)}
         </p>
       )
@@ -148,7 +148,7 @@ export default function AIInsights() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className="backdrop-blur-sm rounded-2xl border border-white/5 bg-gradient-to-br from-violet-500/10 via-zinc-900/80 to-zinc-900/80 overflow-hidden"
+      className="backdrop-blur-sm rounded-2xl border border-white/[0.07] bg-gradient-to-br from-violet-500/10 via-surface/80 to-surface/80 overflow-hidden"
     >
       {/* Header */}
       <button
@@ -207,8 +207,8 @@ export default function AIInsights() {
                   <div className="space-y-2">
                     {[1, 2, 3, 4].map(i => (
                       <div key={i} className="space-y-1.5">
-                        <div className="h-3.5 bg-zinc-800 rounded animate-pulse" style={{ width: `${30 + i * 10}%` }} />
-                        <div className="h-3 bg-zinc-800/60 rounded animate-pulse" style={{ width: `${60 + i * 5}%` }} />
+                        <div className="h-3.5 bg-surface-elevated rounded animate-pulse" style={{ width: `${30 + i * 10}%` }} />
+                        <div className="h-3 bg-surface-elevated/60 rounded animate-pulse" style={{ width: `${60 + i * 5}%` }} />
                       </div>
                     ))}
                   </div>

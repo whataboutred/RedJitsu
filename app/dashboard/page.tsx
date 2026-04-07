@@ -77,41 +77,41 @@ function GoalCard({
 }) {
   const progress = Math.min((current / goal) * 100, 100)
   const colorMap = {
-    strength: { ring: '#ef4444', bg: 'from-red-500/10', border: 'border-red-500/20' },
-    bjj: { ring: '#a855f7', bg: 'from-purple-500/10', border: 'border-purple-500/20' },
-    cardio: { ring: '#10b981', bg: 'from-emerald-500/10', border: 'border-emerald-500/20' },
+    strength: { ring: '#ef4444', bg: 'from-red-500/10', border: 'border-red-500/20', glow: 'shadow-glow-red-soft' },
+    bjj: { ring: '#a855f7', bg: 'from-purple-500/10', border: 'border-purple-500/20', glow: 'shadow-glow-purple' },
+    cardio: { ring: '#10b981', bg: 'from-emerald-500/10', border: 'border-emerald-500/20', glow: 'shadow-glow-green' },
   }
 
   return (
     <Link href={href}>
       <AnimatedCard
-        className={`bg-gradient-to-br ${colorMap[type].bg} to-transparent ${colorMap[type].border} p-3 hover:bg-white/5 transition-colors cursor-pointer`}
+        className={`bg-gradient-to-br ${colorMap[type].bg} to-transparent ${colorMap[type].border} p-4 hover:bg-white/5 active:scale-[0.99] transition-all cursor-pointer`}
         delay={type === 'strength' ? 0 : type === 'bjj' ? 0.1 : 0.2}
       >
-        <div className="flex items-center gap-3">
-          <ProgressRing progress={progress} size={56} strokeWidth={5} color={colorMap[type].ring} showLabel />
+        <div className="flex items-center gap-4">
+          <ProgressRing progress={progress} size={64} strokeWidth={5} color={colorMap[type].ring} showLabel />
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-0.5">
+            <div className="flex items-center gap-2 mb-1">
               <Icon className="w-4 h-4" style={{ color }} />
-              <span className="font-medium text-white text-sm">{label}</span>
+              <span className="font-semibold text-white text-sm">{label}</span>
               {streak > 0 && (
-                <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-500/20 rounded text-xs">
+                <div className="flex items-center gap-0.5 px-2 py-0.5 bg-amber-500/15 rounded-md text-xs">
                   <Flame className="w-3 h-3 text-amber-400 animate-pulse-soft" />
-                  <span className="font-medium text-amber-400">{streak}w</span>
+                  <span className="font-bold text-amber-400">{streak}w</span>
                 </div>
               )}
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-xl font-bold">{current}</span>
+              <span className="text-2xl font-bold">{current}</span>
               <span className="text-zinc-500 text-sm">/ {goal}</span>
-              <span className={`ml-auto text-xs font-medium ${
-                isOnTrack ? 'text-emerald-400' : 'text-amber-400'
+              <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-md ${
+                isOnTrack ? 'text-emerald-400 bg-emerald-500/10' : 'text-amber-400 bg-amber-500/10'
               }`}>
                 {isOnTrack ? 'On Track' : 'Catch Up'}
               </span>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-zinc-500 flex-shrink-0" />
+          <ChevronRight className="w-4 h-4 text-zinc-600 flex-shrink-0" />
         </div>
       </AnimatedCard>
     </Link>
@@ -395,13 +395,14 @@ export default function Dashboard() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-1"
+        className="space-y-1 pt-1"
       >
         <h1 className="text-2xl font-bold text-white">
-          {greeting}{todayWorkoutDay && <span className="text-zinc-400 font-normal"> — Today is <span className="text-brand-red font-semibold">{todayWorkoutDay}</span></span>}
+          {greeting}
         </h1>
-        <p className="text-zinc-400">
+        <p className="text-zinc-500 text-sm">
           {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          {todayWorkoutDay && <span> &middot; <span className="text-brand-red font-medium">{todayWorkoutDay}</span> day</span>}
         </p>
       </motion.div>
 
@@ -411,18 +412,19 @@ export default function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <AnimatedCard className="bg-gradient-to-r from-brand-red/20 to-orange-500/10 border-brand-red/20">
-          <div className="flex items-center justify-between">
+        <AnimatedCard className="bg-gradient-to-br from-brand-red/15 via-red-900/10 to-transparent border-red-500/15 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-brand-red/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="flex items-center justify-between relative">
             <div>
-              <h2 className="text-lg font-semibold text-white mb-1">Ready to train?</h2>
-              <p className="text-zinc-400 text-sm">Start your workout and track your progress</p>
+              <h2 className="text-lg font-bold text-white mb-1">Ready to train?</h2>
+              <p className="text-zinc-500 text-sm">Start logging and track your progress</p>
             </div>
             <Link
               href="/workouts/new"
-              className="flex items-center gap-2 px-5 py-3 bg-brand-red text-white font-semibold rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+              className="btn flex items-center gap-2 shadow-glow-red"
             >
               <Dumbbell className="w-5 h-5" />
-              <span className="hidden sm:inline">Start Workout</span>
+              <span className="hidden sm:inline">Start</span>
             </Link>
           </div>
         </AnimatedCard>
@@ -478,10 +480,12 @@ export default function Dashboard() {
           )}
         </div>
       ) : (
-        <AnimatedCard className="text-center py-8">
-          <Target className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-          <h3 className="font-semibold text-zinc-400 mb-2">No goals configured</h3>
-          <p className="text-zinc-500 text-sm mb-4">Set up your weekly goals to track your progress</p>
+        <AnimatedCard className="text-center py-10">
+          <div className="w-14 h-14 rounded-2xl bg-brand-red/10 flex items-center justify-center mx-auto mb-4">
+            <Target className="w-7 h-7 text-brand-red/50" />
+          </div>
+          <h3 className="font-semibold text-zinc-300 mb-2">No goals configured</h3>
+          <p className="text-zinc-500 text-sm mb-4">Set up weekly goals to track your progress</p>
           <Link href="/settings" className="btn btn-sm">
             Configure Goals
           </Link>
@@ -509,24 +513,34 @@ export default function Dashboard() {
 
         if (recent.length === 0) return null
 
-        const typeColors = {
-          strength: 'border-l-red-500 bg-red-500/5',
-          bjj: 'border-l-purple-500 bg-purple-500/5',
-          cardio: 'border-l-emerald-500 bg-emerald-500/5',
+        const typeConfig = {
+          strength: { border: 'border-l-red-500', bg: 'bg-red-500/[0.05]', icon: Dumbbell, color: 'text-red-400' },
+          bjj: { border: 'border-l-purple-500', bg: 'bg-purple-500/[0.05]', icon: Activity, color: 'text-purple-400' },
+          cardio: { border: 'border-l-emerald-500', bg: 'bg-emerald-500/[0.05]', icon: Heart, color: 'text-emerald-400' },
         }
 
         return (
           <AnimatedCard delay={0.2}>
-            <h3 className="font-semibold text-white mb-3 text-sm">Recent Activity</h3>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-1 h-4 bg-brand-red rounded-full" />
+              <h3 className="font-semibold text-white text-sm">Recent Activity</h3>
+            </div>
             <div className="space-y-2">
-              {recent.map((item, i) => (
-                <div key={i} className={`border-l-2 ${typeColors[item.type]} rounded-r-lg px-3 py-2`}>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-white">{item.title}</span>
-                    <span className="text-xs text-zinc-500">{new Date(item.date).toLocaleDateString()}</span>
+              {recent.map((item, i) => {
+                const cfg = typeConfig[item.type]
+                const ItemIcon = cfg.icon
+                return (
+                  <div key={i} className={`border-l-2 ${cfg.border} ${cfg.bg} rounded-xl px-3 py-3`}>
+                    <div className="flex items-center gap-3">
+                      <ItemIcon className={`w-4 h-4 ${cfg.color} flex-shrink-0`} />
+                      <span className="text-sm text-white flex-1 truncate">{item.title}</span>
+                      <span className="text-xs text-zinc-500 flex-shrink-0">
+                        {new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </AnimatedCard>
         )
@@ -538,19 +552,22 @@ export default function Dashboard() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="relative text-center py-4 px-4"
+          className="relative py-4 px-4"
         >
-          <button
-            onClick={handleRefreshQuote}
-            disabled={isRefreshingQuote}
-            className="absolute top-2 right-2 p-1.5 text-zinc-600 hover:text-zinc-400 transition-colors disabled:opacity-50"
-            title="Get new quote"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingQuote ? 'animate-spin' : ''}`} />
-          </button>
-          <p className="text-zinc-500 italic text-sm leading-relaxed max-w-xl mx-auto">
-            "{todayQuote.text}" <span className="text-zinc-600 not-italic">— {todayQuote.author}</span>
-          </p>
+          <div className="border-l-2 border-l-red-500/30 pl-4">
+            <button
+              onClick={handleRefreshQuote}
+              disabled={isRefreshingQuote}
+              className="absolute top-3 right-3 p-1.5 text-zinc-600 hover:text-zinc-400 transition-colors disabled:opacity-50"
+              title="Get new quote"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingQuote ? 'animate-spin' : ''}`} />
+            </button>
+            <p className="text-zinc-400 italic text-sm leading-relaxed">
+              &ldquo;{todayQuote.text}&rdquo;
+            </p>
+            <p className="text-zinc-600 text-xs mt-1 not-italic">— {todayQuote.author}</p>
+          </div>
         </motion.div>
       )}
     </div>
