@@ -56,14 +56,14 @@ function DesktopHeader({ signOut }: { signOut: () => Promise<void> }) {
   return (
     <header className="hidden md:block sticky top-0 z-50 bg-brand-dark/80 backdrop-blur-lg border-b border-red-500/10">
       <div className="max-w-6xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-24">
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-3">
             <Image
               src="/red-jitsu-logo.png?v=16"
               alt="Red Jitsu Training"
-              width={36}
-              height={36}
+              width={72}
+              height={72}
               className="rounded-xl"
               priority
             />
@@ -126,13 +126,13 @@ function MobileHeader() {
       className="md:hidden sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-red-500/10"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
-      <div className="flex items-center justify-between px-4 h-14">
+      <div className="flex items-center justify-between px-4 h-20">
         <Link href="/dashboard" className="flex items-center gap-2">
           <Image
             src="/red-jitsu-logo.png?v=16"
             alt="Red Jitsu Training"
-            width={28}
-            height={28}
+            width={56}
+            height={56}
             className="rounded-lg"
             priority
           />

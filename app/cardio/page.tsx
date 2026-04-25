@@ -35,6 +35,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import BackgroundLogo from '@/components/BackgroundLogo'
 
 interface CardioSession {
   activity: string
@@ -367,7 +368,8 @@ export default function CardioPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-brand-dark p-4 pb-24 space-y-4">
+      <div className="relative min-h-screen bg-brand-dark p-4 pb-24 space-y-4">
+        <BackgroundLogo />
         <Skeleton variant="rectangular" className="h-10 w-48" />
         <SkeletonCard className="h-32" />
         <SkeletonCard className="h-48" />
@@ -377,7 +379,8 @@ export default function CardioPage() {
 
   if (demo) {
     return (
-      <div className="min-h-screen bg-brand-dark p-4 pb-24">
+      <div className="relative min-h-screen bg-brand-dark p-4 pb-24">
+        <BackgroundLogo />
         <AnimatedCard>
           <div className="text-center py-8">
             <Footprints className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
@@ -395,7 +398,8 @@ export default function CardioPage() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-dark pb-32">
+    <div className="relative min-h-screen bg-brand-dark pb-32">
+      <BackgroundLogo />
       {/* Header */}
       <div className="sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-red-500/10">
         <div className="px-4 py-4">

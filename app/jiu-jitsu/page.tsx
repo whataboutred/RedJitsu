@@ -28,6 +28,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import { toDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useRouter } from 'next/navigation'
+import BackgroundLogo from '@/components/BackgroundLogo'
 
 type Kind = 'Class' | 'Drilling' | 'Open Mat'
 type Intensity = 'low' | 'medium' | 'high'
@@ -420,7 +421,8 @@ export default function BJJPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-brand-dark p-4 pb-24 space-y-4">
+      <div className="relative min-h-screen bg-brand-dark p-4 pb-24 space-y-4">
+        <BackgroundLogo />
         <Skeleton variant="rectangular" className="h-10 w-48" />
         <SkeletonCard className="h-32" />
         <SkeletonCard className="h-48" />
@@ -430,7 +432,8 @@ export default function BJJPage() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-dark pb-32">
+    <div className="relative min-h-screen bg-brand-dark pb-32">
+      <BackgroundLogo />
       {/* Header */}
       <div className="sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-red-500/10">
         <div className="px-4 py-4">
