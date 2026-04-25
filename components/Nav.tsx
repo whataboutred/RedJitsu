@@ -172,7 +172,7 @@ export default function Nav() {
         {/* Brand */}
         <Link href="/dashboard" className="flex items-center gap-2">
           <Image
-            src="/red-jitsu-logo.png?v=15"
+            src="/red-jitsu-logo.png?v=16"
             alt="Red Jitsu Training"
             width={28}
             height={28}
