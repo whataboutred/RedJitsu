@@ -21,6 +21,7 @@ import { ProgressRing } from '@/components/ui/ProgressRing'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { getDailyQuote, refreshQuote, type Quote } from '@/lib/quoteService'
 import ActivityHeatmap from '@/components/ActivityHeatmap'
+import BackgroundLogo from '@/components/BackgroundLogo'
 
 type Workout = { id: string; performed_at: string; title: string | null }
 type BJJ = {
@@ -369,7 +370,8 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto p-4 space-y-6">
+      <div className="max-w-4xl mx-auto p-4 space-y-6 relative z-10">
+        <BackgroundLogo />
         <div className="space-y-2">
           <Skeleton width={200} height={32} />
           <Skeleton width={300} height={20} />
@@ -390,7 +392,8 @@ export default function Dashboard() {
   ].filter(Boolean)
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-6">
+    <div className="max-w-4xl mx-auto p-4 space-y-6 relative z-10">
+      <BackgroundLogo />
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}

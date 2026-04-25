@@ -33,6 +33,7 @@ import WorkoutDetail from '@/components/WorkoutDetail'
 import BJJDetail from '@/components/BJJDetail'
 import CardioDetail from '@/components/CardioDetail'
 import AIInsights from '@/components/AIInsights'
+import BackgroundLogo from '@/components/BackgroundLogo'
 
 type Workout = { id: string; performed_at: string; title: string | null; exercise_count?: number }
 type BJJ = { id: string; performed_at: string; duration_min: number; kind: 'class' | 'drilling' | 'open_mat'; intensity: string | null; notes: string | null }
@@ -106,7 +107,8 @@ export default function HistoryPage() {
 
 function HistoryLoading() {
   return (
-    <div className="min-h-screen bg-brand-dark p-4 pb-24 space-y-4">
+    <div className="relative min-h-screen bg-brand-dark p-4 pb-24 space-y-4">
+      <BackgroundLogo />
       <Skeleton variant="rectangular" className="h-10 w-48" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <SkeletonCard className="h-24" />
@@ -914,7 +916,8 @@ function HistoryClient() {
   if (loading) return <HistoryLoading />
 
   return (
-    <div className="min-h-screen bg-brand-dark pb-24">
+    <div className="relative min-h-screen bg-brand-dark pb-24">
+      <BackgroundLogo />
       {/* Header */}
       <div className="sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-red-500/10">
         <div className="px-4 py-4">
