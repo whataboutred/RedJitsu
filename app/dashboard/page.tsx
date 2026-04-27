@@ -426,10 +426,10 @@ export default function Dashboard() {
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingQuote ? 'animate-spin' : ''}`} />
             </button>
-            <p className="text-zinc-400 italic text-sm leading-relaxed">
+            <p className="text-zinc-200 italic text-base leading-relaxed">
               &ldquo;{todayQuote.text}&rdquo;
             </p>
-            <p className="text-zinc-600 text-xs mt-1 not-italic">— {todayQuote.author}</p>
+            <p className="text-zinc-400 text-sm mt-1 not-italic">— {todayQuote.author}</p>
           </div>
         </motion.div>
       )}
