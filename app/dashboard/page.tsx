@@ -409,29 +409,30 @@ export default function Dashboard() {
         </p>
       </motion.div>
 
-      {/* Quick Start Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <AnimatedCard className="bg-gradient-to-br from-brand-red/15 via-red-900/10 to-transparent border-red-500/15 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-brand-red/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="flex items-center justify-between relative">
-            <div>
-              <h2 className="text-lg font-bold text-white mb-1">Ready to train?</h2>
-              <p className="text-zinc-500 text-sm">Start logging and track your progress</p>
-            </div>
-            <Link
-              href="/workouts/new"
-              className="btn flex items-center gap-2 shadow-glow-red"
+      {/* Motivational Quote — compact */}
+      {todayQuote && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="relative py-4 px-4"
+        >
+          <div className="border-l-2 border-l-red-500/30 pl-4">
+            <button
+              onClick={handleRefreshQuote}
+              disabled={isRefreshingQuote}
+              className="absolute top-3 right-3 p-1.5 text-zinc-600 hover:text-zinc-400 transition-colors disabled:opacity-50"
+              title="Get new quote"
             >
-              <Dumbbell className="w-5 h-5" />
-              <span className="hidden sm:inline">Start</span>
-            </Link>
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingQuote ? 'animate-spin' : ''}`} />
+            </button>
+            <p className="text-zinc-400 italic text-sm leading-relaxed">
+              &ldquo;{todayQuote.text}&rdquo;
+            </p>
+            <p className="text-zinc-600 text-xs mt-1 not-italic">— {todayQuote.author}</p>
           </div>
-        </AnimatedCard>
-      </motion.div>
+        </motion.div>
+      )}
 
       {/* Goal Cards */}
       {enabledGoals.length > 0 ? (
@@ -549,30 +550,6 @@ export default function Dashboard() {
         )
       })()}
 
-      {/* Motivational Quote — compact */}
-      {todayQuote && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="relative py-4 px-4"
-        >
-          <div className="border-l-2 border-l-red-500/30 pl-4">
-            <button
-              onClick={handleRefreshQuote}
-              disabled={isRefreshingQuote}
-              className="absolute top-3 right-3 p-1.5 text-zinc-600 hover:text-zinc-400 transition-colors disabled:opacity-50"
-              title="Get new quote"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingQuote ? 'animate-spin' : ''}`} />
-            </button>
-            <p className="text-zinc-400 italic text-sm leading-relaxed">
-              &ldquo;{todayQuote.text}&rdquo;
-            </p>
-            <p className="text-zinc-600 text-xs mt-1 not-italic">— {todayQuote.author}</p>
-          </div>
-        </motion.div>
-      )}
     </div>
   )
 }
