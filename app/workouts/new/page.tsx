@@ -772,7 +772,7 @@ function WorkoutSetupModal({
               type="datetime-local"
               value={dateTime}
               onChange={(e) => setDateTime(e.target.value)}
-              className="input"
+              className="input appearance-none min-w-0 max-w-full"
             />
           </div>
 
