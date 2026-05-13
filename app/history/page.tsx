@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState, useMemo } from 'react'
+import { Suspense, useEffect, useState, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BarChart3,
@@ -271,65 +271,88 @@ function HistoryClient() {
       .sort((a, b) => b.date.getTime() - a.date.getTime())
   }, [workouts, bjj, cardio, activityFilter, workoutFilter])
 
+  const loadHistoryData = useCallback(async () => {
+    const userId = await getActiveUserId()
+    if (!userId) return
+
+    const { data: w } = await supabase
+      .from('workouts')
+      .select('id,performed_at,title')
+      .eq('user_id', userId)
+      .order('performed_at', { ascending: false })
+      .limit(PAGE_SIZE)
+
+    // Get exercise counts for these workouts
+    const workoutIds = (w || []).map(workout => workout.id)
+    const { data: exerciseCounts } = await supabase
+      .from('workout_exercises')
+      .select('workout_id')
+      .in('workout_id', workoutIds)
+
+    // Count exercises per workout
+    const countMap = new Map<string, number>()
+    exerciseCounts?.forEach(ex => {
+      countMap.set(ex.workout_id, (countMap.get(ex.workout_id) || 0) + 1)
+    })
+
+    const initialWorkouts = (w || []).map(workout => ({
+      ...workout,
+      exercise_count: countMap.get(workout.id) || 0
+    })) as Workout[]
+    setWorkouts(initialWorkouts)
+    setPage(0)
+    setHasMore(initialWorkouts.length === PAGE_SIZE)
+
+    const { data: bj } = await supabase
+      .from('bjj_sessions')
+      .select('id,performed_at,duration_min,kind,intensity,notes')
+      .eq('user_id', userId)
+      .order('performed_at', { ascending: false })
+      .limit(PAGE_SIZE)
+    setBjj((bj || []) as BJJ[])
+
+    const { data: cardioData } = await supabase
+      .from('cardio_sessions')
+      .select('id,performed_at,activity,duration_minutes,distance,distance_unit,intensity,notes')
+      .eq('user_id', userId)
+      .order('performed_at', { ascending: false })
+      .limit(PAGE_SIZE)
+    setCardio((cardioData || []) as Cardio[])
+
+    await loadProgressionData(userId)
+    await loadVolumeData(userId)
+    await loadActiveProgramExercises(userId)
+    await loadStreakData(userId)
+  }, [])
+
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user && !DEMO) { router.push('/login'); return }
-
-      const userId = await getActiveUserId()
-      if (!userId) return
-
-      const { data: w } = await supabase
-        .from('workouts')
-        .select('id,performed_at,title')
-        .eq('user_id', userId)
-        .order('performed_at', { ascending: false })
-        .limit(PAGE_SIZE)
-
-      // Get exercise counts for these workouts
-      const workoutIds = (w || []).map(workout => workout.id)
-      const { data: exerciseCounts } = await supabase
-        .from('workout_exercises')
-        .select('workout_id')
-        .in('workout_id', workoutIds)
-
-      // Count exercises per workout
-      const countMap = new Map<string, number>()
-      exerciseCounts?.forEach(ex => {
-        countMap.set(ex.workout_id, (countMap.get(ex.workout_id) || 0) + 1)
-      })
-
-      const initialWorkouts = (w || []).map(workout => ({
-        ...workout,
-        exercise_count: countMap.get(workout.id) || 0
-      })) as Workout[]
-      setWorkouts(initialWorkouts)
-      setHasMore(initialWorkouts.length === PAGE_SIZE)
-
-      const { data: bj } = await supabase
-        .from('bjj_sessions')
-        .select('id,performed_at,duration_min,kind,intensity,notes')
-        .eq('user_id', userId)
-        .order('performed_at', { ascending: false })
-        .limit(PAGE_SIZE)
-      setBjj((bj || []) as BJJ[])
-
-      const { data: cardioData } = await supabase
-        .from('cardio_sessions')
-        .select('id,performed_at,activity,duration_minutes,distance,distance_unit,intensity,notes')
-        .eq('user_id', userId)
-        .order('performed_at', { ascending: false })
-        .limit(PAGE_SIZE)
-      setCardio((cardioData || []) as Cardio[])
-
-      await loadProgressionData(userId)
-      await loadVolumeData(userId)
-      await loadActiveProgramExercises(userId)
-      await loadStreakData(userId)
-
+      await loadHistoryData()
       setLoading(false)
     })()
-  }, [])
+  }, [loadHistoryData, router])
+
+  useEffect(() => {
+    const refresh = () => { loadHistoryData() }
+    const handleVisibilityChange = () => {
+      if (!document.hidden) refresh()
+    }
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'workout-data-updated') refresh()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleVisibilityChange)
+    window.addEventListener('storage', handleStorage)
+    window.addEventListener('workout-data-updated', refresh)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleVisibilityChange)
+      window.removeEventListener('storage', handleStorage)
+      window.removeEventListener('workout-data-updated', refresh)
+    }
+  }, [loadHistoryData])
 
   const loadMore = async () => {
     if (loadingMore || !hasMore) return

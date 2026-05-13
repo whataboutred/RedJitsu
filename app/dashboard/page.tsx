@@ -148,15 +148,43 @@ export default function Dashboard() {
     setIsRefreshingQuote(false)
   }
 
-  const loadProfileData = useCallback(async () => {
+  const loadDashboardData = useCallback(async () => {
     const userId = await getActiveUserId()
     if (!userId) return
 
-    const { data: prof } = await supabase
-      .from('profiles')
-      .select('weekly_goal,target_weeks,goal_start,bjj_weekly_goal,cardio_weekly_goal,show_strength_goal,show_bjj_goal,show_cardio_goal')
-      .eq('id', userId)
-      .maybeSingle()
+    const [profRes, workoutsRes, bjjRes, cardioRes, activeProgramRes] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('weekly_goal,target_weeks,goal_start,bjj_weekly_goal,cardio_weekly_goal,show_strength_goal,show_bjj_goal,show_cardio_goal')
+        .eq('id', userId)
+        .maybeSingle(),
+      supabase
+        .from('workouts')
+        .select('id,performed_at,title')
+        .eq('user_id', userId)
+        .order('performed_at', { ascending: false })
+        .limit(1000),
+      supabase
+        .from('bjj_sessions')
+        .select('id,performed_at,duration_min,kind')
+        .eq('user_id', userId)
+        .order('performed_at', { ascending: false })
+        .limit(1000),
+      supabase
+        .from('cardio_sessions')
+        .select('id,performed_at,activity,duration_minutes')
+        .eq('user_id', userId)
+        .order('performed_at', { ascending: false })
+        .limit(1000),
+      supabase
+        .from('programs')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .maybeSingle(),
+    ])
+
+    const prof = profRes.data
     if (prof) {
       setWeeklyGoal(prof.weekly_goal ?? 4)
       setBjjWeeklyGoal(prof.bjj_weekly_goal ?? 2)
@@ -164,6 +192,26 @@ export default function Dashboard() {
       setShowStrengthGoal(prof.show_strength_goal ?? true)
       setShowBjjGoal(prof.show_bjj_goal ?? true)
       setShowCardioGoal(prof.show_cardio_goal ?? false)
+    }
+
+    setWorkouts((workoutsRes.data || []) as Workout[])
+    setBjj((bjjRes.data || []) as BJJ[])
+    setCardio((cardioRes.data || []) as Cardio[])
+
+    const activeProgram = activeProgramRes.data
+    if (activeProgram) {
+      const todayDow = new Date().getDay()
+      const { data: programDays } = await supabase
+        .from('program_days')
+        .select('id,name,dows')
+        .eq('program_id', activeProgram.id)
+
+      const todaysDay = (programDays || []).find((day: ProgramDay) =>
+        day.dows && day.dows.includes(todayDow)
+      )
+      setTodayWorkoutDay(todaysDay?.name ?? null)
+    } else {
+      setTodayWorkoutDay(null)
     }
   }, [])
 
@@ -181,74 +229,33 @@ export default function Dashboard() {
         return
       }
 
-      await loadProfileData()
       logger.info(EventType.API_REQUEST, 'Dashboard page loaded', { user_id: userId }, userId)
-
-      const [workoutsRes, bjjRes, cardioRes] = await Promise.all([
-        supabase
-          .from('workouts')
-          .select('id,performed_at,title')
-          .eq('user_id', userId)
-          .order('performed_at', { ascending: false })
-          .limit(1000),
-        supabase
-          .from('bjj_sessions')
-          .select('id,performed_at,duration_min,kind')
-          .eq('user_id', userId)
-          .order('performed_at', { ascending: false })
-          .limit(1000),
-        supabase
-          .from('cardio_sessions')
-          .select('id,performed_at,activity,duration_minutes')
-          .eq('user_id', userId)
-          .order('performed_at', { ascending: false })
-          .limit(1000),
-      ])
-
-      setWorkouts((workoutsRes.data || []) as Workout[])
-      setBjj((bjjRes.data || []) as BJJ[])
-      setCardio((cardioRes.data || []) as Cardio[])
-
-      // Fetch today's workout day from active program
-      const { data: activeProgram } = await supabase
-        .from('programs')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('is_active', true)
-        .maybeSingle()
-
-      if (activeProgram) {
-        const todayDow = new Date().getDay()
-        const { data: programDays } = await supabase
-          .from('program_days')
-          .select('id,name,dows')
-          .eq('program_id', activeProgram.id)
-
-        const todaysDay = (programDays || []).find((day: ProgramDay) =>
-          day.dows && day.dows.includes(todayDow)
-        )
-        if (todaysDay) {
-          setTodayWorkoutDay(todaysDay.name)
-        }
-      }
-
+      await loadDashboardData()
       if (!cancelled) setLoading(false)
     })()
 
     return () => { cancelled = true }
-  }, [loadProfileData, router])
+  }, [loadDashboardData, router])
 
   useEffect(() => {
+    const refresh = () => loadDashboardData()
     const handleVisibilityChange = () => {
-      if (!document.hidden) loadProfileData()
+      if (!document.hidden) refresh()
+    }
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'workout-data-updated') refresh()
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener('focus', handleVisibilityChange)
+    window.addEventListener('storage', handleStorage)
+    window.addEventListener('workout-data-updated', refresh)
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('focus', handleVisibilityChange)
+      window.removeEventListener('storage', handleStorage)
+      window.removeEventListener('workout-data-updated', refresh)
     }
-  }, [loadProfileData])
+  }, [loadDashboardData])
 
   const now = new Date()
   const thisWeekKey = weekKey(now)
