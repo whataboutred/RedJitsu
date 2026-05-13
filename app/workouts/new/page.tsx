@@ -359,12 +359,57 @@ function ExerciseCard({
     }
   }
 
-  const addSet = (copyLast = false) => {
-    const lastSet = exercise.sets[exercise.sets.length - 1]
-    const newSet: SetData = copyLast && lastSet
-      ? { ...lastSet, isCompleted: false }
-      : { weight: 0, reps: 0, isWarmup: false, isCompleted: false }
+  const addSet = () => {
+    const newSet: SetData = { weight: 0, reps: 0, isWarmup: false, isCompleted: false }
     onUpdate({ ...exercise, sets: [...exercise.sets, newSet] })
+  }
+
+  const isEmpty = (s: SetData) => s.weight === 0 && s.reps === 0
+
+  // Fill all empty working sets. First empty set falls back to last-workout history,
+  // subsequent empty sets copy the most recently filled set in this session.
+  // If there are no empty sets, append a new set copying the last one.
+  const copyLast = () => {
+    const newSets = [...exercise.sets]
+    const historySets = exercise.lastWorkout?.sets || []
+    const historyFallback = historySets[historySets.length - 1]
+    let lastFilled: { weight: number; reps: number } | undefined
+
+    // Seed lastFilled from any non-empty working set that already exists
+    for (const s of newSets) {
+      if (!s.isWarmup && !isEmpty(s)) lastFilled = { weight: s.weight, reps: s.reps }
+    }
+
+    let changed = false
+    for (let i = 0; i < newSets.length; i++) {
+      const s = newSets[i]
+      if (s.isWarmup) continue
+      if (!isEmpty(s)) {
+        lastFilled = { weight: s.weight, reps: s.reps }
+        continue
+      }
+      const source = lastFilled || (historyFallback
+        ? { weight: historyFallback.weight, reps: historyFallback.reps }
+        : undefined)
+      if (!source) continue
+      newSets[i] = { ...s, weight: source.weight, reps: source.reps }
+      lastFilled = source
+      changed = true
+    }
+
+    if (changed) {
+      onUpdate({ ...exercise, sets: newSets })
+      return
+    }
+
+    // No empty sets — fall back to appending a new set copied from the last
+    const lastSet = newSets[newSets.length - 1]
+    const appended: SetData = lastSet
+      ? { ...lastSet, isCompleted: false }
+      : historyFallback
+        ? { weight: historyFallback.weight, reps: historyFallback.reps, isWarmup: false, isCompleted: false }
+        : { weight: 0, reps: 0, isWarmup: false, isCompleted: false }
+    onUpdate({ ...exercise, sets: [...newSets, appended] })
   }
 
   const updateSet = (index: number, set: SetData) => {
@@ -481,17 +526,21 @@ function ExerciseCard({
 
               {/* Add Set Buttons — stacked for mobile */}
               <div className="space-y-2 pt-1">
-                {exercise.sets.length > 0 && (
+                {(exercise.sets.some((s) => !s.isWarmup && isEmpty(s)) ||
+                  (exercise.lastWorkout && exercise.lastWorkout.sets.length > 0) ||
+                  exercise.sets.some((s) => !s.isWarmup && !isEmpty(s))) && (
                   <button
-                    onClick={() => addSet(true)}
+                    onClick={copyLast}
                     className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-brand-red/10 text-brand-red font-medium hover:bg-brand-red/15 active:scale-[0.99] transition-all border border-brand-red/20"
                   >
                     <Copy className="w-4 h-4" />
-                    Copy Last Set
+                    {exercise.sets.some((s) => !s.isWarmup && isEmpty(s))
+                      ? 'Fill Empty Sets'
+                      : 'Copy Last Set'}
                   </button>
                 )}
                 <button
-                  onClick={() => addSet(false)}
+                  onClick={addSet}
                   className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-surface-elevated/50 text-zinc-400 hover:text-zinc-300 hover:bg-surface-elevated transition-all"
                 >
                   <Plus className="w-4 h-4" />
@@ -860,6 +909,7 @@ export default function NewWorkoutPage() {
   const [showExerciseSelector, setShowExerciseSelector] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
   const [savedWorkoutId, setSavedWorkoutId] = useState<string | null>(null)
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false)
 
   // Workout details
   const [title, setTitle] = useState('')
@@ -1248,6 +1298,16 @@ export default function NewWorkoutPage() {
       clearDraft()
       setSavedWorkoutId(w.id)
       setShowSummary(true)
+
+      // Notify other pages that workout data changed so they refetch.
+      // localStorage write fires `storage` events in other tabs/windows; the
+      // CustomEvent handles same-window navigation.
+      try {
+        const ts = String(Date.now())
+        localStorage.setItem('workout-data-updated', ts)
+        window.dispatchEvent(new CustomEvent('workout-data-updated', { detail: { ts } }))
+      } catch { /* localStorage may be unavailable */ }
+
       toast.success(`Workout saved! (${verifyWex?.length || 0} exercises, ${verifySets?.length || 0} sets)`)
     } catch (error: any) {
       console.error('[saveWorkout] Error:', error)
@@ -1426,7 +1486,7 @@ export default function NewWorkoutPage() {
               <p className="text-xs text-zinc-500">{summary.sets} sets &middot; {summary.volume.toLocaleString()} {summary.unit}</p>
             </div>
             <button
-              onClick={saveWorkout}
+              onClick={() => setShowSaveConfirm(true)}
               disabled={!canSave || saving}
               className="btn flex items-center gap-2 disabled:opacity-50 shadow-glow-red"
             >
@@ -1453,6 +1513,16 @@ export default function NewWorkoutPage() {
         exercises={allExercises}
         onSelect={addExercise}
         onCreateCustom={createCustomExercise}
+      />
+
+      {/* Save Confirmation */}
+      <ConfirmDialog
+        isOpen={showSaveConfirm}
+        onClose={() => setShowSaveConfirm(false)}
+        onConfirm={() => { saveWorkout() }}
+        title="Save Workout?"
+        message={`Save ${summary.exercises} exercise${summary.exercises !== 1 ? 's' : ''} · ${summary.sets} set${summary.sets !== 1 ? 's' : ''} · ${summary.volume.toLocaleString()} ${summary.unit}?`}
+        confirmText="Save"
       />
 
       {/* Summary Modal */}
