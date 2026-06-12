@@ -22,6 +22,7 @@ import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { getDailyQuote, refreshQuote, type Quote } from '@/lib/quoteService'
 import ActivityHeatmap from '@/components/ActivityHeatmap'
 import BackgroundLogo from '@/components/BackgroundLogo'
+import OnboardingWizard from '@/components/OnboardingWizard'
 
 type Workout = { id: string; performed_at: string; title: string | null }
 type BJJ = {
@@ -135,6 +136,7 @@ export default function Dashboard() {
   const [todayWorkoutDay, setTodayWorkoutDay] = useState<string | null>(null)
   const [todayQuote, setTodayQuote] = useState<Quote | null>(null)
   const [isRefreshingQuote, setIsRefreshingQuote] = useState(false)
+  const [onboardingUserId, setOnboardingUserId] = useState<string | null>(null)
 
   // Load daily quote
   useEffect(() => {
@@ -192,6 +194,9 @@ export default function Dashboard() {
       setShowStrengthGoal(prof.show_strength_goal ?? true)
       setShowBjjGoal(prof.show_bjj_goal ?? true)
       setShowCardioGoal(prof.show_cardio_goal ?? false)
+    } else if (!DEMO) {
+      // No profile yet — brand-new account, run first-time setup
+      setOnboardingUserId(userId)
     }
 
     setWorkouts((workoutsRes.data || []) as Workout[])
@@ -401,6 +406,17 @@ export default function Dashboard() {
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6 relative z-10">
       <BackgroundLogo />
+
+      {onboardingUserId && (
+        <OnboardingWizard
+          userId={onboardingUserId}
+          onComplete={() => {
+            setOnboardingUserId(null)
+            loadDashboardData()
+          }}
+        />
+      )}
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
