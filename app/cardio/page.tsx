@@ -910,7 +910,7 @@ export default function CardioPage() {
 
           {/* Updated stats */}
           <div className="bg-surface-elevated rounded-xl p-4 mb-6">
-            <p className="text-sm text-zinc-500 mb-2">This week's cardio</p>
+            <p className="text-sm text-zinc-500 mb-2">This week&apos;s cardio</p>
             <div className="flex items-center justify-center gap-4">
               <div className="text-center">
                 <p className="text-2xl font-bold text-emerald-400">{weekStats.sessions + 1}</p>

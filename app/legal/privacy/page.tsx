@@ -13,7 +13,7 @@ export default function PrivacyPage() {
       </p>
 
       <p>
-        Red Jitsu Training ("we") stores the minimum data needed to run the app:
+        Red Jitsu Training (&quot;we&quot;) stores the minimum data needed to run the app:
         your account email and your training logs (workouts, sets, and Jiu Jitsu
         session notes). We do not sell your data.
       </p>

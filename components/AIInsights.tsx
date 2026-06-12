@@ -94,13 +94,15 @@ export default function AIInsights() {
   const [expanded, setExpanded] = useState(true)
   const [hasCheckedCache, setHasCheckedCache] = useState(false)
 
-  // Hide in demo mode — requires real auth for API calls
-  if (DEMO) return null
-
   // Auto-load cached insights on mount
   useEffect(() => {
+    if (DEMO) return
     loadInsights(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Hide in demo mode — requires real auth for API calls
+  if (DEMO) return null
 
   async function loadInsights(forceRefresh: boolean) {
     if (loading) return // Prevent concurrent requests

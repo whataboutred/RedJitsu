@@ -493,7 +493,7 @@ export default function EnhancedSettings() {
           </div>
         </label>
         <div className="text-xs text-white/60 bg-black/20 rounded-lg p-3">
-          📈 We'll track your total mat time and consistency each week
+          📈 We&apos;ll track your total mat time and consistency each week
         </div>
       </div>
 
@@ -525,7 +525,7 @@ export default function EnhancedSettings() {
       <div className="card space-y-4">
         <div className="font-medium">👁️ Dashboard Goal Visibility</div>
         <div className="text-sm text-white/70 mb-4">
-          Control which goal cards appear on your dashboard. Disabled goals won't show up, keeping your dashboard focused on what matters to you.
+          Control which goal cards appear on your dashboard. Disabled goals won&apos;t show up, keeping your dashboard focused on what matters to you.
         </div>
         
         <div className="space-y-3">

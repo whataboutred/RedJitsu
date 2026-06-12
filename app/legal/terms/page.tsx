@@ -13,8 +13,8 @@ export default function TermsPage() {
       </p>
 
       <p>
-        By using Red Jitsu Training, you agree that the app is provided "as is"
-        with no guarantees. You're responsible for how you train and use the
+        By using Red Jitsu Training, you agree that the app is provided &quot;as is&quot;
+        with no guarantees. You&apos;re responsible for how you train and use the
         information presented.
       </p>
 
@@ -29,13 +29,13 @@ export default function TermsPage() {
       <ul className="list-disc pl-6 space-y-2">
         <li>Keep your account secure and your email accurate.</li>
         <li>Use the app safely and within your limits.</li>
-        <li>Don't abuse the service or try to access others' data.</li>
+        <li>Don&apos;t abuse the service or try to access others&apos; data.</li>
       </ul>
 
       <h2 className="text-xl font-semibold mt-4">Content & ownership</h2>
       <p>
         You own your training data. We host it for you. You grant us permission
-        to process it to deliver the app's features.
+        to process it to deliver the app&apos;s features.
       </p>
 
       <h2 className="text-xl font-semibold mt-4">Termination</h2>

@@ -96,7 +96,7 @@ export default function EditCardioPage() {
         <main className="relative z-10 p-4 max-w-xl mx-auto">
           <h1 className="text-xl font-semibold mb-2">Demo mode</h1>
           <p className="text-white/70">
-            You're viewing the app in read-only demo mode. To edit cardio sessions,
+            You&apos;re viewing the app in read-only demo mode. To edit cardio sessions,
             please <Link href="/login" className="underline">sign in</Link>.
           </p>
         </main>
