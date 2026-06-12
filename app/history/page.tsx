@@ -27,6 +27,11 @@ import { AnimatedCard, StatCard } from '@/components/ui/Card'
 import { ProgressRing } from '@/components/ui/ProgressRing'
 import { Button } from '@/components/ui/Button'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
+import { Sparkline } from '@/components/ui/Sparkline'
+import { SwipeableRow } from '@/components/ui/SwipeableRow'
+import { ConfirmDialog } from '@/components/ui/BottomSheet'
+import { useToast } from '@/components/Toast'
+import { deleteWorkout, deleteBjjSession, deleteCardioSession } from '@/lib/api'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId } from '@/lib/activeUser'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -70,6 +75,8 @@ type ExerciseProgress = {
   percentChange: number
   sessionCount: number
   trend: 'up' | 'down' | 'stagnant'
+  /** Max working weight per session, chronological — feeds the sparkline */
+  series: number[]
 }
 
 type StreakData = {
@@ -143,8 +150,42 @@ function HistoryClient() {
 
   const params = useSearchParams()
   const router = useRouter()
+  const toast = useToast()
   const highlightId = params.get('highlight')
   const highlightType = params.get('type') || 'workout'
+
+  // Swipe-to-delete target awaiting confirmation
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: 'strength' | 'bjj' | 'cardio'
+    id: string
+    title: string
+  } | null>(null)
+
+  async function confirmDeleteActivity() {
+    if (!deleteTarget) return
+    const { type, id } = deleteTarget
+    try {
+      const userId = await getActiveUserId()
+      if (!userId) return
+
+      if (type === 'strength') {
+        await deleteWorkout(id, userId)
+        setWorkouts((prev) => prev.filter((w) => w.id !== id))
+      } else if (type === 'bjj') {
+        await deleteBjjSession(id, userId)
+        setBjj((prev) => prev.filter((s) => s.id !== id))
+      } else {
+        await deleteCardioSession(id, userId)
+        setCardio((prev) => prev.filter((s) => s.id !== id))
+      }
+      toast.success('Deleted')
+    } catch (e) {
+      console.error('Delete failed:', e)
+      toast.error('Failed to delete')
+    } finally {
+      setDeleteTarget(null)
+    }
+  }
 
   const closeModal = () => {
     router.push('/history')
@@ -700,7 +741,8 @@ function HistoryClient() {
         repsChange,
         percentChange: Math.round(percentChange * 10) / 10,
         sessionCount: data.sessions.length,
-        trend
+        trend,
+        series: data.sessions.map(s => s.maxWeight)
       })
     })
 
@@ -809,7 +851,8 @@ function HistoryClient() {
         repsChange,
         percentChange: Math.round(percentChange * 10) / 10,
         sessionCount: data.sessions.length,
-        trend
+        trend,
+        series: data.sessions.map(s => s.maxWeight)
       })
     })
 
@@ -1050,10 +1093,13 @@ function HistoryClient() {
                                 +{exercise.percentChange}%
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-zinc-500">
-                              <span>{exercise.firstWeight} → {exercise.latestWeight} lb</span>
-                              <span className="text-zinc-600">•</span>
-                              <span>{exercise.sessionCount} sessions</span>
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                                <span>{exercise.firstWeight} → {exercise.latestWeight} lb</span>
+                                <span className="text-zinc-600">•</span>
+                                <span>{exercise.sessionCount} sessions</span>
+                              </div>
+                              <Sparkline data={exercise.series} stroke="#34D399" />
                             </div>
                           </motion.div>
                         ))}
@@ -1102,10 +1148,16 @@ function HistoryClient() {
                                 </span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-zinc-500">
-                              <span>{exercise.firstWeight} → {exercise.latestWeight} lb</span>
-                              <span className="text-zinc-600">•</span>
-                              <span>{exercise.trend === 'stagnant' ? 'Stagnant' : 'Regressed'}</span>
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                                <span>{exercise.firstWeight} → {exercise.latestWeight} lb</span>
+                                <span className="text-zinc-600">•</span>
+                                <span>{exercise.trend === 'stagnant' ? 'Stagnant' : 'Regressed'}</span>
+                              </div>
+                              <Sparkline
+                                data={exercise.series}
+                                stroke={exercise.trend === 'down' ? '#F87171' : '#FBBF24'}
+                              />
                             </div>
                           </motion.div>
                         ))}
@@ -1377,6 +1429,11 @@ function HistoryClient() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.03 }}
                     >
+                      <SwipeableRow
+                        onDelete={() =>
+                          setDeleteTarget({ type: activity.type, id: activity.id, title: activity.title })
+                        }
+                      >
                       <button
                         onClick={() => {
                           if (activity.type === 'strength') {
@@ -1403,6 +1460,7 @@ function HistoryClient() {
                           <ChevronRight className="w-5 h-5 text-zinc-500 group-hover:text-white transition-colors" />
                         </div>
                       </button>
+                      </SwipeableRow>
                     </motion.div>
                   )
                 })
@@ -1422,6 +1480,16 @@ function HistoryClient() {
             </div>
           </>
         )}
+
+        <ConfirmDialog
+          isOpen={deleteTarget !== null}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={confirmDeleteActivity}
+          title={`Delete "${deleteTarget?.title ?? ''}"?`}
+          message="This entry will be permanently deleted. This cannot be undone."
+          confirmText="Delete"
+          variant="danger"
+        />
       </div>
     </div>
   )
