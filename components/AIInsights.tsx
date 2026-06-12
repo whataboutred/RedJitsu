@@ -120,11 +120,11 @@ export default function AIInsights() {
 
       const res = await fetch('/api/insights', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          accessToken: session.access_token,
-          forceRefresh,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ forceRefresh }),
       })
 
       if (!res.ok) {

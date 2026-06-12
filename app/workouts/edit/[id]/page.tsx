@@ -31,6 +31,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
+import { isUuid } from '@/lib/validation'
 import { useToast } from '@/components/Toast'
 import { useDraftAutoSave, getTimeAgo } from '@/hooks/useDraftAutoSave'
 import { getLastWorkoutSetsForExercises, WorkoutSet as LastWorkoutSet } from '@/lib/workoutSuggestions'
@@ -697,6 +698,12 @@ export default function EditWorkoutPage() {
   }, [workoutId])
 
   async function loadData() {
+    if (!isUuid(workoutId)) {
+      toast.error('Workout not found')
+      router.push('/history')
+      return
+    }
+
     const isDemo = await isDemoVisitor()
     if (isDemo) {
       router.push('/login')

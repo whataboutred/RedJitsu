@@ -41,14 +41,26 @@ export function logToSplunk(event: LogEvent) {
     console.log(`[${event.level}] ${event.event_type}: ${event.message}`, event.data)
   }
 
-  // Send to our API route (which handles server-side Splunk logging)
-  fetch('/api/log', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(event),
-  }).catch(() => {
+  // Send to our API route (which handles server-side Splunk logging).
+  // The server resolves user_id from the session token — client-supplied
+  // user_id is ignored — so attach the token when a session exists.
+  ;(async () => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    try {
+      const { supabase } = await import('@/lib/supabaseClient')
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`
+      }
+    } catch {
+      // No session available — log anonymously
+    }
+    await fetch('/api/log', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(event),
+    })
+  })().catch(() => {
     // Silently fail — logging should not disrupt the user
   })
 }

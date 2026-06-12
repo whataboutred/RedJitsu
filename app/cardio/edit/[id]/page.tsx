@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { isoToDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useToast } from '@/components/Toast'
+import { isUuid } from '@/lib/validation'
 
 type CardioSession = {
   activity: string
@@ -46,8 +47,8 @@ export default function EditCardioPage() {
     ;(async () => {
       const isDemo = await isDemoVisitor()
       setDemo(isDemo)
-      
-      if (isDemo) {
+
+      if (isDemo || !isUuid(cardioId)) {
         setLoading(false)
         return
       }
@@ -114,6 +115,22 @@ export default function EditCardioPage() {
             <div className="h-8 bg-white/10 rounded w-1/3"></div>
             <div className="h-32 bg-white/10 rounded"></div>
           </div>
+        </main>
+      </div>
+    )
+  }
+
+  if (!isUuid(cardioId)) {
+    return (
+      <div className="relative min-h-screen bg-black">
+        <BackgroundLogo />
+        <Nav />
+        <main className="relative z-10 p-4 max-w-xl mx-auto">
+          <h1 className="text-xl font-semibold mb-2">Session not found</h1>
+          <p className="text-white/70">
+            This cardio session doesn&apos;t exist.{' '}
+            <Link href="/cardio" className="underline">Back to cardio</Link>
+          </p>
         </main>
       </div>
     )

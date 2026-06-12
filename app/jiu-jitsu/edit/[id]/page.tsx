@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { isoToDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useToast } from '@/components/Toast'
+import { isUuid } from '@/lib/validation'
 
 type Kind = 'Class' | 'Drilling' | 'Open Mat'
 type Intensity = 'low' | 'medium' | 'high'
@@ -34,6 +35,12 @@ export default function EditJiuJitsuPage() {
       const isDemo = await isDemoVisitor()
       setDemo(isDemo)
       if (isDemo) return
+
+      if (!isUuid(sessionId)) {
+        toast.error('Session not found')
+        router.push('/history')
+        return
+      }
 
       const userId = await getActiveUserId()
       if (!userId && !DEMO) {

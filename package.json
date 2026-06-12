@@ -12,6 +12,7 @@
     "@anthropic-ai/sdk": "^0.82.0",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "0.1.8",
+    "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.45.1",
     "dotenv": "^17.2.1",
     "framer-motion": "^12.23.25",
@@ -25,6 +26,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@types/node": "^22.19.21",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "autoprefixer": "^10.4.20",
