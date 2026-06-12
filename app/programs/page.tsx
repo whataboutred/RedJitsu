@@ -11,6 +11,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/Toast'
 import { AnimatedCard } from '@/components/ui/Card'
+import { ConfirmDialog } from '@/components/ui/BottomSheet'
+import { notifyDataChanged } from '@/lib/dataSync'
+import { useDataRefresh } from '@/hooks/useDataRefresh'
 import {
   Dumbbell,
   Calendar,
@@ -36,11 +39,11 @@ type Exercise = {
   category: 'barbell'|'dumbbell'|'machine'|'cable'|'other'
 }
 
-type Program = { 
+type Program = {
   id: string
-  name: string 
+  name: string
   is_active: boolean
-  created_at: string
+  created_at: string | null
   total_days?: number
   total_exercises?: number
 }
@@ -101,6 +104,7 @@ export default function ProgramsPage() {
   
   // Collapsible days state
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set())
+  const [programToDelete, setProgramToDelete] = useState<string | null>(null)
 
   const filteredExercises = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -122,6 +126,11 @@ export default function ProgramsPage() {
     })()
   }, [])
 
+  // Refetch when data changes anywhere or the tab regains focus
+  useDataRefresh(() => {
+    if (!demo && !loading) reloadPrograms()
+  })
+
   if (demo) {
     return (
       <div className="relative min-h-screen bg-black">
@@ -139,7 +148,7 @@ export default function ProgramsPage() {
               </div>
               <h1 className="text-xl font-semibold mb-2">Demo Mode</h1>
               <p className="text-zinc-500 mb-6">
-                You're viewing the app in read-only demo mode. To create your own
+                You&apos;re viewing the app in read-only demo mode. To create your own
                 programs, please sign in.
               </p>
               <Link
@@ -331,16 +340,19 @@ export default function ProgramsPage() {
   }
 
   async function deleteProgram(id: string) {
-    const ok = confirm('Delete this program and all its days/templates? This cannot be undone.')
-    if (!ok) return
-
     // If deleting the active program, deactivate it first to avoid broken dashboard state
     const programToDelete = programs.find(p => p.id === id)
     if (programToDelete?.is_active) {
       await supabase.from('programs').update({ is_active: false }).eq('id', id)
     }
 
-    await supabase.from('programs').delete().eq('id', id)
+    const { error } = await supabase.from('programs').delete().eq('id', id)
+    if (error) {
+      toast.error('Failed to delete program')
+      return
+    }
+    notifyDataChanged()
+    toast.success('Program deleted')
     if (selected?.id === id) setSelected(null)
     await reloadPrograms()
   }
@@ -621,6 +633,7 @@ export default function ProgramsPage() {
         }
       }
 
+      notifyDataChanged()
       toast.success('Program saved successfully!')
       await reloadPrograms()
       backToList()
@@ -751,9 +764,11 @@ export default function ProgramsPage() {
                           <Target className="w-4 h-4 text-zinc-500" />
                           <span>{p.total_exercises} exercises total</span>
                         </div>
-                        <div className="text-xs text-zinc-500">
-                          Created {new Date(p.created_at).toLocaleDateString()}
-                        </div>
+                        {p.created_at && (
+                          <div className="text-xs text-zinc-500">
+                            Created {new Date(p.created_at).toLocaleDateString()}
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex gap-2">
@@ -774,7 +789,7 @@ export default function ProgramsPage() {
                         )}
                         <button
                           className="toggle text-sm px-3 py-2 text-red-400 hover:bg-red-500/20 hover:border-red-500/30"
-                          onClick={() => deleteProgram(p.id)}
+                          onClick={() => setProgramToDelete(p.id)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -814,6 +829,18 @@ export default function ProgramsPage() {
               </AnimatedCard>
             </motion.div>
           )}
+
+          <ConfirmDialog
+            isOpen={programToDelete !== null}
+            onClose={() => setProgramToDelete(null)}
+            onConfirm={() => {
+              if (programToDelete) deleteProgram(programToDelete)
+            }}
+            title="Delete program?"
+            message="This program and all its days and templates will be permanently deleted. This cannot be undone."
+            confirmText="Delete"
+            variant="danger"
+          />
         </main>
       </div>
     )
@@ -1137,7 +1164,7 @@ export default function ProgramsPage() {
                                   >
                                     <div className="flex items-center gap-2 text-brand-red font-medium">
                                       <Plus className="w-4 h-4" />
-                                      Create "{search.trim()}"
+                                      Create &quot;{search.trim()}&quot;
                                     </div>
                                     <div className="text-xs text-zinc-500 mt-1 ml-6">
                                       Add as new {selectedCategory === 'all' ? 'other' : selectedCategory} exercise

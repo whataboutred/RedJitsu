@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, RefreshCw, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO } from '@/lib/activeUser'
+import { useDataRefresh } from '@/hooks/useDataRefresh'
 
 type InsightsResponse = {
   content: string
@@ -94,13 +95,21 @@ export default function AIInsights() {
   const [expanded, setExpanded] = useState(true)
   const [hasCheckedCache, setHasCheckedCache] = useState(false)
 
-  // Hide in demo mode — requires real auth for API calls
-  if (DEMO) return null
-
   // Auto-load cached insights on mount
   useEffect(() => {
+    if (DEMO) return
     loadInsights(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // When training data or settings change, ask the server again — it
+  // regenerates automatically once the data signature stops matching.
+  useDataRefresh(() => {
+    if (!DEMO && !loading) loadInsights(false)
+  })
+
+  // Hide in demo mode — requires real auth for API calls
+  if (DEMO) return null
 
   async function loadInsights(forceRefresh: boolean) {
     if (loading) return // Prevent concurrent requests
@@ -118,11 +127,11 @@ export default function AIInsights() {
 
       const res = await fetch('/api/insights', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          accessToken: session.access_token,
-          forceRefresh,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ forceRefresh }),
       })
 
       if (!res.ok) {

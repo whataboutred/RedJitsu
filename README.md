@@ -11,6 +11,7 @@ A comprehensive training companion for both strength training and Brazilian Jiu-
 - **Workout Programs**: Create and manage structured workout programs with scheduled days
 - **Exercise Library**: Comprehensive database of exercises with custom exercise creation
 - **Progress Tracking**: Weekly consistency goals and streak tracking
+- **Personal Records**: Automatic PR detection with a celebration when you beat an old lift
 - **Templates**: Auto-load today's program or manually select from saved templates
 
 ### 🥋 Brazilian Jiu-Jitsu
@@ -23,9 +24,12 @@ A comprehensive training companion for both strength training and Brazilian Jiu-
 - **Weekly Consistency**: Track progress toward weekly training goals
 - **Streak Counter**: Visualize consecutive weeks meeting your goals
 - **Progress Indicators**: On-track status and catch-up reminders
-- **Recent Activity**: Quick access to recent workouts and sessions
+- **AI Coach Insights**: Personalized analysis of your last 90 days, powered by Claude
+- **Trend Sparklines**: Per-exercise progress lines in the history analytics
+- **Recent Activity**: Quick access to recent workouts and sessions, with swipe-to-delete
 
 ### ⚙️ Additional Features
+- **First-Run Onboarding**: Guided setup for units and weekly goals on a new account
 - **User Profiles**: Customizable units (lbs/kg) and goal settings
 - **Password Management**: Secure password change functionality
 - **Offline Support**: Full PWA capabilities with offline sync
@@ -33,10 +37,10 @@ A comprehensive training companion for both strength training and Brazilian Jiu-
 - **Data Management**: Export capabilities and data deletion options
 
 ## Setup
-1) Create Supabase project → run `supabase/schema.sql` in SQL Editor.
-2) Copy `.env.local.example` → `.env.local` and paste your project URL & anon key.
+1) Create a Supabase project → run `supabase/schema.sql`, then each file in `supabase/migrations/` (oldest first), in the SQL Editor.
+2) Copy `.env.local.example` → `.env.local` and fill in your project URL, anon key, and (for AI insights) an Anthropic API key.
 3) `npm install` → `npm run dev` → http://localhost:3000
-4) Sign in with your email (magic link).
+4) Sign in with your email and password.
 
 ## Deploy
 1. Import your repository into Vercel

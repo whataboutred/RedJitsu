@@ -31,8 +31,11 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
+import { isUuid } from '@/lib/validation'
 import { useToast } from '@/components/Toast'
 import { useDraftAutoSave, getTimeAgo } from '@/hooks/useDraftAutoSave'
+import { hapticTap, hapticSuccess } from '@/lib/haptics'
+import { notifyDataChanged } from '@/lib/dataSync'
 import { getLastWorkoutSetsForExercises, WorkoutSet as LastWorkoutSet } from '@/lib/workoutSuggestions'
 import { Button, IconButton } from '@/components/ui/Button'
 import { BottomSheet, Modal, ConfirmDialog } from '@/components/ui/BottomSheet'
@@ -354,6 +357,7 @@ function ExerciseCard({
 
     // Start rest timer if completing a set
     if (!newSets[setIndex].isCompleted === false) {
+      hapticTap()
       setShowRestTimer(true)
     }
   }
@@ -697,6 +701,12 @@ export default function EditWorkoutPage() {
   }, [workoutId])
 
   async function loadData() {
+    if (!isUuid(workoutId)) {
+      toast.error('Workout not found')
+      router.push('/history')
+      return
+    }
+
     const isDemo = await isDemoVisitor()
     if (isDemo) {
       router.push('/login')
@@ -778,7 +788,7 @@ export default function EditWorkoutPage() {
       let lastWorkoutMap = new Map<string, { weight: number; reps: number }[]>()
       if (exerciseIds.length > 0) {
         try {
-          lastWorkoutMap = await getLastWorkoutSetsForExercises(userId, exerciseIds, workout.location)
+          lastWorkoutMap = await getLastWorkoutSetsForExercises(userId, exerciseIds, workout.location ?? undefined)
         } catch (e) {
           console.error('Error fetching suggestions:', e)
         }
@@ -1084,7 +1094,7 @@ export default function EditWorkoutPage() {
               set_index: idx + 1,
               weight: s.weight,
               reps: s.reps,
-              set_type: s.isWarmup ? 'warmup' : 'working',
+              set_type: s.isWarmup ? ('warmup' as const) : ('working' as const),
               completed: s.isCompleted,
             }))
 
@@ -1097,7 +1107,7 @@ export default function EditWorkoutPage() {
                 set_index: idx + 1,
                 weight: s.weight,
                 reps: s.reps,
-                set_type: s.isWarmup ? 'warmup' : 'working',
+                set_type: s.isWarmup ? ('warmup' as const) : ('working' as const),
               }))
               const result = await supabase.from('sets').insert(rowsWithoutCompleted)
               setsError = result.error
@@ -1112,6 +1122,8 @@ export default function EditWorkoutPage() {
       }
 
       clearDraft()
+      hapticSuccess()
+      notifyDataChanged()
       toast.success('Workout updated!')
       router.push('/history')
     } catch (error: any) {

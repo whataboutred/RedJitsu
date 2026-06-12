@@ -33,6 +33,9 @@ import { useToast } from '@/components/Toast'
 import { toDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { supabase } from '@/lib/supabaseClient'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
+import { hapticSuccess } from '@/lib/haptics'
+import { insertCardioSession } from '@/lib/api'
+import { useDataRefresh } from '@/hooks/useDataRefresh'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import BackgroundLogo from '@/components/BackgroundLogo'
@@ -235,6 +238,11 @@ export default function CardioPage() {
     })()
   }, [])
 
+  // Refetch when data changes anywhere or the tab regains focus
+  useDataRefresh(() => {
+    if (!demo && !loading) loadWeekStats()
+  })
+
   // Timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -342,13 +350,9 @@ export default function CardioPage() {
         performed_at: datetimeLocalToISO(performedAt)
       }
 
-      const { error } = await supabase.from('cardio_sessions').insert(sessionData)
+      await insertCardioSession(sessionData)
 
-      if (error) {
-        toast.error(`Failed to save: ${error.message}`)
-        return
-      }
-
+      hapticSuccess()
       setShowSuccessModal(true)
     } catch (error) {
       console.error('Save error:', error)
@@ -910,7 +914,7 @@ export default function CardioPage() {
 
           {/* Updated stats */}
           <div className="bg-surface-elevated rounded-xl p-4 mb-6">
-            <p className="text-sm text-zinc-500 mb-2">This week's cardio</p>
+            <p className="text-sm text-zinc-500 mb-2">This week&apos;s cardio</p>
             <div className="flex items-center justify-center gap-4">
               <div className="text-center">
                 <p className="text-2xl font-bold text-emerald-400">{weekStats.sessions + 1}</p>

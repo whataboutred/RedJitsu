@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { getCardioSession, deleteCardioSession } from '@/lib/api'
 import { getActiveUserId } from '@/lib/activeUser'
 import { X, Edit3, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/Toast'
+import { ConfirmDialog } from '@/components/ui/BottomSheet'
+import { Skeleton } from '@/components/ui/Skeleton'
 
 type CardioSession = {
   id: string
@@ -31,6 +33,7 @@ export default function CardioDetail({
   const [loading, setLoading] = useState(true)
   const [session, setSession] = useState<CardioSession | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const router = useRouter()
   const toast = useToast()
 
@@ -43,14 +46,7 @@ export default function CardioDetail({
       const userId = await getActiveUserId()
       if (!userId) return
 
-      const { data } = await supabase
-        .from('cardio_sessions')
-        .select('*')
-        .eq('id', sessionId)
-        .eq('user_id', userId)
-        .single()
-
-      setSession(data as CardioSession)
+      setSession(await getCardioSession(sessionId, userId))
     } catch (error) {
       console.error('Error loading cardio session:', error)
     } finally {
@@ -59,27 +55,13 @@ export default function CardioDetail({
   }
 
   async function handleDelete() {
-    if (!confirm('Are you sure you want to delete this cardio session? This cannot be undone.')) {
-      return
-    }
-
     setDeleting(true)
     try {
       const userId = await getActiveUserId()
       if (!userId) return
 
-      const { error } = await supabase
-        .from('cardio_sessions')
-        .delete()
-        .eq('id', sessionId)
-        .eq('user_id', userId)
-
-      if (error) {
-        toast.error('Failed to delete cardio session')
-        console.error('Delete error:', error)
-        return
-      }
-
+      await deleteCardioSession(sessionId, userId)
+      toast.success('Cardio session deleted')
       if (onUpdate) {
         onUpdate()
       }
@@ -99,8 +81,12 @@ export default function CardioDetail({
   if (loading) return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
       <div className="card max-w-lg w-full mx-4">
-        <div className="flex items-center justify-between">
-          <div>Loading session details...</div>
+        <div className="flex items-start justify-between">
+          <div className="flex-1 space-y-3 py-1">
+            <Skeleton variant="text" className="w-1/2" />
+            <Skeleton variant="text" className="w-1/3" />
+            <Skeleton variant="rounded" className="h-24 w-full" />
+          </div>
           <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg" title="Close">
             <X className="w-5 h-5" />
           </button>
@@ -139,8 +125,8 @@ export default function CardioDetail({
             >
               Edit
             </button>
-            <button 
-              onClick={handleDelete}
+            <button
+              onClick={() => setConfirmDelete(true)}
               disabled={deleting}
               className="p-2 hover:bg-white/5 rounded-lg text-red-400 hover:text-red-300 disabled:opacity-50 transition-colors" 
               title="Delete session"
@@ -201,6 +187,16 @@ export default function CardioDetail({
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={handleDelete}
+        title="Delete cardio session?"
+        message="This session will be permanently deleted. This cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   )
 }

@@ -34,6 +34,10 @@ import { useToast } from '@/components/Toast'
 import { savePendingWorkout, trySyncPending } from '@/lib/offline'
 import { toDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useDraftAutoSave, getTimeAgo } from '@/hooks/useDraftAutoSave'
+import { hapticTap, hapticSuccess } from '@/lib/haptics'
+import { detectAndSaveNewPRs, type NewPR } from '@/lib/api/personalRecords'
+import { notifyDataChanged } from '@/lib/dataSync'
+import PRCelebration from '@/components/PRCelebration'
 import { getLastWorkoutSetsForExercises, WorkoutSet as LastWorkoutSet } from '@/lib/workoutSuggestions'
 import { Button, IconButton } from '@/components/ui/Button'
 import { BottomSheet, Modal, ConfirmDialog } from '@/components/ui/BottomSheet'
@@ -355,6 +359,7 @@ function ExerciseCard({
 
     // Start rest timer if completing a set
     if (!newSets[setIndex].isCompleted === false) {
+      hapticTap()
       setShowRestTimer(true)
     }
   }
@@ -909,6 +914,8 @@ export default function NewWorkoutPage() {
   const [showExerciseSelector, setShowExerciseSelector] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
   const [savedWorkoutId, setSavedWorkoutId] = useState<string | null>(null)
+  const [newPRs, setNewPRs] = useState<NewPR[]>([])
+  const [showPRCelebration, setShowPRCelebration] = useState(false)
   const [showSaveConfirm, setShowSaveConfirm] = useState(false)
 
   // Workout details
@@ -936,6 +943,41 @@ export default function NewWorkoutPage() {
     enabled: true,
   })
 
+  // Unsaved draft found on mount, awaiting the user's restore decision
+  const [pendingDraft, setPendingDraft] = useState<any>(null)
+  const draftRestoredRef = useRef(false)
+
+  function restoreDraft(draft: any) {
+    draftRestoredRef.current = true
+    // Convert old draft format to new format
+    const restoredExercises: WorkoutExercise[] = draft.items.map((item: any) => ({
+      id: crypto.randomUUID(),
+      exerciseId: item.id,
+      name: item.name,
+      sets: item.sets.map((s: any) => ({
+        weight: s.weight,
+        reps: s.reps,
+        isWarmup: s.set_type === 'warmup',
+        isCompleted: false,
+      })),
+    }))
+    setExercises(restoredExercises)
+    setTitle(draft.customTitle || '')
+    setNotes(draft.note || '')
+    setLocation(draft.location || '')
+    // Restore original workout timestamp if available
+    if (draft.performedAt) {
+      setPerformedAt(draft.performedAt)
+    }
+    if (restoredExercises.length > 0) {
+      setExpandedId(restoredExercises[0].id)
+    }
+    // Skip setup modal since we're restoring a draft
+    setShowSetupModal(false)
+    setSetupComplete(true)
+    toast.success('Draft restored!')
+  }
+
   // Load initial data
   useEffect(() => {
     ;(async () => {
@@ -954,43 +996,10 @@ export default function NewWorkoutPage() {
       userIdRef.current = userId
       startTimeRef.current = new Date()
 
-      // Try to restore draft
+      // Try to restore draft — ask via dialog instead of blocking the load
       const draft = loadDraft()
       if (draft && draft.items && draft.items.length > 0) {
-        const shouldRestore = confirm(
-          `Found unsaved workout from ${getTimeAgo(draft.timestamp)}. Restore it?`
-        )
-        if (shouldRestore) {
-          // Convert old draft format to new format
-          const restoredExercises: WorkoutExercise[] = draft.items.map((item: any) => ({
-            id: crypto.randomUUID(),
-            exerciseId: item.id,
-            name: item.name,
-            sets: item.sets.map((s: any) => ({
-              weight: s.weight,
-              reps: s.reps,
-              isWarmup: s.set_type === 'warmup',
-              isCompleted: false,
-            })),
-          }))
-          setExercises(restoredExercises)
-          setTitle(draft.customTitle || '')
-          setNotes(draft.note || '')
-          setLocation(draft.location || '')
-          // Restore original workout timestamp if available
-          if (draft.performedAt) {
-            setPerformedAt(draft.performedAt)
-          }
-          if (restoredExercises.length > 0) {
-            setExpandedId(restoredExercises[0].id)
-          }
-          // Skip setup modal since we're restoring a draft
-          setShowSetupModal(false)
-          setSetupComplete(true)
-          toast.success('Draft restored!')
-        } else {
-          clearDraft()
-        }
+        setPendingDraft(draft)
       }
 
       // Check for repeat workout (from WorkoutDetail "Repeat" button)
@@ -1070,7 +1079,7 @@ export default function NewWorkoutPage() {
           sets: ex.sets.map((s) => ({
             weight: s.weight,
             reps: s.reps,
-            set_type: s.isWarmup ? 'warmup' : 'working',
+            set_type: s.isWarmup ? ('warmup' as const) : ('working' as const),
           })),
         })),
         note: notes,
@@ -1249,7 +1258,7 @@ export default function NewWorkoutPage() {
             set_index: idx + 1,
             weight: s.weight,
             reps: s.reps,
-            set_type: s.isWarmup ? 'warmup' : 'working',
+            set_type: s.isWarmup ? ('warmup' as const) : ('working' as const),
             completed: s.isCompleted,
           }))
 
@@ -1262,7 +1271,7 @@ export default function NewWorkoutPage() {
               set_index: idx + 1,
               weight: s.weight,
               reps: s.reps,
-              set_type: s.isWarmup ? 'warmup' : 'working',
+              set_type: s.isWarmup ? ('warmup' as const) : ('working' as const),
             }))
             const result = await supabase.from('sets').insert(rowsWithoutCompleted)
             setsError = result.error
@@ -1297,16 +1306,28 @@ export default function NewWorkoutPage() {
 
       clearDraft()
       setSavedWorkoutId(w.id)
-      setShowSummary(true)
+      hapticSuccess()
 
-      // Notify other pages that workout data changed so they refetch.
-      // localStorage write fires `storage` events in other tabs/windows; the
-      // CustomEvent handles same-window navigation.
+      // Detect personal records — celebrate before showing the summary
+      let prs: NewPR[] = []
       try {
-        const ts = String(Date.now())
-        localStorage.setItem('workout-data-updated', ts)
-        window.dispatchEvent(new CustomEvent('workout-data-updated', { detail: { ts } }))
-      } catch { /* localStorage may be unavailable */ }
+        prs = await detectAndSaveNewPRs(
+          userId,
+          w.id,
+          exercises.map((ex) => ({ exerciseId: ex.exerciseId, name: ex.name, sets: ex.sets }))
+        )
+      } catch (e) {
+        console.error('PR detection failed:', e)
+      }
+      if (prs.length > 0) {
+        setNewPRs(prs)
+        setShowPRCelebration(true)
+      } else {
+        setShowSummary(true)
+      }
+
+      // Notify other pages that workout data changed so they refetch
+      notifyDataChanged()
 
       toast.success(`Workout saved! (${verifyWex?.length || 0} exercises, ${verifySets?.length || 0} sets)`)
     } catch (error: any) {
@@ -1515,6 +1536,22 @@ export default function NewWorkoutPage() {
         onCreateCustom={createCustomExercise}
       />
 
+      {/* Draft Restore */}
+      <ConfirmDialog
+        isOpen={pendingDraft !== null}
+        onClose={() => {
+          if (!draftRestoredRef.current) clearDraft()
+          setPendingDraft(null)
+        }}
+        onConfirm={() => {
+          if (pendingDraft) restoreDraft(pendingDraft)
+        }}
+        title="Restore unsaved workout?"
+        message={pendingDraft ? `Found an unsaved workout from ${getTimeAgo(pendingDraft.timestamp)}.` : ''}
+        confirmText="Restore"
+        cancelText="Discard"
+      />
+
       {/* Save Confirmation */}
       <ConfirmDialog
         isOpen={showSaveConfirm}
@@ -1523,6 +1560,17 @@ export default function NewWorkoutPage() {
         title="Save Workout?"
         message={`Save ${summary.exercises} exercise${summary.exercises !== 1 ? 's' : ''} · ${summary.sets} set${summary.sets !== 1 ? 's' : ''} · ${summary.volume.toLocaleString()} ${summary.unit}?`}
         confirmText="Save"
+      />
+
+      {/* PR Celebration — shown before the summary when records were hit */}
+      <PRCelebration
+        prs={newPRs}
+        unit={unit}
+        isOpen={showPRCelebration}
+        onClose={() => {
+          setShowPRCelebration(false)
+          setShowSummary(true)
+        }}
       />
 
       {/* Summary Modal */}

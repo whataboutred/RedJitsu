@@ -3,12 +3,15 @@
 import Nav from '@/components/Nav'
 import BackgroundLogo from '@/components/BackgroundLogo'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { getBjjSession, updateBjjSession } from '@/lib/api'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { isoToDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useToast } from '@/components/Toast'
+import { isUuid } from '@/lib/validation'
+import { Input, Select, Textarea } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
 
 type Kind = 'Class' | 'Drilling' | 'Open Mat'
 type Intensity = 'low' | 'medium' | 'high'
@@ -21,6 +24,7 @@ export default function EditJiuJitsuPage() {
 
   const [demo, setDemo] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   
   // Form state
   const [performedAt, setPerformedAt] = useState<string>('')
@@ -35,19 +39,20 @@ export default function EditJiuJitsuPage() {
       setDemo(isDemo)
       if (isDemo) return
 
+      if (!isUuid(sessionId)) {
+        toast.error('Session not found')
+        router.push('/history')
+        return
+      }
+
       const userId = await getActiveUserId()
-      if (!userId && !DEMO) {
-        router.push('/login')
+      if (!userId) {
+        if (!DEMO) router.push('/login')
         return
       }
 
       // Load existing session data
-      const { data: session } = await supabase
-        .from('bjj_sessions')
-        .select('performed_at,kind,duration_min,intensity,notes')
-        .eq('id', sessionId)
-        .eq('user_id', userId)
-        .single()
+      const session = await getBjjSession(sessionId, userId).catch(() => null)
 
       if (!session) {
         toast.error('Session not found')
@@ -68,7 +73,7 @@ export default function EditJiuJitsuPage() {
       }
 
       setDuration(session.duration_min)
-      setIntensity(session.intensity || 'medium')
+      setIntensity((session.intensity as Intensity) || 'medium')
       setNotes(session.notes || '')
       
       setLoading(false)
@@ -78,43 +83,42 @@ export default function EditJiuJitsuPage() {
   // Use datetimeLocalToISO from lib/dateUtils for timezone-safe conversion
 
   async function saveSession() {
+    if (saving) return
     const userId = await getActiveUserId()
     if (!userId) { toast.warning('Please sign in again.'); return }
 
+    setSaving(true)
     try {
       const minutes = Math.min(600, Math.max(5, Number(duration || 60)))
-      const { error } = await supabase
-        .from('bjj_sessions')
-        .update({
-          performed_at: datetimeLocalToISO(performedAt),
-          kind: kind === 'Open Mat' ? 'open_mat' : (kind.toLowerCase()),
-          duration_min: minutes,
-          intensity,
-          notes: notes || null
-        })
-        .eq('id', sessionId)
-        .eq('user_id', userId)
-
-      if (error) {
-        console.error('Update error:', error)
-        toast.error('Failed to update session: ' + error.message)
-        return
-      }
+      await updateBjjSession(sessionId, userId, {
+        performed_at: datetimeLocalToISO(performedAt),
+        kind: kind === 'Open Mat' ? ('open_mat' as const) : (kind.toLowerCase() as 'class' | 'drilling'),
+        duration_min: minutes,
+        intensity,
+        notes: notes || null
+      })
 
       toast.success('Session updated successfully!')
       router.push(`/history?highlight=${sessionId}&type=bjj`)
     } catch (err) {
       console.error('Save error:', err)
       toast.error('Failed to update session')
+    } finally {
+      setSaving(false)
     }
   }
 
   if (loading) {
     return (
-      <div>
+      <div className="relative min-h-screen bg-black">
+        <BackgroundLogo />
         <Nav />
-        <main className="max-w-3xl mx-auto p-4">
-          <div className="text-center">Loading session...</div>
+        <main className="relative z-10 max-w-3xl mx-auto p-4">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-white/10 rounded w-1/3"></div>
+            <div className="h-32 bg-white/10 rounded"></div>
+            <div className="h-32 bg-white/10 rounded"></div>
+          </div>
         </main>
       </div>
     )
@@ -135,78 +139,59 @@ export default function EditJiuJitsuPage() {
         {/* Session Details Form */}
         <div className="card space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Session Type */}
-            <label className="block">
-              <div className="mb-2 text-sm text-white/80">Session type</div>
-              <select
-                className="input w-full"
-                value={kind}
-                onChange={(e) => setKind(e.target.value as Kind)}
-              >
-                <option value="Class">Class</option>
-                <option value="Drilling">Drilling</option>
-                <option value="Open Mat">Open Mat</option>
-              </select>
-            </label>
-
-            {/* Duration */}
-            <label className="block">
-              <div className="mb-2 text-sm text-white/80">Duration (minutes)</div>
-              <input
-                type="number"
-                min="5"
-                max="600"
-                className="input w-full"
-                value={duration}
-                onChange={(e) => setDuration(Number(e.target.value))}
-              />
-            </label>
+            <Select
+              label="Session type"
+              value={kind}
+              onChange={(e) => setKind(e.target.value as Kind)}
+              options={[
+                { value: 'Class', label: 'Class' },
+                { value: 'Drilling', label: 'Drilling' },
+                { value: 'Open Mat', label: 'Open Mat' },
+              ]}
+            />
+            <Input
+              label="Duration (minutes)"
+              type="number"
+              min={5}
+              max={600}
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Intensity */}
-            <label className="block">
-              <div className="mb-2 text-sm text-white/80">Intensity</div>
-              <select
-                className="input w-full"
-                value={intensity}
-                onChange={(e) => setIntensity(e.target.value as Intensity)}
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </label>
-
-            {/* Performed At */}
-            <label className="block">
-              <div className="mb-2 text-sm text-white/80">Performed at</div>
-              <input
-                type="datetime-local"
-                className="input w-full"
-                value={performedAt}
-                onChange={(e) => setPerformedAt(e.target.value)}
-              />
-            </label>
+            <Select
+              label="Intensity"
+              value={intensity}
+              onChange={(e) => setIntensity(e.target.value as Intensity)}
+              options={[
+                { value: 'low', label: 'Low' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'high', label: 'High' },
+              ]}
+            />
+            <Input
+              label="Performed at"
+              type="datetime-local"
+              value={performedAt}
+              onChange={(e) => setPerformedAt(e.target.value)}
+            />
           </div>
 
-          {/* Notes */}
-          <label className="block">
-            <div className="mb-2 text-sm text-white/80">Notes (optional)</div>
-            <textarea
-              className="input w-full h-24 resize-none"
-              placeholder="How did it go? What did you work on?"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </label>
+          <Textarea
+            label="Notes (optional)"
+            className="h-24"
+            placeholder="How did it go? What did you work on?"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
         </div>
 
         {/* Action Buttons */}
         <div className="flex gap-3">
-          <button className="btn" onClick={saveSession}>
+          <Button onClick={saveSession} loading={saving}>
             Save Changes
-          </button>
+          </Button>
           <Link href="/history" className="toggle">
             Cancel
           </Link>

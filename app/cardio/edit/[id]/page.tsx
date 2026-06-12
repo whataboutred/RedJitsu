@@ -3,12 +3,15 @@
 import Nav from '@/components/Nav'
 import BackgroundLogo from '@/components/BackgroundLogo'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { getCardioSession, updateCardioSession } from '@/lib/api'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { isoToDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useToast } from '@/components/Toast'
+import { isUuid } from '@/lib/validation'
+import { Input, Select, Textarea } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
 
 type CardioSession = {
   activity: string
@@ -46,8 +49,8 @@ export default function EditCardioPage() {
     ;(async () => {
       const isDemo = await isDemoVisitor()
       setDemo(isDemo)
-      
-      if (isDemo) {
+
+      if (isDemo || !isUuid(cardioId)) {
         setLoading(false)
         return
       }
@@ -62,12 +65,7 @@ export default function EditCardioPage() {
     if (!userId) return
 
     try {
-      const { data: cardioData } = await supabase
-        .from('cardio_sessions')
-        .select('*')
-        .eq('id', cardioId)
-        .eq('user_id', userId)
-        .single()
+      const cardioData = await getCardioSession(cardioId, userId)
 
       if (cardioData) {
         setSession({
@@ -96,7 +94,7 @@ export default function EditCardioPage() {
         <main className="relative z-10 p-4 max-w-xl mx-auto">
           <h1 className="text-xl font-semibold mb-2">Demo mode</h1>
           <p className="text-white/70">
-            You're viewing the app in read-only demo mode. To edit cardio sessions,
+            You&apos;re viewing the app in read-only demo mode. To edit cardio sessions,
             please <Link href="/login" className="underline">sign in</Link>.
           </p>
         </main>
@@ -114,6 +112,22 @@ export default function EditCardioPage() {
             <div className="h-8 bg-white/10 rounded w-1/3"></div>
             <div className="h-32 bg-white/10 rounded"></div>
           </div>
+        </main>
+      </div>
+    )
+  }
+
+  if (!isUuid(cardioId)) {
+    return (
+      <div className="relative min-h-screen bg-black">
+        <BackgroundLogo />
+        <Nav />
+        <main className="relative z-10 p-4 max-w-xl mx-auto">
+          <h1 className="text-xl font-semibold mb-2">Session not found</h1>
+          <p className="text-white/70">
+            This cardio session doesn&apos;t exist.{' '}
+            <Link href="/cardio" className="underline">Back to cardio</Link>
+          </p>
         </main>
       </div>
     )
@@ -137,26 +151,16 @@ export default function EditCardioPage() {
 
     setSaving(true)
     try {
-      const { error } = await supabase
-        .from('cardio_sessions')
-        .update({
-          activity: session.activity,
-          duration_minutes: session.duration_minutes || null,
-          distance: session.distance || null,
-          distance_unit: session.distance_unit,
-          intensity: session.intensity,
-          calories: session.calories || null,
-          notes: session.notes?.trim() || null,
-          performed_at: datetimeLocalToISO(performedAt)
-        })
-        .eq('id', cardioId)
-        .eq('user_id', userId)
-
-      if (error) {
-        console.error('Save error:', error)
-        toast.error(`Failed to update cardio session: ${error.message}`)
-        return
-      }
+      await updateCardioSession(cardioId, userId, {
+        activity: session.activity,
+        duration_minutes: session.duration_minutes || null,
+        distance: session.distance || null,
+        distance_unit: session.distance_unit,
+        intensity: session.intensity,
+        calories: session.calories || null,
+        notes: session.notes?.trim() || null,
+        performed_at: datetimeLocalToISO(performedAt)
+      })
 
       toast.success('Cardio session updated!')
       router.push('/history')
@@ -184,9 +188,8 @@ export default function EditCardioPage() {
         <div className="card">
           <div className="font-medium mb-4">🏃‍♀️ Activity</div>
           <div className="bg-brand-red/10 border border-brand-red/20 rounded-xl p-4">
-            <input
+            <Input
               type="text"
-              className="input w-full"
               value={session.activity}
               onChange={e => updateSession({ activity: e.target.value })}
               placeholder="Enter activity name..."
@@ -201,12 +204,9 @@ export default function EditCardioPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Date & Time */}
             <div className="md:col-span-2">
-              <label className="block text-sm text-white/80 font-medium mb-2">
-                Date & Time
-              </label>
-              <input
+              <Input
+                label="Date & Time"
                 type="datetime-local"
-                className="input w-full"
                 value={performedAt}
                 onChange={e => setPerformedAt(e.target.value)}
               />
@@ -214,16 +214,13 @@ export default function EditCardioPage() {
 
             {/* Duration */}
             <div>
-              <label className="block text-sm text-white/80 font-medium mb-2">
-                Duration (minutes)
-              </label>
-              <input
+              <Input
+                label="Duration (minutes)"
                 type="number"
-                min="1"
-                className="input w-full"
+                min={1}
                 value={session.duration_minutes || ''}
-                onChange={e => updateSession({ 
-                  duration_minutes: e.target.value ? Number(e.target.value) : undefined 
+                onChange={e => updateSession({
+                  duration_minutes: e.target.value ? Number(e.target.value) : undefined
                 })}
                 placeholder="Optional"
               />
@@ -231,44 +228,42 @@ export default function EditCardioPage() {
 
             {/* Distance */}
             <div>
-              <label className="block text-sm text-white/80 font-medium mb-2">
+              <label className="block text-sm font-medium text-zinc-400 mb-1.5">
                 Distance
               </label>
               <div className="flex gap-2">
-                <input
+                <Input
                   type="number"
-                  min="0"
-                  step="0.1"
-                  className="input flex-1"
+                  min={0}
+                  step={0.1}
                   value={session.distance || ''}
-                  onChange={e => updateSession({ 
-                    distance: e.target.value ? Number(e.target.value) : undefined 
+                  onChange={e => updateSession({
+                    distance: e.target.value ? Number(e.target.value) : undefined
                   })}
                   placeholder="Optional"
                 />
-                <select
-                  className="input"
-                  value={session.distance_unit}
-                  onChange={e => updateSession({ distance_unit: e.target.value as 'miles' | 'km' })}
-                >
-                  <option value="miles">miles</option>
-                  <option value="km">km</option>
-                </select>
+                <div className="w-28 shrink-0">
+                  <Select
+                    value={session.distance_unit}
+                    onChange={e => updateSession({ distance_unit: e.target.value as 'miles' | 'km' })}
+                    options={[
+                      { value: 'miles', label: 'miles' },
+                      { value: 'km', label: 'km' },
+                    ]}
+                  />
+                </div>
               </div>
             </div>
 
             {/* Calories */}
             <div>
-              <label className="block text-sm text-white/80 font-medium mb-2">
-                Calories Burned
-              </label>
-              <input
+              <Input
+                label="Calories Burned"
                 type="number"
-                min="1"
-                className="input w-full"
+                min={1}
                 value={session.calories || ''}
-                onChange={e => updateSession({ 
-                  calories: e.target.value ? Number(e.target.value) : undefined 
+                onChange={e => updateSession({
+                  calories: e.target.value ? Number(e.target.value) : undefined
                 })}
                 placeholder="Optional"
               />
@@ -299,11 +294,9 @@ export default function EditCardioPage() {
 
           {/* Notes */}
           <div className="mt-4">
-            <label className="block text-sm text-white/80 font-medium mb-2">
-              Notes (Optional)
-            </label>
-            <textarea
-              className="input w-full h-20 resize-none"
+            <Textarea
+              label="Notes (Optional)"
+              className="h-20"
               value={session.notes || ''}
               onChange={e => updateSession({ notes: e.target.value })}
               placeholder="How did the session feel? Any notable observations..."
@@ -317,13 +310,14 @@ export default function EditCardioPage() {
             <Link href="/history" className="toggle flex-1 text-center py-3">
               Cancel
             </Link>
-            <button 
-              className="btn flex-1 disabled:opacity-50"
+            <Button
+              className="flex-1"
               onClick={handleSave}
-              disabled={saving || !session.activity.trim()}
+              loading={saving}
+              disabled={!session.activity.trim()}
             >
-              {saving ? 'Saving...' : 'Update Cardio Session'}
-            </button>
+              Update Cardio Session
+            </Button>
           </div>
         </div>
       </main>

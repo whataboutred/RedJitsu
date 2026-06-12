@@ -124,7 +124,7 @@ export default function SafeAutoRefresh() {
         <div className="flex-1">
           <div className="font-medium text-sm mb-1">Update Available</div>
           <div className="text-xs text-white/90 mb-3">
-            A new version is ready. We'll update automatically when you're not actively using the app, or you can update now.
+            A new version is ready. We&apos;ll update automatically when you&apos;re not actively using the app, or you can update now.
           </div>
           <div className="flex gap-2">
             <button 

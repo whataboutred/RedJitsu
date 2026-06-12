@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { deleteWorkout } from '@/lib/api'
 import { getActiveUserId } from '@/lib/activeUser'
 import { X, Edit3, Trash2, Copy, Trophy } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/Toast'
+import { ConfirmDialog } from '@/components/ui/BottomSheet'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { estimated1RM } from '@/lib/formulas'
 
 type WorkoutSet = {
@@ -28,6 +31,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [workout, setWorkout] = useState<{ performed_at: string; title: string | null } | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const router = useRouter()
   const toast = useToast()
 
@@ -112,30 +116,15 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
   }, {} as Record<string, WorkoutSet[]>)
 
   async function handleDelete() {
-    if (!confirm('Are you sure you want to delete this workout? This cannot be undone.')) {
-      return
-    }
-
     setDeleting(true)
     try {
       const userId = await getActiveUserId()
       if (!userId) return
 
-      const { error } = await supabase
-        .from('workouts')
-        .delete()
-        .eq('id', workoutId)
-        .eq('user_id', userId)
+      await deleteWorkout(workoutId, userId)
 
-      if (error) {
-        toast.error('Failed to delete workout')
-        console.error('Delete error:', error)
-        return
-      }
-
-      // Close modal and refresh the page
+      // lib/api notifies the open pages, which refetch — no reload needed
       onClose()
-      window.location.reload()
     } catch (error) {
       toast.error('Failed to delete workout')
       console.error('Delete error:', error)
@@ -168,8 +157,12 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
   if (loading) return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
       <div className="card max-w-lg w-full mx-4">
-        <div className="flex items-center justify-between">
-          <div>Loading workout details...</div>
+        <div className="flex items-start justify-between">
+          <div className="flex-1 space-y-3 py-1">
+            <Skeleton variant="text" className="w-1/2" />
+            <Skeleton variant="text" className="w-1/3" />
+            <Skeleton variant="rounded" className="h-24 w-full" />
+          </div>
           <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg" title="Close">
             <X className="w-5 h-5" />
           </button>
@@ -215,7 +208,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
               <Edit3 className="w-5 h-5" />
             </button>
             <button 
-              onClick={handleDelete}
+              onClick={() => setConfirmDelete(true)}
               disabled={deleting}
               className="p-1 hover:bg-white/5 rounded-lg text-red-400 hover:text-red-300 disabled:opacity-50" 
               title="Delete workout"
@@ -275,12 +268,22 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
               <div>No sets recorded for this workout.</div>
               <div className="text-xs text-white/40">
                 This workout may have been saved before the data tracking was fully set up,
-                or the exercise data wasn't saved properly.
+                or the exercise data wasn&apos;t saved properly.
               </div>
             </div>
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={handleDelete}
+        title="Delete workout?"
+        message="This workout and all its sets will be permanently deleted. This cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   )
 }

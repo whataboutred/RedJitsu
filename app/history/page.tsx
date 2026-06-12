@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useState, useMemo, useCallback } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BarChart3,
@@ -26,6 +27,12 @@ import { AnimatedCard, StatCard } from '@/components/ui/Card'
 import { ProgressRing } from '@/components/ui/ProgressRing'
 import { Button } from '@/components/ui/Button'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
+import { Sparkline } from '@/components/ui/Sparkline'
+import { SwipeableRow } from '@/components/ui/SwipeableRow'
+import { ConfirmDialog } from '@/components/ui/BottomSheet'
+import { useToast } from '@/components/Toast'
+import { deleteWorkout, deleteBjjSession, deleteCardioSession } from '@/lib/api'
+import { useDataRefresh } from '@/hooks/useDataRefresh'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId } from '@/lib/activeUser'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -69,6 +76,8 @@ type ExerciseProgress = {
   percentChange: number
   sessionCount: number
   trend: 'up' | 'down' | 'stagnant'
+  /** Max working weight per session, chronological — feeds the sparkline */
+  series: number[]
 }
 
 type StreakData = {
@@ -142,8 +151,42 @@ function HistoryClient() {
 
   const params = useSearchParams()
   const router = useRouter()
+  const toast = useToast()
   const highlightId = params.get('highlight')
   const highlightType = params.get('type') || 'workout'
+
+  // Swipe-to-delete target awaiting confirmation
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: 'strength' | 'bjj' | 'cardio'
+    id: string
+    title: string
+  } | null>(null)
+
+  async function confirmDeleteActivity() {
+    if (!deleteTarget) return
+    const { type, id } = deleteTarget
+    try {
+      const userId = await getActiveUserId()
+      if (!userId) return
+
+      if (type === 'strength') {
+        await deleteWorkout(id, userId)
+        setWorkouts((prev) => prev.filter((w) => w.id !== id))
+      } else if (type === 'bjj') {
+        await deleteBjjSession(id, userId)
+        setBjj((prev) => prev.filter((s) => s.id !== id))
+      } else {
+        await deleteCardioSession(id, userId)
+        setCardio((prev) => prev.filter((s) => s.id !== id))
+      }
+      toast.success('Deleted')
+    } catch (e) {
+      console.error('Delete failed:', e)
+      toast.error('Failed to delete')
+    } finally {
+      setDeleteTarget(null)
+    }
+  }
 
   const closeModal = () => {
     router.push('/history')
@@ -334,25 +377,8 @@ function HistoryClient() {
     })()
   }, [loadHistoryData, router])
 
-  useEffect(() => {
-    const refresh = () => { loadHistoryData() }
-    const handleVisibilityChange = () => {
-      if (!document.hidden) refresh()
-    }
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'workout-data-updated') refresh()
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('focus', handleVisibilityChange)
-    window.addEventListener('storage', handleStorage)
-    window.addEventListener('workout-data-updated', refresh)
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('focus', handleVisibilityChange)
-      window.removeEventListener('storage', handleStorage)
-      window.removeEventListener('workout-data-updated', refresh)
-    }
-  }, [loadHistoryData])
+  // Refetch when data changes anywhere or the tab regains focus
+  useDataRefresh(loadHistoryData)
 
   const loadMore = async () => {
     if (loadingMore || !hasMore) return
@@ -699,7 +725,8 @@ function HistoryClient() {
         repsChange,
         percentChange: Math.round(percentChange * 10) / 10,
         sessionCount: data.sessions.length,
-        trend
+        trend,
+        series: data.sessions.map(s => s.maxWeight)
       })
     })
 
@@ -808,7 +835,8 @@ function HistoryClient() {
         repsChange,
         percentChange: Math.round(percentChange * 10) / 10,
         sessionCount: data.sessions.length,
-        trend
+        trend,
+        series: data.sessions.map(s => s.maxWeight)
       })
     })
 
@@ -983,7 +1011,7 @@ function HistoryClient() {
         <BJJDetail sessionId={highlightId} onClose={closeModal} />
       )}
       {highlightId && highlightType === 'cardio' && (
-        <CardioDetail sessionId={highlightId} onClose={closeModal} onUpdate={() => window.location.reload()} />
+        <CardioDetail sessionId={highlightId} onClose={closeModal} />
       )}
 
       <div className="p-4 space-y-4">
@@ -997,7 +1025,10 @@ function HistoryClient() {
               <AnimatedCard className="text-center py-10">
                 <BarChart3 className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
                 <h3 className="font-semibold text-zinc-500 mb-2">No activity data yet</h3>
-                <p className="text-zinc-500 text-sm mb-4">Start logging workouts, BJJ sessions, or cardio to see your analytics here.</p>
+                <p className="text-zinc-500 text-sm mb-6">Start logging workouts, BJJ sessions, or cardio to see your analytics here.</p>
+                <Link href="/workouts/new" className="btn inline-flex">
+                  Log Your First Workout
+                </Link>
               </AnimatedCard>
             )}
 
@@ -1046,10 +1077,13 @@ function HistoryClient() {
                                 +{exercise.percentChange}%
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-zinc-500">
-                              <span>{exercise.firstWeight} → {exercise.latestWeight} lb</span>
-                              <span className="text-zinc-600">•</span>
-                              <span>{exercise.sessionCount} sessions</span>
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                                <span>{exercise.firstWeight} → {exercise.latestWeight} lb</span>
+                                <span className="text-zinc-600">•</span>
+                                <span>{exercise.sessionCount} sessions</span>
+                              </div>
+                              <Sparkline data={exercise.series} stroke="#34D399" />
                             </div>
                           </motion.div>
                         ))}
@@ -1098,10 +1132,16 @@ function HistoryClient() {
                                 </span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-zinc-500">
-                              <span>{exercise.firstWeight} → {exercise.latestWeight} lb</span>
-                              <span className="text-zinc-600">•</span>
-                              <span>{exercise.trend === 'stagnant' ? 'Stagnant' : 'Regressed'}</span>
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                                <span>{exercise.firstWeight} → {exercise.latestWeight} lb</span>
+                                <span className="text-zinc-600">•</span>
+                                <span>{exercise.trend === 'stagnant' ? 'Stagnant' : 'Regressed'}</span>
+                              </div>
+                              <Sparkline
+                                data={exercise.series}
+                                stroke={exercise.trend === 'down' ? '#F87171' : '#FBBF24'}
+                              />
                             </div>
                           </motion.div>
                         ))}
@@ -1356,7 +1396,10 @@ function HistoryClient() {
                 <AnimatedCard>
                   <div className="text-center py-8">
                     <Calendar className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                    <p className="text-zinc-500">No activities found</p>
+                    <p className="text-zinc-500 mb-6">No activities found for this period</p>
+                    <Link href="/workouts/new" className="btn inline-flex">
+                      Log a Workout
+                    </Link>
                   </div>
                 </AnimatedCard>
               ) : (
@@ -1370,6 +1413,11 @@ function HistoryClient() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.03 }}
                     >
+                      <SwipeableRow
+                        onDelete={() =>
+                          setDeleteTarget({ type: activity.type, id: activity.id, title: activity.title })
+                        }
+                      >
                       <button
                         onClick={() => {
                           if (activity.type === 'strength') {
@@ -1396,6 +1444,7 @@ function HistoryClient() {
                           <ChevronRight className="w-5 h-5 text-zinc-500 group-hover:text-white transition-colors" />
                         </div>
                       </button>
+                      </SwipeableRow>
                     </motion.div>
                   )
                 })
@@ -1415,6 +1464,16 @@ function HistoryClient() {
             </div>
           </>
         )}
+
+        <ConfirmDialog
+          isOpen={deleteTarget !== null}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={confirmDeleteActivity}
+          title={`Delete "${deleteTarget?.title ?? ''}"?`}
+          message="This entry will be permanently deleted. This cannot be undone."
+          confirmText="Delete"
+          variant="danger"
+        />
       </div>
     </div>
   )

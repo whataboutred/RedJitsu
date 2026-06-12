@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { sendPasswordReset } from '@/lib/sendPasswordReset'
+import { Input } from '@/components/ui/Input'
 
 export default function LoginForm() {
   const [email, setEmail] = useState('')
@@ -55,26 +56,22 @@ export default function LoginForm() {
     <div className="w-full max-w-md">
       {mode === 'login' ? (
         <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm text-white/70 mb-1">Email</label>
-            <input
-              type="email"
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-white/70 mb-1">Password</label>
-            <input
-              type="password"
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+          <Input
+            label="Email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <Input
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
 
@@ -99,16 +96,14 @@ export default function LoginForm() {
       ) : (
         <form onSubmit={handlePasswordReset} className="space-y-4">
           <h2 className="text-lg font-medium mb-4">Reset password</h2>
-          <div>
-            <label className="block text-sm text-white/70 mb-1">Email</label>
-            <input
-              type="email"
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+          <Input
+            label="Email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
           {message && <p className="text-green-400 text-sm">{message}</p>}
