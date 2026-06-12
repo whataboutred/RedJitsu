@@ -35,6 +35,8 @@ import { savePendingWorkout, trySyncPending } from '@/lib/offline'
 import { toDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useDraftAutoSave, getTimeAgo } from '@/hooks/useDraftAutoSave'
 import { hapticTap, hapticSuccess } from '@/lib/haptics'
+import { detectAndSaveNewPRs, type NewPR } from '@/lib/api/personalRecords'
+import PRCelebration from '@/components/PRCelebration'
 import { getLastWorkoutSetsForExercises, WorkoutSet as LastWorkoutSet } from '@/lib/workoutSuggestions'
 import { Button, IconButton } from '@/components/ui/Button'
 import { BottomSheet, Modal, ConfirmDialog } from '@/components/ui/BottomSheet'
@@ -911,6 +913,8 @@ export default function NewWorkoutPage() {
   const [showExerciseSelector, setShowExerciseSelector] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
   const [savedWorkoutId, setSavedWorkoutId] = useState<string | null>(null)
+  const [newPRs, setNewPRs] = useState<NewPR[]>([])
+  const [showPRCelebration, setShowPRCelebration] = useState(false)
   const [showSaveConfirm, setShowSaveConfirm] = useState(false)
 
   // Workout details
@@ -1302,7 +1306,24 @@ export default function NewWorkoutPage() {
       clearDraft()
       setSavedWorkoutId(w.id)
       hapticSuccess()
-      setShowSummary(true)
+
+      // Detect personal records — celebrate before showing the summary
+      let prs: NewPR[] = []
+      try {
+        prs = await detectAndSaveNewPRs(
+          userId,
+          w.id,
+          exercises.map((ex) => ({ exerciseId: ex.exerciseId, name: ex.name, sets: ex.sets }))
+        )
+      } catch (e) {
+        console.error('PR detection failed:', e)
+      }
+      if (prs.length > 0) {
+        setNewPRs(prs)
+        setShowPRCelebration(true)
+      } else {
+        setShowSummary(true)
+      }
 
       // Notify other pages that workout data changed so they refetch.
       // localStorage write fires `storage` events in other tabs/windows; the
@@ -1544,6 +1565,17 @@ export default function NewWorkoutPage() {
         title="Save Workout?"
         message={`Save ${summary.exercises} exercise${summary.exercises !== 1 ? 's' : ''} · ${summary.sets} set${summary.sets !== 1 ? 's' : ''} · ${summary.volume.toLocaleString()} ${summary.unit}?`}
         confirmText="Save"
+      />
+
+      {/* PR Celebration — shown before the summary when records were hit */}
+      <PRCelebration
+        prs={newPRs}
+        unit={unit}
+        isOpen={showPRCelebration}
+        onClose={() => {
+          setShowPRCelebration(false)
+          setShowSummary(true)
+        }}
       />
 
       {/* Summary Modal */}

@@ -22,6 +22,7 @@ import {
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, isDemoVisitor } from '@/lib/activeUser'
 import SafeAutoRefresh from '@/components/SafeAutoRefresh'
+import SyncStatus from '@/components/SyncStatus'
 
 // Check if we're in workout mode (hide nav)
 const workoutModeRoutes = ['/workouts/new', '/workouts/edit']
@@ -307,6 +308,7 @@ export default function Navigation({ children }: { children: React.ReactNode }) 
     return (
       <div className="min-h-screen bg-brand-dark">
         <SafeAutoRefresh />
+        <SyncStatus />
         {children}
       </div>
     )
@@ -315,6 +317,7 @@ export default function Navigation({ children }: { children: React.ReactNode }) 
   return (
     <div className="min-h-screen bg-brand-dark">
       <SafeAutoRefresh />
+      <SyncStatus />
       <DesktopHeader signOut={signOut} />
       <MobileHeader />
 
