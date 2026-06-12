@@ -32,6 +32,7 @@ export interface Database {
           show_strength_goal: boolean | null
           show_bjj_goal: boolean | null
           show_cardio_goal: boolean | null
+          coach_context: string | null
           created_at: string | null
         }
         Insert: {
@@ -45,6 +46,7 @@ export interface Database {
           show_strength_goal?: boolean | null
           show_bjj_goal?: boolean | null
           show_cardio_goal?: boolean | null
+          coach_context?: string | null
           created_at?: string | null
         }
         Update: {
@@ -58,6 +60,7 @@ export interface Database {
           show_strength_goal?: boolean | null
           show_bjj_goal?: boolean | null
           show_cardio_goal?: boolean | null
+          coach_context?: string | null
           created_at?: string | null
         }
         Relationships: []
