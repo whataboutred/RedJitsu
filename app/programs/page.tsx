@@ -37,11 +37,11 @@ type Exercise = {
   category: 'barbell'|'dumbbell'|'machine'|'cable'|'other'
 }
 
-type Program = { 
+type Program = {
   id: string
-  name: string 
+  name: string
   is_active: boolean
-  created_at: string
+  created_at: string | null
   total_days?: number
   total_exercises?: number
 }
@@ -755,9 +755,11 @@ export default function ProgramsPage() {
                           <Target className="w-4 h-4 text-zinc-500" />
                           <span>{p.total_exercises} exercises total</span>
                         </div>
-                        <div className="text-xs text-zinc-500">
-                          Created {new Date(p.created_at).toLocaleDateString()}
-                        </div>
+                        {p.created_at && (
+                          <div className="text-xs text-zinc-500">
+                            Created {new Date(p.created_at).toLocaleDateString()}
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex gap-2">

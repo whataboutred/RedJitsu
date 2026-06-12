@@ -1072,7 +1072,7 @@ export default function NewWorkoutPage() {
           sets: ex.sets.map((s) => ({
             weight: s.weight,
             reps: s.reps,
-            set_type: s.isWarmup ? 'warmup' : 'working',
+            set_type: s.isWarmup ? ('warmup' as const) : ('working' as const),
           })),
         })),
         note: notes,
@@ -1251,7 +1251,7 @@ export default function NewWorkoutPage() {
             set_index: idx + 1,
             weight: s.weight,
             reps: s.reps,
-            set_type: s.isWarmup ? 'warmup' : 'working',
+            set_type: s.isWarmup ? ('warmup' as const) : ('working' as const),
             completed: s.isCompleted,
           }))
 
@@ -1264,7 +1264,7 @@ export default function NewWorkoutPage() {
               set_index: idx + 1,
               weight: s.weight,
               reps: s.reps,
-              set_type: s.isWarmup ? 'warmup' : 'working',
+              set_type: s.isWarmup ? ('warmup' as const) : ('working' as const),
             }))
             const result = await supabase.from('sets').insert(rowsWithoutCompleted)
             setsError = result.error

@@ -785,7 +785,7 @@ export default function EditWorkoutPage() {
       let lastWorkoutMap = new Map<string, { weight: number; reps: number }[]>()
       if (exerciseIds.length > 0) {
         try {
-          lastWorkoutMap = await getLastWorkoutSetsForExercises(userId, exerciseIds, workout.location)
+          lastWorkoutMap = await getLastWorkoutSetsForExercises(userId, exerciseIds, workout.location ?? undefined)
         } catch (e) {
           console.error('Error fetching suggestions:', e)
         }
@@ -1091,7 +1091,7 @@ export default function EditWorkoutPage() {
               set_index: idx + 1,
               weight: s.weight,
               reps: s.reps,
-              set_type: s.isWarmup ? 'warmup' : 'working',
+              set_type: s.isWarmup ? ('warmup' as const) : ('working' as const),
               completed: s.isCompleted,
             }))
 
@@ -1104,7 +1104,7 @@ export default function EditWorkoutPage() {
                 set_index: idx + 1,
                 weight: s.weight,
                 reps: s.reps,
-                set_type: s.isWarmup ? 'warmup' : 'working',
+                set_type: s.isWarmup ? ('warmup' as const) : ('working' as const),
               }))
               const result = await supabase.from('sets').insert(rowsWithoutCompleted)
               setsError = result.error

@@ -39,7 +39,7 @@ type Cardio = {
 type ProgramDay = {
   id: string
   name: string
-  dows: number[]
+  dows: number[] | null
 }
 
 function startOfWeekSunday(d: Date) {

@@ -44,8 +44,8 @@ export default function EditJiuJitsuPage() {
       }
 
       const userId = await getActiveUserId()
-      if (!userId && !DEMO) {
-        router.push('/login')
+      if (!userId) {
+        if (!DEMO) router.push('/login')
         return
       }
 
@@ -76,7 +76,7 @@ export default function EditJiuJitsuPage() {
       }
 
       setDuration(session.duration_min)
-      setIntensity(session.intensity || 'medium')
+      setIntensity((session.intensity as Intensity) || 'medium')
       setNotes(session.notes || '')
       
       setLoading(false)
@@ -97,7 +97,7 @@ export default function EditJiuJitsuPage() {
         .from('bjj_sessions')
         .update({
           performed_at: datetimeLocalToISO(performedAt),
-          kind: kind === 'Open Mat' ? 'open_mat' : (kind.toLowerCase()),
+          kind: kind === 'Open Mat' ? ('open_mat' as const) : (kind.toLowerCase() as 'class' | 'drilling'),
           duration_min: minutes,
           intensity,
           notes: notes || null

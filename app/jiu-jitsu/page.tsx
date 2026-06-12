@@ -266,7 +266,7 @@ export default function BJJPage() {
           }
 
           acc[kindVal].durations.push(session.duration_min)
-          acc[kindVal].intensities.push(session.intensity)
+          acc[kindVal].intensities.push(session.intensity ?? 'unknown')
           acc[kindVal].dates.push(session.performed_at)
 
           return acc
@@ -383,7 +383,7 @@ export default function BJJPage() {
       .insert({
         user_id: userId,
         performed_at: datetimeLocalToISO(performedAt),
-        kind: kind === 'Open Mat' ? 'open_mat' : (kind.toLowerCase()),
+        kind: kind === 'Open Mat' ? ('open_mat' as const) : (kind.toLowerCase() as 'class' | 'drilling'),
         duration_min: minutes,
         intensity,
         notes: notes || null

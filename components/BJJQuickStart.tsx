@@ -93,7 +93,7 @@ export default function BJJQuickStart({ onQuickStart }: BJJQuickStartProps) {
         }
         
         acc[kind].durations.push(session.duration_min)
-        acc[kind].intensities.push(session.intensity)
+        acc[kind].intensities.push(session.intensity ?? 'unknown')
         acc[kind].dates.push(session.performed_at)
         
         return acc
