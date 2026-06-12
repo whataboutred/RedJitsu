@@ -139,7 +139,7 @@ export default function ProgramsPage() {
               </div>
               <h1 className="text-xl font-semibold mb-2">Demo Mode</h1>
               <p className="text-zinc-500 mb-6">
-                You're viewing the app in read-only demo mode. To create your own
+                You&apos;re viewing the app in read-only demo mode. To create your own
                 programs, please sign in.
               </p>
               <Link
@@ -1137,7 +1137,7 @@ export default function ProgramsPage() {
                                   >
                                     <div className="flex items-center gap-2 text-brand-red font-medium">
                                       <Plus className="w-4 h-4" />
-                                      Create "{search.trim()}"
+                                      Create &quot;{search.trim()}&quot;
                                     </div>
                                     <div className="text-xs text-zinc-500 mt-1 ml-6">
                                       Add as new {selectedCategory === 'all' ? 'other' : selectedCategory} exercise

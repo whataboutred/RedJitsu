@@ -147,7 +147,7 @@ export default function BJJQuickStart({ onQuickStart }: BJJQuickStartProps) {
     <div className="space-y-4">
       {/* This Week Progress */}
       <div className="card">
-        <div className="font-medium mb-3">📊 This Week's Training</div>
+        <div className="font-medium mb-3">📊 This Week&apos;s Training</div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-brand-red">{weekStats.sessions}</div>

@@ -275,7 +275,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
               <div>No sets recorded for this workout.</div>
               <div className="text-xs text-white/40">
                 This workout may have been saved before the data tracking was fully set up,
-                or the exercise data wasn't saved properly.
+                or the exercise data wasn&apos;t saved properly.
               </div>
             </div>
           )}

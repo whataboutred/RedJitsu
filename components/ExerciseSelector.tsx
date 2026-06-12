@@ -253,7 +253,7 @@ export default function ExerciseSelector({
                   className="toggle w-full text-left p-3 border-dashed border-brand-red/50 hover:bg-brand-red/10"
                   onClick={onAddCustomExercise}
                 >
-                  <div className="font-medium text-brand-red">+ Create "{search.trim()}"</div>
+                  <div className="font-medium text-brand-red">+ Create &quot;{search.trim()}&quot;</div>
                   <div className="text-xs text-white/60 mt-1">
                     ⭐ Custom exercise
                   </div>
