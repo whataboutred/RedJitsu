@@ -26,6 +26,7 @@ import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { useToast } from '@/components/Toast'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
+import { hapticSuccess } from '@/lib/haptics'
 import { toDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useRouter } from 'next/navigation'
 import BackgroundLogo from '@/components/BackgroundLogo'
@@ -361,6 +362,7 @@ export default function BJJPage() {
       } else {
         await saveOnline()
       }
+      hapticSuccess()
       setShowSuccessModal(true)
     } catch (error) {
       console.error('Save error:', error)

@@ -34,6 +34,7 @@ import { useToast } from '@/components/Toast'
 import { savePendingWorkout, trySyncPending } from '@/lib/offline'
 import { toDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useDraftAutoSave, getTimeAgo } from '@/hooks/useDraftAutoSave'
+import { hapticTap, hapticSuccess } from '@/lib/haptics'
 import { getLastWorkoutSetsForExercises, WorkoutSet as LastWorkoutSet } from '@/lib/workoutSuggestions'
 import { Button, IconButton } from '@/components/ui/Button'
 import { BottomSheet, Modal, ConfirmDialog } from '@/components/ui/BottomSheet'
@@ -355,6 +356,7 @@ function ExerciseCard({
 
     // Start rest timer if completing a set
     if (!newSets[setIndex].isCompleted === false) {
+      hapticTap()
       setShowRestTimer(true)
     }
   }
@@ -1299,6 +1301,7 @@ export default function NewWorkoutPage() {
 
       clearDraft()
       setSavedWorkoutId(w.id)
+      hapticSuccess()
       setShowSummary(true)
 
       // Notify other pages that workout data changed so they refetch.

@@ -32,6 +32,19 @@ body {
   border-radius: 4px;
 }
 
+/* Honor the OS reduced-motion preference for CSS animations/transitions.
+   (framer-motion is handled by MotionConfig in components/MotionProvider.) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

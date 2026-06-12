@@ -4,6 +4,7 @@ import './globals.css'
 import { ToastProvider } from '@/components/Toast'
 import Navigation from '@/components/Navigation'
 import { AuthProvider } from '@/components/AuthProvider'
+import { MotionProvider } from '@/components/MotionProvider'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -68,9 +69,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`dark ${inter.variable}`}>
       <body className="bg-brand-dark text-white antialiased font-sans">
         <AuthProvider>
-          <ToastProvider>
-            <Navigation>{children}</Navigation>
-          </ToastProvider>
+          <MotionProvider>
+            <ToastProvider>
+              <Navigation>{children}</Navigation>
+            </ToastProvider>
+          </MotionProvider>
         </AuthProvider>
       </body>
     </html>

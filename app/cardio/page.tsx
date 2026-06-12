@@ -33,6 +33,7 @@ import { useToast } from '@/components/Toast'
 import { toDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { supabase } from '@/lib/supabaseClient'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
+import { hapticSuccess } from '@/lib/haptics'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import BackgroundLogo from '@/components/BackgroundLogo'
@@ -349,6 +350,7 @@ export default function CardioPage() {
         return
       }
 
+      hapticSuccess()
       setShowSuccessModal(true)
     } catch (error) {
       console.error('Save error:', error)

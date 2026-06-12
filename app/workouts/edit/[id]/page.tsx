@@ -34,6 +34,7 @@ import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import { isUuid } from '@/lib/validation'
 import { useToast } from '@/components/Toast'
 import { useDraftAutoSave, getTimeAgo } from '@/hooks/useDraftAutoSave'
+import { hapticTap, hapticSuccess } from '@/lib/haptics'
 import { getLastWorkoutSetsForExercises, WorkoutSet as LastWorkoutSet } from '@/lib/workoutSuggestions'
 import { Button, IconButton } from '@/components/ui/Button'
 import { BottomSheet, Modal, ConfirmDialog } from '@/components/ui/BottomSheet'
@@ -355,6 +356,7 @@ function ExerciseCard({
 
     // Start rest timer if completing a set
     if (!newSets[setIndex].isCompleted === false) {
+      hapticTap()
       setShowRestTimer(true)
     }
   }
@@ -1119,6 +1121,7 @@ export default function EditWorkoutPage() {
       }
 
       clearDraft()
+      hapticSuccess()
       toast.success('Workout updated!')
       router.push('/history')
     } catch (error: any) {
