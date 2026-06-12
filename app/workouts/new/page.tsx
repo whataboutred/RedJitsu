@@ -936,6 +936,41 @@ export default function NewWorkoutPage() {
     enabled: true,
   })
 
+  // Unsaved draft found on mount, awaiting the user's restore decision
+  const [pendingDraft, setPendingDraft] = useState<any>(null)
+  const draftRestoredRef = useRef(false)
+
+  function restoreDraft(draft: any) {
+    draftRestoredRef.current = true
+    // Convert old draft format to new format
+    const restoredExercises: WorkoutExercise[] = draft.items.map((item: any) => ({
+      id: crypto.randomUUID(),
+      exerciseId: item.id,
+      name: item.name,
+      sets: item.sets.map((s: any) => ({
+        weight: s.weight,
+        reps: s.reps,
+        isWarmup: s.set_type === 'warmup',
+        isCompleted: false,
+      })),
+    }))
+    setExercises(restoredExercises)
+    setTitle(draft.customTitle || '')
+    setNotes(draft.note || '')
+    setLocation(draft.location || '')
+    // Restore original workout timestamp if available
+    if (draft.performedAt) {
+      setPerformedAt(draft.performedAt)
+    }
+    if (restoredExercises.length > 0) {
+      setExpandedId(restoredExercises[0].id)
+    }
+    // Skip setup modal since we're restoring a draft
+    setShowSetupModal(false)
+    setSetupComplete(true)
+    toast.success('Draft restored!')
+  }
+
   // Load initial data
   useEffect(() => {
     ;(async () => {
@@ -954,43 +989,10 @@ export default function NewWorkoutPage() {
       userIdRef.current = userId
       startTimeRef.current = new Date()
 
-      // Try to restore draft
+      // Try to restore draft — ask via dialog instead of blocking the load
       const draft = loadDraft()
       if (draft && draft.items && draft.items.length > 0) {
-        const shouldRestore = confirm(
-          `Found unsaved workout from ${getTimeAgo(draft.timestamp)}. Restore it?`
-        )
-        if (shouldRestore) {
-          // Convert old draft format to new format
-          const restoredExercises: WorkoutExercise[] = draft.items.map((item: any) => ({
-            id: crypto.randomUUID(),
-            exerciseId: item.id,
-            name: item.name,
-            sets: item.sets.map((s: any) => ({
-              weight: s.weight,
-              reps: s.reps,
-              isWarmup: s.set_type === 'warmup',
-              isCompleted: false,
-            })),
-          }))
-          setExercises(restoredExercises)
-          setTitle(draft.customTitle || '')
-          setNotes(draft.note || '')
-          setLocation(draft.location || '')
-          // Restore original workout timestamp if available
-          if (draft.performedAt) {
-            setPerformedAt(draft.performedAt)
-          }
-          if (restoredExercises.length > 0) {
-            setExpandedId(restoredExercises[0].id)
-          }
-          // Skip setup modal since we're restoring a draft
-          setShowSetupModal(false)
-          setSetupComplete(true)
-          toast.success('Draft restored!')
-        } else {
-          clearDraft()
-        }
+        setPendingDraft(draft)
       }
 
       // Check for repeat workout (from WorkoutDetail "Repeat" button)
@@ -1513,6 +1515,22 @@ export default function NewWorkoutPage() {
         exercises={allExercises}
         onSelect={addExercise}
         onCreateCustom={createCustomExercise}
+      />
+
+      {/* Draft Restore */}
+      <ConfirmDialog
+        isOpen={pendingDraft !== null}
+        onClose={() => {
+          if (!draftRestoredRef.current) clearDraft()
+          setPendingDraft(null)
+        }}
+        onConfirm={() => {
+          if (pendingDraft) restoreDraft(pendingDraft)
+        }}
+        title="Restore unsaved workout?"
+        message={pendingDraft ? `Found an unsaved workout from ${getTimeAgo(pendingDraft.timestamp)}.` : ''}
+        confirmText="Restore"
+        cancelText="Discard"
       />
 
       {/* Save Confirmation */}

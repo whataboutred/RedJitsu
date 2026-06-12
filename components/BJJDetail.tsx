@@ -6,6 +6,8 @@ import { getActiveUserId } from '@/lib/activeUser'
 import { X, Edit3, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/Toast'
+import { ConfirmDialog } from '@/components/ui/BottomSheet'
+import { Skeleton } from '@/components/ui/Skeleton'
 
 type BJJSession = {
   id: string
@@ -20,6 +22,7 @@ export default function BJJDetail({ sessionId, onClose }: { sessionId: string; o
   const [loading, setLoading] = useState(true)
   const [session, setSession] = useState<BJJSession | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const router = useRouter()
   const toast = useToast()
 
@@ -42,10 +45,6 @@ export default function BJJDetail({ sessionId, onClose }: { sessionId: string; o
   }, [sessionId])
 
   async function handleDelete() {
-    if (!confirm('Are you sure you want to delete this Jiu Jitsu session? This cannot be undone.')) {
-      return
-    }
-
     setDeleting(true)
     try {
       const userId = await getActiveUserId()
@@ -91,8 +90,12 @@ export default function BJJDetail({ sessionId, onClose }: { sessionId: string; o
   if (loading) return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
       <div className="card max-w-lg w-full">
-        <div className="flex items-center justify-between">
-          <div>Loading session details...</div>
+        <div className="flex items-start justify-between">
+          <div className="flex-1 space-y-3 py-1">
+            <Skeleton variant="text" className="w-1/2" />
+            <Skeleton variant="text" className="w-1/3" />
+            <Skeleton variant="rounded" className="h-24 w-full" />
+          </div>
           <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg" title="Close">
             <X className="w-5 h-5" />
           </button>
@@ -130,8 +133,8 @@ export default function BJJDetail({ sessionId, onClose }: { sessionId: string; o
             >
               <Edit3 className="w-5 h-5" />
             </button>
-            <button 
-              onClick={handleDelete}
+            <button
+              onClick={() => setConfirmDelete(true)}
               disabled={deleting}
               className="p-1 hover:bg-white/5 rounded-lg text-red-400 hover:text-red-300 disabled:opacity-50" 
               title="Delete session"
@@ -173,6 +176,16 @@ export default function BJJDetail({ sessionId, onClose }: { sessionId: string; o
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={handleDelete}
+        title="Delete Jiu Jitsu session?"
+        message="This session will be permanently deleted. This cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   )
 }

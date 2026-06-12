@@ -25,6 +25,13 @@ body {
   overscroll-behavior-y: contain;
 }
 
+/* Visible focus for keyboard navigation (without affecting mouse/touch) */
+:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

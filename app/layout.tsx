@@ -1,8 +1,15 @@
 import type { Metadata, Viewport } from 'next'
+import { Inter } from 'next/font/google'
 import './globals.css'
 import { ToastProvider } from '@/components/Toast'
 import Navigation from '@/components/Navigation'
 import { AuthProvider } from '@/components/AuthProvider'
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+})
 
 export const metadata: Metadata = {
   title: {
@@ -38,7 +45,10 @@ export const metadata: Metadata = {
     description: 'Track workouts, BJJ sessions, cardio, and more.',
   },
   icons: {
-    icon: '/icons/icon-192.png',
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32' },
+      { url: '/icons/icon-192.png', type: 'image/png' },
+    ],
     shortcut: '/icons/icon-192.png',
     apple: '/apple-touch-icon.png',
   },
@@ -55,8 +65,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-brand-dark text-white antialiased">
+    <html lang="en" className={`dark ${inter.variable}`}>
+      <body className="bg-brand-dark text-white antialiased font-sans">
         <AuthProvider>
           <ToastProvider>
             <Navigation>{children}</Navigation>

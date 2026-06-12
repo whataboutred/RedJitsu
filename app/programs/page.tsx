@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/Toast'
 import { AnimatedCard } from '@/components/ui/Card'
+import { ConfirmDialog } from '@/components/ui/BottomSheet'
 import {
   Dumbbell,
   Calendar,
@@ -101,6 +102,7 @@ export default function ProgramsPage() {
   
   // Collapsible days state
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set())
+  const [programToDelete, setProgramToDelete] = useState<string | null>(null)
 
   const filteredExercises = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -331,16 +333,18 @@ export default function ProgramsPage() {
   }
 
   async function deleteProgram(id: string) {
-    const ok = confirm('Delete this program and all its days/templates? This cannot be undone.')
-    if (!ok) return
-
     // If deleting the active program, deactivate it first to avoid broken dashboard state
     const programToDelete = programs.find(p => p.id === id)
     if (programToDelete?.is_active) {
       await supabase.from('programs').update({ is_active: false }).eq('id', id)
     }
 
-    await supabase.from('programs').delete().eq('id', id)
+    const { error } = await supabase.from('programs').delete().eq('id', id)
+    if (error) {
+      toast.error('Failed to delete program')
+      return
+    }
+    toast.success('Program deleted')
     if (selected?.id === id) setSelected(null)
     await reloadPrograms()
   }
@@ -774,7 +778,7 @@ export default function ProgramsPage() {
                         )}
                         <button
                           className="toggle text-sm px-3 py-2 text-red-400 hover:bg-red-500/20 hover:border-red-500/30"
-                          onClick={() => deleteProgram(p.id)}
+                          onClick={() => setProgramToDelete(p.id)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -814,6 +818,18 @@ export default function ProgramsPage() {
               </AnimatedCard>
             </motion.div>
           )}
+
+          <ConfirmDialog
+            isOpen={programToDelete !== null}
+            onClose={() => setProgramToDelete(null)}
+            onConfirm={() => {
+              if (programToDelete) deleteProgram(programToDelete)
+            }}
+            title="Delete program?"
+            message="This program and all its days and templates will be permanently deleted. This cannot be undone."
+            confirmText="Delete"
+            variant="danger"
+          />
         </main>
       </div>
     )

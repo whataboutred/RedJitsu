@@ -22,6 +22,7 @@ export default function EditJiuJitsuPage() {
 
   const [demo, setDemo] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   
   // Form state
   const [performedAt, setPerformedAt] = useState<string>('')
@@ -85,9 +86,11 @@ export default function EditJiuJitsuPage() {
   // Use datetimeLocalToISO from lib/dateUtils for timezone-safe conversion
 
   async function saveSession() {
+    if (saving) return
     const userId = await getActiveUserId()
     if (!userId) { toast.warning('Please sign in again.'); return }
 
+    setSaving(true)
     try {
       const minutes = Math.min(600, Math.max(5, Number(duration || 60)))
       const { error } = await supabase
@@ -113,15 +116,22 @@ export default function EditJiuJitsuPage() {
     } catch (err) {
       console.error('Save error:', err)
       toast.error('Failed to update session')
+    } finally {
+      setSaving(false)
     }
   }
 
   if (loading) {
     return (
-      <div>
+      <div className="relative min-h-screen bg-black">
+        <BackgroundLogo />
         <Nav />
-        <main className="max-w-3xl mx-auto p-4">
-          <div className="text-center">Loading session...</div>
+        <main className="relative z-10 max-w-3xl mx-auto p-4">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-white/10 rounded w-1/3"></div>
+            <div className="h-32 bg-white/10 rounded"></div>
+            <div className="h-32 bg-white/10 rounded"></div>
+          </div>
         </main>
       </div>
     )
@@ -211,8 +221,8 @@ export default function EditJiuJitsuPage() {
 
         {/* Action Buttons */}
         <div className="flex gap-3">
-          <button className="btn" onClick={saveSession}>
-            Save Changes
+          <button className="btn disabled:opacity-50" onClick={saveSession} disabled={saving}>
+            {saving ? 'Saving…' : 'Save Changes'}
           </button>
           <Link href="/history" className="toggle">
             Cancel

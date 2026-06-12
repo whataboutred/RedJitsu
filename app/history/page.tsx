@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useState, useMemo, useCallback } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BarChart3,
@@ -997,7 +998,10 @@ function HistoryClient() {
               <AnimatedCard className="text-center py-10">
                 <BarChart3 className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
                 <h3 className="font-semibold text-zinc-500 mb-2">No activity data yet</h3>
-                <p className="text-zinc-500 text-sm mb-4">Start logging workouts, BJJ sessions, or cardio to see your analytics here.</p>
+                <p className="text-zinc-500 text-sm mb-6">Start logging workouts, BJJ sessions, or cardio to see your analytics here.</p>
+                <Link href="/workouts/new" className="btn inline-flex">
+                  Log Your First Workout
+                </Link>
               </AnimatedCard>
             )}
 
@@ -1356,7 +1360,10 @@ function HistoryClient() {
                 <AnimatedCard>
                   <div className="text-center py-8">
                     <Calendar className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                    <p className="text-zinc-500">No activities found</p>
+                    <p className="text-zinc-500 mb-6">No activities found for this period</p>
+                    <Link href="/workouts/new" className="btn inline-flex">
+                      Log a Workout
+                    </Link>
                   </div>
                 </AnimatedCard>
               ) : (
