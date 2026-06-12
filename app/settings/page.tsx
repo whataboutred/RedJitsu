@@ -99,6 +99,7 @@ export default function SettingsPage() {
   const [showStrengthGoal, setShowStrengthGoal] = useState<boolean>(true)
   const [showBjjGoal, setShowBjjGoal] = useState<boolean>(true)
   const [showCardioGoal, setShowCardioGoal] = useState<boolean>(false)
+  const [coachContext, setCoachContext] = useState<string>('')
 
   // User stats
   const [userStats, setUserStats] = useState<UserStats | null>(null)
@@ -138,6 +139,7 @@ export default function SettingsPage() {
         setShowStrengthGoal(p.show_strength_goal ?? true)
         setShowBjjGoal(p.show_bjj_goal ?? true)
         setShowCardioGoal(p.show_cardio_goal ?? false)
+        setCoachContext(p.coach_context ?? '')
       }
     } catch (err) {
       console.error('Error in loadUserData:', err)
@@ -222,7 +224,8 @@ export default function SettingsPage() {
         cardio_weekly_goal: Math.min(14, Math.max(1, cardioWeeklyGoal || 3)),
         show_strength_goal: showStrengthGoal,
         show_bjj_goal: showBjjGoal,
-        show_cardio_goal: showCardioGoal
+        show_cardio_goal: showCardioGoal,
+        coach_context: coachContext.trim() || null
       })
 
       toast.success('Settings saved!')
@@ -473,6 +476,26 @@ export default function SettingsPage() {
               />
             </div>
           </div>
+        </AnimatedCard>
+
+        {/* AI Coach Context */}
+        <AnimatedCard delay={0.28}>
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="w-5 h-5 text-violet-400" />
+            <h3 className="font-semibold text-white">AI Coach Context</h3>
+          </div>
+          <p className="text-sm text-zinc-500 mb-4">
+            Tell the AI coach about your goals, injuries, or anything else it should factor
+            into your insights — e.g. &quot;cutting until August, left shoulder impingement,
+            prepping for my first BJJ competition.&quot;
+          </p>
+          <textarea
+            value={coachContext}
+            onChange={(e) => setCoachContext(e.target.value.slice(0, 1000))}
+            placeholder="Your goals, injuries, schedule constraints…"
+            className="w-full h-28 bg-surface border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 outline-none resize-none transition-all duration-200 focus:border-brand-red focus:ring-2 focus:ring-brand-red/25"
+          />
+          <p className="mt-1.5 text-xs text-zinc-600 text-right">{coachContext.length}/1000</p>
         </AnimatedCard>
 
         {/* Dashboard Visibility */}
