@@ -1158,8 +1158,8 @@ function HistoryClient() {
               )}
             </AnimatedCard>
 
-            {/* Streak Info Section */}
-            {streakData && (
+            {/* Streak Info Section — only the categories you're tracking (goal > 0) */}
+            {streakData && (streakData.strength.goal > 0 || streakData.bjj.goal > 0 || streakData.cardio.goal > 0) && (
               <AnimatedCard delay={0.1}>
                 <div className="flex items-center gap-2 mb-4">
                   <Flame className="w-5 h-5 text-red-400" />
@@ -1168,6 +1168,7 @@ function HistoryClient() {
 
                 <div className="grid grid-cols-3 gap-3">
                   {/* Strength Streak */}
+                  {streakData.strength.goal > 0 && (
                   <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-center">
                     <div className="flex items-center justify-center gap-1 mb-2">
                       <Dumbbell className="w-4 h-4 text-red-400" />
@@ -1185,8 +1186,10 @@ function HistoryClient() {
                       </div>
                     </div>
                   </div>
+                  )}
 
                   {/* BJJ Streak */}
+                  {streakData.bjj.goal > 0 && (
                   <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-center">
                     <div className="flex items-center justify-center gap-1 mb-2">
                       <Target className="w-4 h-4 text-purple-400" />
@@ -1204,8 +1207,10 @@ function HistoryClient() {
                       </div>
                     </div>
                   </div>
+                  )}
 
                   {/* Cardio Streak */}
+                  {streakData.cardio.goal > 0 && (
                   <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center">
                     <div className="flex items-center justify-center gap-1 mb-2">
                       <Activity className="w-4 h-4 text-emerald-400" />
@@ -1223,6 +1228,7 @@ function HistoryClient() {
                       </div>
                     </div>
                   </div>
+                  )}
                 </div>
               </AnimatedCard>
             )}

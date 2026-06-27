@@ -131,9 +131,6 @@ export default function Dashboard() {
   const [weeklyGoal, setWeeklyGoal] = useState<number>(4)
   const [bjjWeeklyGoal, setBjjWeeklyGoal] = useState<number>(2)
   const [cardioWeeklyGoal, setCardioWeeklyGoal] = useState<number>(3)
-  const [showStrengthGoal, setShowStrengthGoal] = useState<boolean>(true)
-  const [showBjjGoal, setShowBjjGoal] = useState<boolean>(true)
-  const [showCardioGoal, setShowCardioGoal] = useState<boolean>(false)
   const [todayWorkoutDay, setTodayWorkoutDay] = useState<string | null>(null)
   const [todayQuote, setTodayQuote] = useState<Quote | null>(null)
   const [isRefreshingQuote, setIsRefreshingQuote] = useState(false)
@@ -158,7 +155,7 @@ export default function Dashboard() {
     const [profRes, workoutsRes, bjjRes, cardioRes, activeProgramRes] = await Promise.all([
       supabase
         .from('profiles')
-        .select('weekly_goal,target_weeks,goal_start,bjj_weekly_goal,cardio_weekly_goal,show_strength_goal,show_bjj_goal,show_cardio_goal')
+        .select('weekly_goal,bjj_weekly_goal,cardio_weekly_goal')
         .eq('id', userId)
         .maybeSingle(),
       supabase
@@ -192,9 +189,6 @@ export default function Dashboard() {
       setWeeklyGoal(prof.weekly_goal ?? 4)
       setBjjWeeklyGoal(prof.bjj_weekly_goal ?? 2)
       setCardioWeeklyGoal(prof.cardio_weekly_goal ?? 3)
-      setShowStrengthGoal(prof.show_strength_goal ?? true)
-      setShowBjjGoal(prof.show_bjj_goal ?? true)
-      setShowCardioGoal(prof.show_cardio_goal ?? false)
     } else if (!DEMO) {
       // No profile yet — brand-new account, run first-time setup
       setOnboardingUserId(userId)
@@ -381,12 +375,6 @@ export default function Dashboard() {
     )
   }
 
-  const enabledGoals = [
-    showStrengthGoal && 'strength',
-    showBjjGoal && 'bjj',
-    showCardioGoal && 'cardio',
-  ].filter(Boolean)
-
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-8 relative z-10">
       <BackgroundLogo />
@@ -426,7 +414,7 @@ export default function Dashboard() {
         <Link href="/workouts/new" className="block active:scale-[0.98] transition-transform">
           <p className="text-6xl font-display text-white leading-none">
             {thisWeekCount}
-            <span className="text-3xl text-zinc-600"> / {weeklyGoal}</span>
+            {weeklyGoal > 0 && <span className="text-3xl text-zinc-600"> / {weeklyGoal}</span>}
           </p>
           <p className="text-sm text-zinc-500 mt-2 uppercase tracking-wide">Workouts this week</p>
         </Link>
