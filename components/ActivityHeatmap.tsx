@@ -2,12 +2,13 @@
 
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Calendar } from 'lucide-react'
+import { Calendar, Flame } from 'lucide-react'
 
 type ActivityType = 'strength' | 'bjj' | 'cardio'
 
 interface ActivityHeatmapProps {
   activities: Array<{ date: string; type: ActivityType }>
+  streakWeeks?: number
 }
 
 const WEEKS = 12
@@ -30,7 +31,7 @@ function getColor(types: ActivityType[]): string {
   return count >= 2 ? 'bg-emerald-500' : 'bg-emerald-500/40'
 }
 
-export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
+export default function ActivityHeatmap({ activities, streakWeeks = 0 }: ActivityHeatmapProps) {
   const { grid, activeDays, monthLabels } = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -87,14 +88,23 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
       className="bg-surface/80 border border-white/[0.07] rounded-xl p-4"
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-zinc-400" />
-          <h3 className="text-sm font-semibold text-white">Activity</h3>
+          <h3 className="font-display uppercase text-lg text-white">Consistency</h3>
         </div>
-        <p className="text-xs text-zinc-500">
-          {activeDays} day{activeDays !== 1 ? 's' : ''} active
-        </p>
+        <div className="flex items-center gap-3">
+          {streakWeeks > 0 && (
+            <span className="flex items-baseline gap-1 text-brand-red">
+              <Flame className="w-4 h-4 self-center" />
+              <span className="font-display text-xl leading-none">{streakWeeks}</span>
+              <span className="text-xs text-zinc-500">wk streak</span>
+            </span>
+          )}
+          <p className="text-xs text-zinc-500">
+            {activeDays} day{activeDays !== 1 ? 's' : ''} active
+          </p>
+        </div>
       </div>
 
       {/* Month labels row */}

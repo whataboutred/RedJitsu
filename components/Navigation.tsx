@@ -8,6 +8,7 @@ import {
   Home,
   Dumbbell,
   History,
+  TrendingUp,
   User,
   Plus,
   X,
@@ -50,7 +51,7 @@ function DesktopHeader({ signOut }: { signOut: () => Promise<void> }) {
 
   const navItems = [
     { href: '/dashboard', label: 'Home', icon: Home },
-    { href: '/history', label: 'History', icon: History },
+    { href: '/history', label: 'Progress', icon: TrendingUp },
     { href: '/programs', label: 'Programs', icon: FileText },
     { href: '/settings', label: 'Settings', icon: Settings },
   ]
@@ -143,7 +144,7 @@ function BottomNav() {
 
   const leftItems = [
     { href: '/dashboard', label: 'Home', icon: Home },
-    { href: '/history', label: 'History', icon: History },
+    { href: '/history', label: 'Progress', icon: TrendingUp },
   ]
   const rightItems = [
     { href: '/programs', label: 'Programs', icon: FileText },

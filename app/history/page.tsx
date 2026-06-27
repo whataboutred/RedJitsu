@@ -977,8 +977,8 @@ function HistoryClient() {
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-display uppercase text-white">Analytics</h1>
-              <p className="text-sm text-zinc-500 mt-0.5">Track your progress</p>
+              <h1 className="text-4xl font-display uppercase text-white">Progress</h1>
+              <p className="text-sm text-zinc-500 mt-0.5">Insights &amp; training log</p>
             </div>
             <div className="flex gap-2">
               <button
@@ -989,7 +989,7 @@ function HistoryClient() {
                 onClick={() => setSelectedView('analytics')}
               >
                 <BarChart3 className="w-4 h-4 inline mr-1" />
-                Analytics
+                Overview
               </button>
               <button
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedView === 'workouts'
@@ -1159,184 +1159,9 @@ function HistoryClient() {
               )}
             </AnimatedCard>
 
-            {/* Streak Info Section — only the categories you're tracking (goal > 0) */}
-            {streakData && (streakData.strength.goal > 0 || streakData.bjj.goal > 0 || streakData.cardio.goal > 0) && (
-              <AnimatedCard delay={0.1}>
-                <div className="flex items-center gap-2 mb-4">
-                  <Flame className="w-5 h-5 text-red-400" />
-                  <h3 className="font-display uppercase text-lg text-white">Current Streaks</h3>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  {/* Strength Streak */}
-                  {streakData.strength.goal > 0 && (
-                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-center">
-                    <div className="flex items-center justify-center gap-1 mb-2">
-                      <Dumbbell className="w-4 h-4 text-red-400" />
-                      <span className="text-xs font-medium text-red-400">Strength</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-1">
-                      <Flame className="w-4 h-4 text-amber-400" />
-                      <span className="text-xl font-bold text-white">{streakData.strength.current}</span>
-                      <span className="text-xs text-zinc-500">wks</span>
-                    </div>
-                    <div className="mt-2 text-xs">
-                      <span className="text-zinc-500">{streakData.strength.thisWeek}/{streakData.strength.goal} this week</span>
-                      <div className={`mt-1 ${streakData.strength.isOnTrack ? 'text-emerald-400' : 'text-amber-400'}`}>
-                        {streakData.strength.isOnTrack ? 'On Track' : 'Catch Up'}
-                      </div>
-                    </div>
-                  </div>
-                  )}
-
-                  {/* BJJ Streak */}
-                  {streakData.bjj.goal > 0 && (
-                  <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-center">
-                    <div className="flex items-center justify-center gap-1 mb-2">
-                      <Target className="w-4 h-4 text-purple-400" />
-                      <span className="text-xs font-medium text-purple-400">BJJ</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-1">
-                      <Flame className="w-4 h-4 text-amber-400" />
-                      <span className="text-xl font-bold text-white">{streakData.bjj.current}</span>
-                      <span className="text-xs text-zinc-500">wks</span>
-                    </div>
-                    <div className="mt-2 text-xs">
-                      <span className="text-zinc-500">{streakData.bjj.thisWeek}/{streakData.bjj.goal} this week</span>
-                      <div className={`mt-1 ${streakData.bjj.isOnTrack ? 'text-emerald-400' : 'text-amber-400'}`}>
-                        {streakData.bjj.isOnTrack ? 'On Track' : 'Catch Up'}
-                      </div>
-                    </div>
-                  </div>
-                  )}
-
-                  {/* Cardio Streak */}
-                  {streakData.cardio.goal > 0 && (
-                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center">
-                    <div className="flex items-center justify-center gap-1 mb-2">
-                      <Activity className="w-4 h-4 text-emerald-400" />
-                      <span className="text-xs font-medium text-emerald-400">Cardio</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-1">
-                      <Flame className="w-4 h-4 text-amber-400" />
-                      <span className="text-xl font-bold text-white">{streakData.cardio.current}</span>
-                      <span className="text-xs text-zinc-500">wks</span>
-                    </div>
-                    <div className="mt-2 text-xs">
-                      <span className="text-zinc-500">{streakData.cardio.thisWeek}/{streakData.cardio.goal} this week</span>
-                      <div className={`mt-1 ${streakData.cardio.isOnTrack ? 'text-emerald-400' : 'text-amber-400'}`}>
-                        {streakData.cardio.isOnTrack ? 'On Track' : 'Catch Up'}
-                      </div>
-                    </div>
-                  </div>
-                  )}
-                </div>
-              </AnimatedCard>
-            )}
-
-            {/* Volume Tracker */}
-            {volumeData.length > 0 && (
-              <AnimatedCard delay={0.2}>
-                <div className="flex items-center gap-2 mb-4">
-                  <BarChart3 className="w-5 h-5 text-red-400" />
-                  <h3 className="font-display uppercase text-lg text-white">Volume Tracker</h3>
-                  <span className="text-xs text-zinc-500 ml-auto">Working sets per session • Last 60 days</span>
-                </div>
-
-                <div className="space-y-3">
-                  {volumeData.slice(-10).map((day, index) => {
-                    const maxTotal = Math.max(...volumeData.slice(-10).map(d => d.upperVolume + d.lowerVolume))
-
-                    return (
-                      <motion.div
-                        key={day.date}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="flex items-center gap-3"
-                      >
-                        <div className="w-16 text-xs text-zinc-500">
-                          {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </div>
-                        <div className="flex-1 h-6 bg-surface rounded-full overflow-hidden flex">
-                          <motion.div
-                            className="bg-gradient-to-r from-red-500 to-orange-500 h-full"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(day.upperVolume / maxTotal) * 100}%` }}
-                            transition={{ delay: 0.3 + index * 0.05, duration: 0.5 }}
-                          />
-                          <motion.div
-                            className="bg-gradient-to-r from-blue-500 to-cyan-500 h-full"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(day.lowerVolume / maxTotal) * 100}%` }}
-                            transition={{ delay: 0.3 + index * 0.05, duration: 0.5 }}
-                          />
-                        </div>
-                        <div className="w-14 text-xs text-zinc-500 text-right">
-                          {day.totalSets} sets
-                        </div>
-                      </motion.div>
-                    )
-                  })}
-                </div>
-
-                <div className="flex gap-4 text-xs text-zinc-500 mt-4 pt-4 border-t border-red-500/10">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-gradient-to-r from-red-500 to-orange-500" />
-                    Upper Body
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-gradient-to-r from-blue-500 to-cyan-500" />
-                    Lower Body
-                  </div>
-                </div>
-              </AnimatedCard>
-            )}
-
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <AnimatedCard delay={0.25} className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
-                    <Flame className="w-6 h-6 text-red-400" />
-                  </div>
-                </div>
-                <p className="text-4xl font-display text-red-400"><CountUp value={workoutStats.thisWeek} /></p>
-                <p className="text-xs text-zinc-500">This Week</p>
-              </AnimatedCard>
-
-              <AnimatedCard delay={0.3} className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-blue-400" />
-                  </div>
-                </div>
-                <p className="text-4xl font-display text-blue-400"><CountUp value={workoutStats.thisMonth} /></p>
-                <p className="text-xs text-zinc-500">This Month</p>
-              </AnimatedCard>
-
-              <AnimatedCard delay={0.35} className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-emerald-400" />
-                  </div>
-                </div>
-                <p className="text-4xl font-display text-emerald-400"><CountUp value={workoutStats.avgPerWeek} decimals={1} /></p>
-                <p className="text-xs text-zinc-500">Avg/Week</p>
-              </AnimatedCard>
-
-              <AnimatedCard delay={0.4} className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
-                    <Trophy className="w-6 h-6 text-purple-400" />
-                  </div>
-                </div>
-                <p className="text-4xl font-display text-purple-400"><CountUp value={workoutStats.total} /></p>
-                <p className="text-xs text-zinc-500">Total</p>
-              </AnimatedCard>
-            </div>
-
+            {/* Consistency — the heatmap carries a single streak callout */}
             <ActivityHeatmap
+              streakWeeks={streakData?.strength.current ?? 0}
               activities={[
                 ...workouts.map((w) => ({ date: w.performed_at.split('T')[0], type: 'strength' as const })),
                 ...bjj.map((b) => ({ date: b.performed_at.split('T')[0], type: 'bjj' as const })),
