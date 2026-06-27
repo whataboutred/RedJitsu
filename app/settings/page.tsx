@@ -322,8 +322,11 @@ export default function SettingsPage() {
         {/* Profile Card */}
         <AnimatedCard delay={0}>
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-brand-red to-red-700 flex items-center justify-center">
-              <User className="w-8 h-8 text-white" />
+            {/* Skull crest — the old logo reframed as an embroidered patch */}
+            <div className="relative w-16 h-16 rounded-full bg-surface-elevated border-2 border-brand-red/50 flex items-center justify-center overflow-hidden flex-shrink-0">
+              <div className="absolute inset-[3px] rounded-full border border-dashed border-white/15" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/red-jitsu-logo.png" alt="" className="w-[52px] h-[52px] object-contain" />
             </div>
             <div className="flex-1">
               <p className="text-lg font-semibold text-white">{userEmail || 'User'}</p>
@@ -341,7 +344,7 @@ export default function SettingsPage() {
           <AnimatedCard delay={0.05}>
             <div className="flex items-center gap-2 mb-4">
               <Trophy className="w-5 h-5 text-amber-400" />
-              <h3 className="font-semibold text-white">Your Stats (30 days)</h3>
+              <h3 className="font-display uppercase text-lg text-white">Your Stats (30 days)</h3>
             </div>
             <div className="grid grid-cols-4 gap-3">
               <div className="text-center">
@@ -380,7 +383,7 @@ export default function SettingsPage() {
         <AnimatedCard delay={0.1}>
           <div className="flex items-center gap-2 mb-4">
             <Scale className="w-5 h-5 text-red-400" />
-            <h3 className="font-semibold text-white">Weight Unit</h3>
+            <h3 className="font-display uppercase text-lg text-white">Weight Unit</h3>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <button
@@ -410,7 +413,7 @@ export default function SettingsPage() {
         <AnimatedCard delay={0.15}>
           <div className="flex items-center gap-2 mb-4">
             <Dumbbell className="w-5 h-5 text-red-400" />
-            <h3 className="font-semibold text-white">Strength Goal</h3>
+            <h3 className="font-display uppercase text-lg text-white">Strength Goal</h3>
           </div>
           <div className="space-y-4">
             <div>
@@ -434,7 +437,7 @@ export default function SettingsPage() {
         <AnimatedCard delay={0.2}>
           <div className="flex items-center gap-2 mb-4">
             <Target className="w-5 h-5 text-purple-400" />
-            <h3 className="font-semibold text-white">BJJ Goal</h3>
+            <h3 className="font-display uppercase text-lg text-white">BJJ Goal</h3>
           </div>
           <div className="space-y-4">
             <div>
@@ -458,7 +461,7 @@ export default function SettingsPage() {
         <AnimatedCard delay={0.25}>
           <div className="flex items-center gap-2 mb-4">
             <Activity className="w-5 h-5 text-emerald-400" />
-            <h3 className="font-semibold text-white">Cardio Goal</h3>
+            <h3 className="font-display uppercase text-lg text-white">Cardio Goal</h3>
           </div>
           <div className="space-y-4">
             <div>
@@ -482,7 +485,7 @@ export default function SettingsPage() {
         <AnimatedCard delay={0.28}>
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-5 h-5 text-violet-400" />
-            <h3 className="font-semibold text-white">AI Coach Context</h3>
+            <h3 className="font-display uppercase text-lg text-white">AI Coach Context</h3>
           </div>
           <p className="text-sm text-zinc-500 mb-4">
             Tell the AI coach about your goals, injuries, or anything else it should factor
@@ -502,7 +505,7 @@ export default function SettingsPage() {
         <AnimatedCard delay={0.3}>
           <div className="flex items-center gap-2 mb-4">
             <Eye className="w-5 h-5 text-blue-400" />
-            <h3 className="font-semibold text-white">Dashboard Goals</h3>
+            <h3 className="font-display uppercase text-lg text-white">Dashboard Goals</h3>
           </div>
           <p className="text-sm text-zinc-500 mb-4">Choose which goals to show on your dashboard</p>
           <div className="space-y-3">
@@ -549,7 +552,7 @@ export default function SettingsPage() {
         <AnimatedCard delay={0.35}>
           <div className="flex items-center gap-2 mb-4">
             <Lock className="w-5 h-5 text-zinc-500" />
-            <h3 className="font-semibold text-white">Account</h3>
+            <h3 className="font-display uppercase text-lg text-white">Account</h3>
           </div>
           <div className="space-y-2">
             <button

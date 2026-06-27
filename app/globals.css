@@ -27,6 +27,20 @@ body {
   overscroll-behavior: none;
 }
 
+/* Subtle branded glow at the top of every screen — adds athletic depth/energy
+   without imagery. Sits behind content (z-index -1), above the base background. */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 45vh;
+  background: radial-gradient(800px circle at 50% -8%, rgba(220, 38, 38, 0.1), transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
 /* ============================================
    APP-LIKE TOUCH BEHAVIOR
    Removes the web tells: gray tap-flash, long-press callout menus,

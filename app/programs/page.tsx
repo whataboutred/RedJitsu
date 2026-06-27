@@ -713,7 +713,7 @@ export default function ProgramsPage() {
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-white truncate mb-1">{p.name}</div>
+                          <div className="text-lg font-display uppercase text-white truncate mb-1">{p.name}</div>
                           {p.is_active && (
                             <span className="inline-flex items-center gap-1 text-xs text-brand-red font-medium bg-brand-red/10 px-2 py-0.5 rounded-full">
                               <span className="w-1.5 h-1.5 bg-brand-red rounded-full"></span>

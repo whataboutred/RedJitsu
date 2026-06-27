@@ -24,29 +24,31 @@ function AchievementBadge({
     : '#3F3F46'
   const fill = earned ? '#DC2626' : '#161214'
   const text = earned ? '#FFFFFF' : '#52525B'
+  const stitch = earned ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.1)'
 
+  // Embroidered-patch look: a woven square with a thick tier-colored edge
+  // and a dashed "stitch" inner border, label in the Anton display font.
   return (
     <svg viewBox="0 0 100 100" className="w-full h-full">
+      <rect x="11" y="11" width="78" height="78" rx="24" fill={fill} stroke={ring} strokeWidth="5" />
       <rect
-        x="22"
-        y="22"
-        width="56"
-        height="56"
-        rx="14"
-        transform="rotate(45 50 50)"
-        fill={fill}
-        stroke={ring}
-        strokeWidth="3"
+        x="20"
+        y="20"
+        width="60"
+        height="60"
+        rx="17"
+        fill="none"
+        stroke={stitch}
+        strokeWidth="1.5"
+        strokeDasharray="3.5 3.5"
       />
       <text
         x="50"
-        y="51"
+        y="55"
         textAnchor="middle"
         dominantBaseline="central"
-        fontFamily="Helvetica Neue, Helvetica, Arial, sans-serif"
-        fontSize="25"
-        fontWeight="800"
-        fontStyle="italic"
+        style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic' }}
+        fontSize="34"
         fill={text}
       >
         {label}

@@ -32,7 +32,7 @@ function renderMarkdown(text: string) {
   for (const line of lines) {
     if (line.startsWith('## ')) {
       elements.push(
-        <h3 key={key++} className="text-sm font-semibold text-white mt-4 mb-1.5 first:mt-0 flex items-center gap-2">
+        <h3 key={key++} className="text-base font-display uppercase tracking-wide text-white mt-4 mb-1.5 first:mt-0 flex items-center gap-2">
           {getSectionIcon(line.replace('## ', ''))}
           {line.replace('## ', '')}
         </h3>
@@ -166,7 +166,7 @@ export default function AIInsights() {
       >
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-violet-400" />
-          <h3 className="font-semibold text-white text-base">AI Coach Insights</h3>
+          <h3 className="font-display uppercase text-lg text-white">AI Coach Insights</h3>
           {insights?.generatedAt && (
             <span className="text-xs text-zinc-500 flex items-center gap-1">
               <Clock className="w-3 h-3" />

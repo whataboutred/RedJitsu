@@ -1038,7 +1038,7 @@ function HistoryClient() {
             <AnimatedCard delay={0}>
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-5 h-5 text-red-400" />
-                <h3 className="font-semibold text-white">Exercise Progress</h3>
+                <h3 className="font-display uppercase text-lg text-white">Exercise Progress</h3>
                 <span className="text-xs text-zinc-500 ml-auto">
                   {hasActiveProgram && activeProgramExercises.size > 0 ? 'From active program' : 'All exercises'} • Last 90 days
                 </span>
@@ -1163,7 +1163,7 @@ function HistoryClient() {
               <AnimatedCard delay={0.1}>
                 <div className="flex items-center gap-2 mb-4">
                   <Flame className="w-5 h-5 text-red-400" />
-                  <h3 className="font-semibold text-white">Current Streaks</h3>
+                  <h3 className="font-display uppercase text-lg text-white">Current Streaks</h3>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
@@ -1232,7 +1232,7 @@ function HistoryClient() {
               <AnimatedCard delay={0.2}>
                 <div className="flex items-center gap-2 mb-4">
                   <BarChart3 className="w-5 h-5 text-red-400" />
-                  <h3 className="font-semibold text-white">Volume Tracker</h3>
+                  <h3 className="font-display uppercase text-lg text-white">Volume Tracker</h3>
                   <span className="text-xs text-zinc-500 ml-auto">Working sets per session • Last 60 days</span>
                 </div>
 
