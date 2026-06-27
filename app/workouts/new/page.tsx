@@ -39,6 +39,7 @@ import { detectAndSaveNewPRs, type NewPR } from '@/lib/api/personalRecords'
 import { notifyDataChanged } from '@/lib/dataSync'
 import PRCelebration from '@/components/PRCelebration'
 import { getLastWorkoutSetsForExercises, WorkoutSet as LastWorkoutSet } from '@/lib/workoutSuggestions'
+import { searchByName } from '@/lib/exerciseSearch'
 import { Button, IconButton } from '@/components/ui/Button'
 import { BottomSheet, Modal, ConfirmDialog } from '@/components/ui/BottomSheet'
 import { NumberInput, Input, Textarea, Select } from '@/components/ui/Input'
@@ -353,12 +354,14 @@ function ExerciseCard({
   const totalSets = exercise.sets.filter((s) => !s.isWarmup).length
 
   const handleSetComplete = (setIndex: number) => {
-    const newSets = [...exercise.sets]
-    newSets[setIndex].isCompleted = !newSets[setIndex].isCompleted
+    const nowCompleted = !exercise.sets[setIndex].isCompleted
+    const newSets = exercise.sets.map((s, i) =>
+      i === setIndex ? { ...s, isCompleted: nowCompleted } : s
+    )
     onUpdate({ ...exercise, sets: newSets })
 
-    // Start rest timer if completing a set
-    if (!newSets[setIndex].isCompleted === false) {
+    // Start the rest timer only when a set is being completed (not un-completed)
+    if (nowCompleted) {
       hapticTap()
       setShowRestTimer(true)
     }
@@ -370,6 +373,24 @@ function ExerciseCard({
   }
 
   const isEmpty = (s: SetData) => s.weight === 0 && s.reps === 0
+
+  // Tap a previous-workout chip to drop those numbers into the first empty
+  // working set (or append a new set if every set is already filled).
+  const fillFromHistory = (weight: number, reps: number) => {
+    hapticTap()
+    const idx = exercise.sets.findIndex((s) => !s.isWarmup && isEmpty(s))
+    if (idx >= 0) {
+      const newSets = exercise.sets.map((s, i) =>
+        i === idx ? { ...s, weight, reps } : s
+      )
+      onUpdate({ ...exercise, sets: newSets })
+    } else {
+      onUpdate({
+        ...exercise,
+        sets: [...exercise.sets, { weight, reps, isWarmup: false, isCompleted: false }],
+      })
+    }
+  }
 
   // Fill all empty working sets. First empty set falls back to last-workout history,
   // subsequent empty sets copy the most recently filled set in this session.
@@ -485,15 +506,22 @@ function ExerciseCard({
               {/* Last Workout Reference */}
               {exercise.lastWorkout && exercise.lastWorkout.sets.length > 0 ? (
                 <div className="rounded-xl p-3 bg-blue-500/[0.07] border border-blue-500/15">
-                  <div className="flex items-center gap-2 text-xs font-medium mb-2 text-blue-400">
-                    <TrendingUp className="w-3.5 h-3.5" />
-                    Previous Workout
+                  <div className="flex items-center justify-between gap-2 text-xs font-medium mb-2 text-blue-400">
+                    <span className="flex items-center gap-2">
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      Previous Workout
+                    </span>
+                    <span className="text-[10px] text-blue-400/60 font-normal">tap to fill</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {exercise.lastWorkout.sets.slice(0, 5).map((s, i) => (
-                      <span key={i} className="px-2.5 py-1 bg-blue-500/15 rounded-lg text-xs text-blue-300 font-medium">
+                      <button
+                        key={i}
+                        onClick={() => fillFromHistory(s.weight, s.reps)}
+                        className="px-2.5 py-1 bg-blue-500/15 hover:bg-blue-500/25 active:scale-95 rounded-lg text-xs text-blue-300 font-medium transition-all"
+                      >
                         {s.weight}{unit} x {s.reps}
-                      </span>
+                      </button>
                     ))}
                     {exercise.lastWorkout.sets.length > 5 && (
                       <span className="px-2 py-1 text-xs text-blue-400">
@@ -600,11 +628,10 @@ function ExerciseSelectorSheet({
   ]
 
   const filtered = useMemo(() => {
-    return exercises.filter((ex) => {
-      const matchesSearch = ex.name.toLowerCase().includes(search.toLowerCase())
-      const matchesCategory = category === 'all' || ex.category === category
-      return matchesSearch && matchesCategory
-    })
+    const byCategory = exercises.filter(
+      (ex) => category === 'all' || ex.category === category
+    )
+    return searchByName(byCategory, search)
   }, [exercises, search, category])
 
   const searchHeader = (
@@ -943,22 +970,22 @@ export default function NewWorkoutPage() {
     enabled: true,
   })
 
-  // Unsaved draft found on mount, awaiting the user's restore decision
-  const [pendingDraft, setPendingDraft] = useState<any>(null)
-  const draftRestoredRef = useRef(false)
+  // When an in-progress workout is auto-resumed, this holds its save time so
+  // we can show a dismissible "resumed" banner instead of a blocking dialog.
+  const [resumedDraftAt, setResumedDraftAt] = useState<number | null>(null)
 
   function restoreDraft(draft: any) {
-    draftRestoredRef.current = true
     // Convert old draft format to new format
     const restoredExercises: WorkoutExercise[] = draft.items.map((item: any) => ({
       id: crypto.randomUUID(),
       exerciseId: item.id,
       name: item.name,
+      lastWorkout: item.lastWorkout,
       sets: item.sets.map((s: any) => ({
         weight: s.weight,
         reps: s.reps,
         isWarmup: s.set_type === 'warmup',
-        isCompleted: false,
+        isCompleted: !!s.completed,
       })),
     }))
     setExercises(restoredExercises)
@@ -972,10 +999,22 @@ export default function NewWorkoutPage() {
     if (restoredExercises.length > 0) {
       setExpandedId(restoredExercises[0].id)
     }
-    // Skip setup modal since we're restoring a draft
+    // Skip setup modal since we're resuming an in-progress workout
     setShowSetupModal(false)
     setSetupComplete(true)
-    toast.success('Draft restored!')
+    setResumedDraftAt(draft.timestamp || Date.now())
+  }
+
+  // Discard the auto-resumed workout and start fresh.
+  function discardResumedDraft() {
+    clearDraft()
+    setExercises([])
+    setTitle('')
+    setNotes('')
+    setExpandedId(null)
+    setResumedDraftAt(null)
+    setSetupComplete(false)
+    setShowSetupModal(true)
   }
 
   // Load initial data
@@ -996,10 +1035,13 @@ export default function NewWorkoutPage() {
       userIdRef.current = userId
       startTimeRef.current = new Date()
 
-      // Try to restore draft — ask via dialog instead of blocking the load
+      // Auto-resume an in-progress workout instead of prompting — the user can
+      // discard it from the banner if they meant to start fresh. Skip when
+      // arriving via the "Repeat workout" flow, which loads its own exercises.
+      const isRepeatFlow = new URLSearchParams(window.location.search).get('repeat') === 'true'
       const draft = loadDraft()
-      if (draft && draft.items && draft.items.length > 0) {
-        setPendingDraft(draft)
+      if (!isRepeatFlow && draft && draft.items && draft.items.length > 0) {
+        restoreDraft(draft)
       }
 
       // Check for repeat workout (from WorkoutDetail "Repeat" button)
@@ -1076,10 +1118,12 @@ export default function NewWorkoutPage() {
         items: exercises.map((ex) => ({
           id: ex.exerciseId,
           name: ex.name,
+          lastWorkout: ex.lastWorkout,
           sets: ex.sets.map((s) => ({
             weight: s.weight,
             reps: s.reps,
             set_type: s.isWarmup ? ('warmup' as const) : ('working' as const),
+            completed: s.isCompleted,
           })),
         })),
         note: notes,
@@ -1088,7 +1132,7 @@ export default function NewWorkoutPage() {
         performedAt,
       })
     }
-  }, [exercises, title, notes, location, saveDraft])
+  }, [exercises, title, notes, location, performedAt, saveDraft])
 
   // Add exercise handler
   const addExercise = useCallback(async (ex: Exercise) => {
@@ -1410,6 +1454,36 @@ export default function NewWorkoutPage() {
 
       {/* Main Content */}
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-32">
+        {/* Resumed-workout banner — shown when an in-progress draft was auto-restored */}
+        <AnimatePresence>
+          {resumedDraftAt !== null && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="flex items-center gap-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3"
+            >
+              <RotateCcw className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <p className="text-sm text-emerald-100/90 flex-1 min-w-0">
+                Resumed your workout from {getTimeAgo(resumedDraftAt)}.
+              </p>
+              <button
+                onClick={discardResumedDraft}
+                className="text-xs font-medium text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0"
+              >
+                Discard
+              </button>
+              <button
+                onClick={() => setResumedDraftAt(null)}
+                className="p-1 text-zinc-500 hover:text-white transition-colors flex-shrink-0"
+                aria-label="Dismiss"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Workout Details Card */}
         <AnimatedCard className="space-y-4">
           <input
@@ -1534,22 +1608,6 @@ export default function NewWorkoutPage() {
         exercises={allExercises}
         onSelect={addExercise}
         onCreateCustom={createCustomExercise}
-      />
-
-      {/* Draft Restore */}
-      <ConfirmDialog
-        isOpen={pendingDraft !== null}
-        onClose={() => {
-          if (!draftRestoredRef.current) clearDraft()
-          setPendingDraft(null)
-        }}
-        onConfirm={() => {
-          if (pendingDraft) restoreDraft(pendingDraft)
-        }}
-        title="Restore unsaved workout?"
-        message={pendingDraft ? `Found an unsaved workout from ${getTimeAgo(pendingDraft.timestamp)}.` : ''}
-        confirmText="Restore"
-        cancelText="Discard"
       />
 
       {/* Save Confirmation */}
