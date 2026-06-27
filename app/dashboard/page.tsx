@@ -416,6 +416,26 @@ export default function Dashboard() {
         </p>
       </motion.div>
 
+      {/* Quick stats — kept deliberately minimal */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="grid grid-cols-2 gap-4 pt-1"
+      >
+        <Link href="/workouts/new" className="block active:scale-[0.98] transition-transform">
+          <p className="text-5xl font-bold tracking-tight text-white leading-none">
+            {thisWeekCount}
+            <span className="text-2xl text-zinc-600 font-bold"> / {weeklyGoal}</span>
+          </p>
+          <p className="text-sm text-zinc-500 mt-2">Workouts this week</p>
+        </Link>
+        <Link href="/history" className="block active:scale-[0.98] transition-transform">
+          <p className="text-5xl font-bold tracking-tight text-white leading-none">{workouts.length}</p>
+          <p className="text-sm text-zinc-500 mt-2">Total workouts</p>
+        </Link>
+      </motion.div>
+
       {/* Motivational Quote — compact */}
       {todayQuote && (
         <motion.div
@@ -441,121 +461,8 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      {/* Goal Cards */}
-      {enabledGoals.length > 0 ? (
-        <div className={`grid gap-4 ${
-          enabledGoals.length === 1
-            ? 'grid-cols-1'
-            : enabledGoals.length === 2
-              ? 'sm:grid-cols-2'
-              : 'sm:grid-cols-2 lg:grid-cols-3'
-        }`}>
-          {showStrengthGoal && (
-            <GoalCard
-              type="strength"
-              icon={Dumbbell}
-              label="Strength"
-              current={thisWeekCount}
-              goal={weeklyGoal}
-              streak={strengthStreak}
-              isOnTrack={onTrackStrength}
-              color="#ef4444"
-              href="/workouts/new"
-            />
-          )}
-          {showBjjGoal && (
-            <GoalCard
-              type="bjj"
-              icon={Activity}
-              label="Jiu-Jitsu"
-              current={bjjThisWeekCount}
-              goal={bjjWeeklyGoal}
-              streak={bjjStreak}
-              isOnTrack={onTrackBjj}
-              color="#a855f7"
-              href="/jiu-jitsu"
-            />
-          )}
-          {showCardioGoal && (
-            <GoalCard
-              type="cardio"
-              icon={Heart}
-              label="Cardio"
-              current={cardioThisWeekCount}
-              goal={cardioWeeklyGoal}
-              streak={cardioStreak}
-              isOnTrack={onTrackCardio}
-              color="#10b981"
-              href="/cardio"
-            />
-          )}
-        </div>
-      ) : (
-        <AnimatedCard className="text-center py-10">
-          <div className="w-14 h-14 rounded-2xl bg-brand-red/10 flex items-center justify-center mx-auto mb-4">
-            <Target className="w-7 h-7 text-brand-red/50" />
-          </div>
-          <h3 className="font-semibold text-zinc-300 mb-2">No goals configured</h3>
-          <p className="text-zinc-500 text-sm mb-4">Set up weekly goals to track your progress</p>
-          <Link href="/settings" className="btn btn-sm">
-            Configure Goals
-          </Link>
-        </AnimatedCard>
-      )}
-
-      {/* Activity Heatmap */}
-      {!loading && (
-        <ActivityHeatmap
-          activities={[
-            ...workouts.map(w => ({ date: w.performed_at.split('T')[0], type: 'strength' as const })),
-            ...bjj.map(b => ({ date: b.performed_at.split('T')[0], type: 'bjj' as const })),
-            ...cardio.map(c => ({ date: c.performed_at.split('T')[0], type: 'cardio' as const })),
-          ]}
-        />
-      )}
-
-      {/* Recent Activity */}
-      {(() => {
-        const recent = [
-          ...workouts.map(w => ({ type: 'strength' as const, title: w.title || 'Strength Training', date: w.performed_at })),
-          ...bjj.map(b => ({ type: 'bjj' as const, title: b.kind.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()), date: b.performed_at })),
-          ...cardio.map(c => ({ type: 'cardio' as const, title: c.activity, date: c.performed_at })),
-        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5)
-
-        if (recent.length === 0) return null
-
-        const typeConfig = {
-          strength: { border: 'border-l-red-500', bg: 'bg-red-500/[0.05]', icon: Dumbbell, color: 'text-red-400' },
-          bjj: { border: 'border-l-purple-500', bg: 'bg-purple-500/[0.05]', icon: Activity, color: 'text-purple-400' },
-          cardio: { border: 'border-l-emerald-500', bg: 'bg-emerald-500/[0.05]', icon: Heart, color: 'text-emerald-400' },
-        }
-
-        return (
-          <AnimatedCard delay={0.2}>
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-1 h-6 bg-brand-red rounded-full" />
-              <h3 className="font-bold tracking-tight text-white text-xl">Recent Activity</h3>
-            </div>
-            <div className="space-y-2">
-              {recent.map((item, i) => {
-                const cfg = typeConfig[item.type]
-                const ItemIcon = cfg.icon
-                return (
-                  <div key={i} className={`border-l-2 ${cfg.border} ${cfg.bg} rounded-xl px-3 py-3`}>
-                    <div className="flex items-center gap-3">
-                      <ItemIcon className={`w-4 h-4 ${cfg.color} flex-shrink-0`} />
-                      <span className="text-sm text-white flex-1 truncate">{item.title}</span>
-                      <span className="text-xs text-zinc-500 flex-shrink-0">
-                        {new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </AnimatedCard>
-        )
-      })()}
+      {/* Goal progress, activity heatmap, and recent activity now live in the
+          Activity/History tab to keep Home clean. */}
 
     </div>
   )

@@ -73,10 +73,10 @@ function renderInline(text: string) {
 
 function getSectionIcon(section: string) {
   const lower = section.toLowerCase()
-  if (lower.includes('going well') || lower.includes('strength')) {
+  if (lower.includes('win') || lower.includes('going well') || lower.includes('strength')) {
     return <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
   }
-  if (lower.includes('improve') || lower.includes('work')) {
+  if (lower.includes('fix') || lower.includes('improve') || lower.includes('work')) {
     return <Zap className="w-4 h-4 text-amber-400 shrink-0" />
   }
   if (lower.includes('observation') || lower.includes('pattern')) {
