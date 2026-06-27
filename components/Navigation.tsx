@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, isDemoVisitor } from '@/lib/activeUser'
+import { hapticTap } from '@/lib/haptics'
 import SafeAutoRefresh from '@/components/SafeAutoRefresh'
 import SyncStatus from '@/components/SyncStatus'
 
@@ -166,14 +167,19 @@ function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => hapticTap()}
               className={`
                 flex flex-col items-center justify-center gap-1 flex-1 py-2
-                transition-colors duration-200 relative
+                transition-colors duration-200 relative active:scale-90
                 ${isActive ? 'text-brand-red' : 'text-zinc-500'}
               `}
             >
               {isActive && (
-                <div className="absolute top-0 w-8 h-0.5 bg-brand-red rounded-full" />
+                <motion.div
+                  layoutId="bottomNavIndicator"
+                  className="absolute top-0 w-8 h-0.5 bg-brand-red rounded-full"
+                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                />
               )}
               <Icon className="w-5 h-5" />
               <span className="text-2xs font-medium">{item.label}</span>
@@ -232,7 +238,7 @@ function QuickActionFAB() {
                 >
                   <Link
                     href={action.href}
-                    onClick={() => setIsOpen(false)}
+                    onClick={() => { hapticTap(); setIsOpen(false) }}
                     className={`
                       flex items-center gap-3 pl-4 pr-5 py-3 rounded-full
                       ${action.color} text-white font-medium
@@ -251,7 +257,7 @@ function QuickActionFAB() {
 
       {/* FAB Button */}
       <motion.button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => { hapticTap(); setIsOpen(!isOpen) }}
         className={`
           fixed bottom-20 md:bottom-8 right-1/2 translate-x-1/2 md:right-4 md:translate-x-0 z-50
           w-14 h-14 rounded-full

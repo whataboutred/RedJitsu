@@ -10,7 +10,7 @@ export function RouteLoading({
   variant?: 'list' | 'stats' | 'form'
 }) {
   return (
-    <div className="relative min-h-screen bg-black">
+    <div className="relative min-h-screen bg-brand-dark">
       <main className="relative z-10 max-w-6xl mx-auto p-4 space-y-6 pt-6">
         <div className="flex items-center justify-between">
           <Skeleton variant="rectangular" className="h-8 w-44" />
