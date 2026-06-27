@@ -15,8 +15,10 @@ import {
   Target,
   Flame,
   RefreshCw,
+  Play,
 } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/Card'
+import CountUp from '@/components/ui/CountUp'
 import { ProgressRing } from '@/components/ui/ProgressRing'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { getDailyQuote, refreshQuote, type Quote } from '@/lib/quoteService'
@@ -253,16 +255,39 @@ export default function Dashboard() {
       >
         <Link href="/workouts/new" className="block active:scale-[0.98] transition-transform">
           <p className="text-6xl font-display text-white leading-none">
-            {thisWeekCount}
+            <CountUp value={thisWeekCount} />
             {weeklyGoal > 0 && <span className="text-3xl text-zinc-600"> / {weeklyGoal}</span>}
           </p>
           <p className="text-sm text-zinc-500 mt-2 uppercase tracking-wide">Workouts this week</p>
         </Link>
         <Link href="/history" className="block active:scale-[0.98] transition-transform">
-          <p className="text-6xl font-display text-white leading-none">{workouts.length}</p>
+          <p className="text-6xl font-display text-brand-red leading-none"><CountUp value={workouts.length} /></p>
           <p className="text-sm text-zinc-500 mt-2 uppercase tracking-wide">Total workouts</p>
         </Link>
       </motion.div>
+
+      {/* Today's scheduled session — only shown when today maps to a program day */}
+      {todayWorkoutDay && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+        >
+          <Link
+            href="/workouts/new"
+            className="flex items-center justify-between gap-3 rounded-2xl bg-surface border border-white/[0.07] border-l-2 border-l-brand-red p-4 active:scale-[0.99] transition-transform"
+          >
+            <div className="min-w-0">
+              <p className="text-xs uppercase tracking-wide text-zinc-500">Today&apos;s session</p>
+              <p className="text-xl font-display uppercase text-white truncate">{todayWorkoutDay}</p>
+            </div>
+            <span className="btn btn-sm flex-shrink-0">
+              <Play className="w-4 h-4" />
+              Start
+            </span>
+          </Link>
+        </motion.div>
+      )}
 
       {/* Motivational Quote — compact */}
       {todayQuote && (

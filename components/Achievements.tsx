@@ -73,7 +73,7 @@ export default function Achievements({
       <div className="flex items-end justify-between mb-5">
         <h3 className="text-2xl font-display uppercase text-white">Achievements</h3>
         <span className="text-sm text-zinc-500">
-          {earnedCount} / {all.length} earned
+          <span className="font-display text-brand-red text-base">{earnedCount}</span> / {all.length} earned
         </span>
       </div>
 
