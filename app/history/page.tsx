@@ -38,6 +38,7 @@ import { DEMO, getActiveUserId } from '@/lib/activeUser'
 import { useSearchParams, useRouter } from 'next/navigation'
 import WorkoutDetail from '@/components/WorkoutDetail'
 import BJJDetail from '@/components/BJJDetail'
+import Achievements from '@/components/Achievements'
 import CardioDetail from '@/components/CardioDetail'
 import AIInsights from '@/components/AIInsights'
 import BackgroundLogo from '@/components/BackgroundLogo'
@@ -1326,6 +1327,11 @@ function HistoryClient() {
                 <p className="text-xs text-zinc-500">Total</p>
               </AnimatedCard>
             </div>
+
+            <Achievements
+              totalWorkouts={workoutStats.total}
+              streakWeeks={streakData?.strength.current ?? 0}
+            />
           </>
         ) : (
           /* Workout History View */

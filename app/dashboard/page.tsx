@@ -388,7 +388,7 @@ export default function Dashboard() {
   ].filter(Boolean)
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-6 relative z-10">
+    <div className="max-w-4xl mx-auto p-4 space-y-8 relative z-10">
       <BackgroundLogo />
 
       {onboardingUserId && (
@@ -532,9 +532,9 @@ export default function Dashboard() {
 
         return (
           <AnimatedCard delay={0.2}>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-1 h-4 bg-brand-red rounded-full" />
-              <h3 className="font-semibold text-white text-sm">Recent Activity</h3>
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-1 h-6 bg-brand-red rounded-full" />
+              <h3 className="font-bold tracking-tight text-white text-xl">Recent Activity</h3>
             </div>
             <div className="space-y-2">
               {recent.map((item, i) => {
