@@ -293,8 +293,8 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="border-b border-red-500/10">
         <div className="px-4 py-4">
-          <h1 className="text-4xl font-display uppercase text-white">Settings</h1>
-          <p className="text-sm text-zinc-500 mt-0.5">Customize your experience</p>
+          <h1 className="text-4xl font-display uppercase text-white">Profile</h1>
+          <p className="text-sm text-zinc-500 mt-0.5">Your stats &amp; settings</p>
         </div>
       </div>
 
@@ -323,35 +323,35 @@ export default function SettingsPage() {
         {userStats && (
           <AnimatedCard delay={0.05}>
             <div className="flex items-center gap-2 mb-4">
-              <Trophy className="w-5 h-5 text-amber-400" />
+              <Trophy className="w-5 h-5 text-zinc-400" />
               <h3 className="font-display uppercase text-lg text-white">Your Stats (30 days)</h3>
             </div>
             <div className="grid grid-cols-4 gap-3">
               <div className="text-center">
                 <div className="relative inline-flex items-center justify-center">
                   <ProgressRing progress={(userStats.totalWorkouts / 20) * 100} color="#ef4444" />
-                  <span className="absolute text-sm font-bold text-white">{userStats.totalWorkouts}</span>
+                  <span className="absolute font-display text-base text-white">{userStats.totalWorkouts}</span>
                 </div>
                 <p className="text-xs text-zinc-500 mt-1">Workouts</p>
               </div>
               <div className="text-center">
                 <div className="relative inline-flex items-center justify-center">
                   <ProgressRing progress={(userStats.totalBjjSessions / 10) * 100} color="#a855f7" />
-                  <span className="absolute text-sm font-bold text-white">{userStats.totalBjjSessions}</span>
+                  <span className="absolute font-display text-base text-white">{userStats.totalBjjSessions}</span>
                 </div>
                 <p className="text-xs text-zinc-500 mt-1">BJJ</p>
               </div>
               <div className="text-center">
                 <div className="relative inline-flex items-center justify-center">
                   <ProgressRing progress={(userStats.currentStreak / 7) * 100} color="#10b981" />
-                  <span className="absolute text-sm font-bold text-white">{userStats.currentStreak}</span>
+                  <span className="absolute font-display text-base text-white">{userStats.currentStreak}</span>
                 </div>
                 <p className="text-xs text-zinc-500 mt-1">Streak</p>
               </div>
               <div className="text-center">
                 <div className="relative inline-flex items-center justify-center">
                   <ProgressRing progress={(userStats.avgWeeklyWorkouts / 7) * 100} color="#3b82f6" />
-                  <span className="absolute text-sm font-bold text-white">{userStats.avgWeeklyWorkouts}</span>
+                  <span className="absolute font-display text-base text-white">{userStats.avgWeeklyWorkouts}</span>
                 </div>
                 <p className="text-xs text-zinc-500 mt-1">Avg/Week</p>
               </div>
@@ -362,7 +362,7 @@ export default function SettingsPage() {
         {/* Units */}
         <AnimatedCard delay={0.1}>
           <div className="flex items-center gap-2 mb-4">
-            <Scale className="w-5 h-5 text-red-400" />
+            <Scale className="w-5 h-5 text-zinc-400" />
             <h3 className="font-display uppercase text-lg text-white">Weight Unit</h3>
           </div>
           <div className="grid grid-cols-2 gap-3">
