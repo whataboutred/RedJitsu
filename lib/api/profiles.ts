@@ -30,10 +30,7 @@ export async function ensureProfile(userId: string): Promise<Profile | null> {
         unit: 'lb',
         weekly_goal: 4,
         bjj_weekly_goal: 2,
-        cardio_weekly_goal: 3,
-        show_strength_goal: true,
-        show_bjj_goal: true,
-        show_cardio_goal: false,
+        cardio_weekly_goal: 0, // 0 = off (cardio tracking off by default)
       },
       { onConflict: 'id', ignoreDuplicates: false }
     )

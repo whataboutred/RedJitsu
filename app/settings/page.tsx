@@ -96,9 +96,6 @@ export default function SettingsPage() {
   const [cardioWeeklyGoal, setCardioWeeklyGoal] = useState<number>(3)
 
   // Goal visibility
-  const [showStrengthGoal, setShowStrengthGoal] = useState<boolean>(true)
-  const [showBjjGoal, setShowBjjGoal] = useState<boolean>(true)
-  const [showCardioGoal, setShowCardioGoal] = useState<boolean>(false)
   const [coachContext, setCoachContext] = useState<string>('')
 
   // User stats
@@ -136,9 +133,6 @@ export default function SettingsPage() {
         setGoalStart(p.goal_start ?? '')
         setBjjWeeklyGoal(p.bjj_weekly_goal ?? 2)
         setCardioWeeklyGoal(p.cardio_weekly_goal ?? 3)
-        setShowStrengthGoal(p.show_strength_goal ?? true)
-        setShowBjjGoal(p.show_bjj_goal ?? true)
-        setShowCardioGoal(p.show_cardio_goal ?? false)
         setCoachContext(p.coach_context ?? '')
       }
     } catch (err) {
@@ -217,14 +211,11 @@ export default function SettingsPage() {
     try {
       await upsertProfile(userId, {
         unit,
-        weekly_goal: Math.min(14, Math.max(1, weeklyGoal || 4)),
+        weekly_goal: Math.min(14, Math.max(0, weeklyGoal)),
         target_weeks: targetWeeks === '' ? null : targetWeeks,
         goal_start: goalStart || null,
-        bjj_weekly_goal: Math.min(14, Math.max(1, bjjWeeklyGoal || 2)),
-        cardio_weekly_goal: Math.min(14, Math.max(1, cardioWeeklyGoal || 3)),
-        show_strength_goal: showStrengthGoal,
-        show_bjj_goal: showBjjGoal,
-        show_cardio_goal: showCardioGoal,
+        bjj_weekly_goal: Math.min(14, Math.max(0, bjjWeeklyGoal)),
+        cardio_weekly_goal: Math.min(14, Math.max(0, cardioWeeklyGoal)),
         coach_context: coachContext.trim() || null
       })
 
@@ -418,12 +409,12 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-zinc-500">Sessions per week</p>
-                <span className="text-lg font-bold text-red-400">{weeklyGoal}</span>
+                <p className="text-sm text-zinc-500">Sessions per week <span className="text-zinc-600">· 0 = off</span></p>
+                <span className="text-lg font-bold text-red-400">{weeklyGoal === 0 ? 'Off' : weeklyGoal}</span>
               </div>
               <input
                 type="range"
-                min={1}
+                min={0}
                 max={14}
                 value={weeklyGoal}
                 onChange={(e) => setWeeklyGoal(Number(e.target.value))}
@@ -442,12 +433,12 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-zinc-500">Sessions per week</p>
-                <span className="text-lg font-bold text-purple-400">{bjjWeeklyGoal}</span>
+                <p className="text-sm text-zinc-500">Sessions per week <span className="text-zinc-600">· 0 = off</span></p>
+                <span className="text-lg font-bold text-purple-400">{bjjWeeklyGoal === 0 ? 'Off' : bjjWeeklyGoal}</span>
               </div>
               <input
                 type="range"
-                min={1}
+                min={0}
                 max={14}
                 value={bjjWeeklyGoal}
                 onChange={(e) => setBjjWeeklyGoal(Number(e.target.value))}
@@ -466,12 +457,12 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-zinc-500">Sessions per week</p>
-                <span className="text-lg font-bold text-emerald-400">{cardioWeeklyGoal}</span>
+                <p className="text-sm text-zinc-500">Sessions per week <span className="text-zinc-600">· 0 = off</span></p>
+                <span className="text-lg font-bold text-emerald-400">{cardioWeeklyGoal === 0 ? 'Off' : cardioWeeklyGoal}</span>
               </div>
               <input
                 type="range"
-                min={1}
+                min={0}
                 max={14}
                 value={cardioWeeklyGoal}
                 onChange={(e) => setCardioWeeklyGoal(Number(e.target.value))}
@@ -499,53 +490,6 @@ export default function SettingsPage() {
             className="w-full h-28 bg-surface border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 outline-none resize-none transition-all duration-200 focus:border-brand-red focus:ring-2 focus:ring-brand-red/25"
           />
           <p className="mt-1.5 text-xs text-zinc-600 text-right">{coachContext.length}/1000</p>
-        </AnimatedCard>
-
-        {/* Dashboard Visibility */}
-        <AnimatedCard delay={0.3}>
-          <div className="flex items-center gap-2 mb-4">
-            <Eye className="w-5 h-5 text-blue-400" />
-            <h3 className="font-display uppercase text-lg text-white">Dashboard Goals</h3>
-          </div>
-          <p className="text-sm text-zinc-500 mb-4">Choose which goals to show on your dashboard</p>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-surface/50 rounded-xl">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center">
-                  <Dumbbell className="w-5 h-5 text-red-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-white">Strength</p>
-                  <p className="text-xs text-zinc-500">Weekly workout tracking</p>
-                </div>
-              </div>
-              <Toggle enabled={showStrengthGoal} onChange={setShowStrengthGoal} color="bg-red-500" />
-            </div>
-            <div className="flex items-center justify-between p-3 bg-surface/50 rounded-xl">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                  <Target className="w-5 h-5 text-purple-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-white">Jiu Jitsu</p>
-                  <p className="text-xs text-zinc-500">Weekly BJJ sessions</p>
-                </div>
-              </div>
-              <Toggle enabled={showBjjGoal} onChange={setShowBjjGoal} color="bg-purple-500" />
-            </div>
-            <div className="flex items-center justify-between p-3 bg-surface/50 rounded-xl">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-emerald-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-white">Cardio</p>
-                  <p className="text-xs text-zinc-500">Weekly cardio sessions</p>
-                </div>
-              </div>
-              <Toggle enabled={showCardioGoal} onChange={setShowCardioGoal} color="bg-emerald-500" />
-            </div>
-          </div>
         </AnimatedCard>
 
         {/* Account Section */}

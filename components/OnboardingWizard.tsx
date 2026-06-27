@@ -35,9 +35,6 @@ export default function OnboardingWizard({
         weekly_goal: weeklyGoal,
         bjj_weekly_goal: bjjGoal,
         cardio_weekly_goal: cardioGoal,
-        show_strength_goal: weeklyGoal > 0,
-        show_bjj_goal: bjjGoal > 0,
-        show_cardio_goal: cardioGoal > 0,
       })
       hapticSuccess()
       onComplete()
