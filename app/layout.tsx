@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Anton } from 'next/font/google'
 import './globals.css'
 import { ToastProvider } from '@/components/Toast'
 import Navigation from '@/components/Navigation'
@@ -10,6 +10,15 @@ const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
+})
+
+// Heavy condensed display font for the wordmark, titles, and big numbers.
+// Single weight (400) — its heaviness is inherent, so font-bold is a no-op.
+const anton = Anton({
+  subsets: ['latin'],
+  weight: '400',
+  display: 'swap',
+  variable: '--font-display',
 })
 
 export const metadata: Metadata = {
@@ -111,7 +120,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`dark ${inter.variable}`}>
+    <html lang="en" className={`dark ${inter.variable} ${anton.variable}`}>
       <body className="bg-brand-dark text-white antialiased font-sans">
         <AuthProvider>
           <MotionProvider>

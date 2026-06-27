@@ -105,7 +105,7 @@ function GoalCard({
               )}
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-bold tracking-tight">{current}</span>
+              <span className="text-4xl font-display">{current}</span>
               <span className="text-zinc-500 text-sm">/ {goal}</span>
               <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-md ${
                 isOnTrack ? 'text-emerald-400 bg-emerald-500/10' : 'text-amber-400 bg-amber-500/10'
@@ -407,7 +407,7 @@ export default function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-1 pt-1"
       >
-        <h1 className="text-3xl font-bold tracking-tight text-white">
+        <h1 className="text-4xl font-display uppercase text-white">
           {greeting}
         </h1>
         <p className="text-zinc-500 text-sm">
@@ -424,15 +424,15 @@ export default function Dashboard() {
         className="grid grid-cols-2 gap-4 pt-1"
       >
         <Link href="/workouts/new" className="block active:scale-[0.98] transition-transform">
-          <p className="text-5xl font-bold tracking-tight text-white leading-none">
+          <p className="text-6xl font-display text-white leading-none">
             {thisWeekCount}
-            <span className="text-2xl text-zinc-600 font-bold"> / {weeklyGoal}</span>
+            <span className="text-3xl text-zinc-600"> / {weeklyGoal}</span>
           </p>
-          <p className="text-sm text-zinc-500 mt-2">Workouts this week</p>
+          <p className="text-sm text-zinc-500 mt-2 uppercase tracking-wide">Workouts this week</p>
         </Link>
         <Link href="/history" className="block active:scale-[0.98] transition-transform">
-          <p className="text-5xl font-bold tracking-tight text-white leading-none">{workouts.length}</p>
-          <p className="text-sm text-zinc-500 mt-2">Total workouts</p>
+          <p className="text-6xl font-display text-white leading-none">{workouts.length}</p>
+          <p className="text-sm text-zinc-500 mt-2 uppercase tracking-wide">Total workouts</p>
         </Link>
       </motion.div>
 

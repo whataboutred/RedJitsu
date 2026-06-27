@@ -656,7 +656,7 @@ export default function ProgramsPage() {
             className="flex items-start justify-between gap-3"
           >
             <div className="min-w-0">
-              <h1 className="text-3xl font-bold tracking-tight text-white">Workout Programs</h1>
+              <h1 className="text-4xl font-display uppercase text-white">Workout Programs</h1>
               <p className="text-sm text-zinc-500 mt-1">Build and manage your training plans</p>
             </div>
             <button className="btn shrink-0" onClick={startManualMode}>
@@ -687,7 +687,7 @@ export default function ProgramsPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <LayoutGrid className="w-5 h-5 text-zinc-500" />
-                    <span className="font-semibold text-white whitespace-nowrap">Your Programs</span>
+                    <span className="text-lg font-display uppercase text-white whitespace-nowrap">Your Programs</span>
                     <span className="text-xs bg-surface-elevated text-zinc-500 px-2 py-0.5 rounded-full">
                       {programs.length}
                     </span>
@@ -845,7 +845,7 @@ export default function ProgramsPage() {
                 <Zap className="w-5 h-5 text-amber-400" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">Quick Start Templates</h1>
+                <h1 className="text-4xl font-display uppercase text-white">Quick Start Templates</h1>
                 <p className="text-sm text-zinc-500">Choose a proven program to get started</p>
               </div>
             </div>

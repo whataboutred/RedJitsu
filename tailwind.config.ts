@@ -17,6 +17,7 @@ export default {
           "Segoe UI",
           "sans-serif",
         ],
+        display: ["var(--font-display)", "Impact", "sans-serif"],
       },
       colors: {
         // Brand colors

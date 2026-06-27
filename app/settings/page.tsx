@@ -313,7 +313,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="border-b border-red-500/10">
         <div className="px-4 py-4">
-          <h1 className="text-3xl font-bold tracking-tight text-white">Settings</h1>
+          <h1 className="text-4xl font-display uppercase text-white">Settings</h1>
           <p className="text-sm text-zinc-500 mt-0.5">Customize your experience</p>
         </div>
       </div>
