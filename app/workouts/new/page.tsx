@@ -505,26 +505,26 @@ function ExerciseCard({
             <div className="p-4 space-y-3">
               {/* Last Workout Reference */}
               {exercise.lastWorkout && exercise.lastWorkout.sets.length > 0 ? (
-                <div className="rounded-xl p-3 bg-blue-500/[0.07] border border-blue-500/15">
-                  <div className="flex items-center justify-between gap-2 text-xs font-medium mb-2 text-blue-400">
+                <div className="rounded-xl p-3 bg-surface-elevated/40 border border-white/5">
+                  <div className="flex items-center justify-between gap-2 text-xs font-medium mb-2 text-zinc-400">
                     <span className="flex items-center gap-2">
                       <TrendingUp className="w-3.5 h-3.5" />
                       Previous Workout
                     </span>
-                    <span className="text-[10px] text-blue-400/60 font-normal">tap to fill</span>
+                    <span className="text-[10px] text-zinc-600 font-normal">tap to fill</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {exercise.lastWorkout.sets.slice(0, 5).map((s, i) => (
                       <button
                         key={i}
                         onClick={() => fillFromHistory(s.weight, s.reps)}
-                        className="px-2.5 py-1 bg-blue-500/15 hover:bg-blue-500/25 active:scale-95 rounded-lg text-xs text-blue-300 font-medium transition-all"
+                        className="px-2.5 py-1 bg-surface-elevated hover:bg-surface-pressed active:scale-95 rounded-lg text-xs text-zinc-200 font-medium transition-all"
                       >
                         {s.weight}{unit} x {s.reps}
                       </button>
                     ))}
                     {exercise.lastWorkout.sets.length > 5 && (
-                      <span className="px-2 py-1 text-xs text-blue-400">
+                      <span className="px-2 py-1 text-xs text-zinc-500">
                         +{exercise.lastWorkout.sets.length - 5} more
                       </span>
                     )}
@@ -1490,45 +1490,52 @@ export default function NewWorkoutPage() {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Workout name (optional)"
-            className="w-full bg-transparent text-xl font-semibold placeholder-zinc-600 focus:outline-none"
+            placeholder="Name this session"
+            className="w-full bg-transparent text-2xl font-semibold text-white placeholder-zinc-700 focus:outline-none"
           />
 
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-2 text-sm text-zinc-400">
-              <Calendar className="w-4 h-4" />
+          {/* Meta rows */}
+          <div className="rounded-xl bg-surface-elevated/40 border border-white/5 divide-y divide-white/5">
+            <label className="flex items-center gap-3 px-4 py-3">
+              <Calendar className="w-4 h-4 text-brand-red/80 shrink-0" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 w-14">Date</span>
               <input
                 type="datetime-local"
                 value={performedAt}
                 onChange={(e) => setPerformedAt(e.target.value)}
-                className="bg-transparent focus:outline-none"
+                className="flex-1 min-w-0 bg-transparent text-sm text-white focus:outline-none text-right"
               />
-            </div>
-            <div className="flex items-center gap-2 text-sm text-zinc-400">
-              <MapPin className="w-4 h-4" />
+            </label>
+            <label className="flex items-center gap-3 px-4 py-3">
+              <MapPin className="w-4 h-4 text-brand-red/80 shrink-0" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 w-14">Where</span>
               <input
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="Location"
+                placeholder="Add gym"
                 list="locations"
-                className="bg-transparent focus:outline-none w-32"
+                className="flex-1 min-w-0 bg-transparent text-sm text-white placeholder-zinc-600 focus:outline-none text-right"
               />
               <datalist id="locations">
                 {savedLocations.map((loc) => (
                   <option key={loc} value={loc} />
                 ))}
               </datalist>
-            </div>
+            </label>
           </div>
 
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Add notes..."
-            className="w-full bg-transparent text-sm text-zinc-400 placeholder-zinc-600 focus:outline-none resize-none"
-            rows={2}
-          />
+          {/* Notes */}
+          <div className="flex items-start gap-3 px-1">
+            <FileText className="w-4 h-4 text-zinc-500 mt-0.5 shrink-0" />
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add notes..."
+              className="w-full bg-transparent text-sm text-zinc-300 placeholder-zinc-600 focus:outline-none resize-none"
+              rows={2}
+            />
+          </div>
         </AnimatedCard>
 
         {/* Exercises */}

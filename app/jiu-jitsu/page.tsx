@@ -58,10 +58,10 @@ const SESSION_TYPES = [
     description: 'Structured instruction',
     suggestedDuration: 60,
     suggestedIntensity: 'medium' as Intensity,
-    gradient: 'from-purple-500/20 to-pink-500/20',
+    gradient: 'from-purple-500/20 to-purple-700/10',
     iconBg: 'bg-purple-500/20',
-    iconColor: 'text-purple-400',
-    activeGradient: 'from-purple-500/40 to-pink-500/40',
+    iconColor: 'text-purple-300',
+    activeGradient: 'from-purple-500/40 to-purple-700/20',
     borderColor: 'border-purple-500/50'
   },
   {
@@ -71,11 +71,11 @@ const SESSION_TYPES = [
     description: 'Focused technique',
     suggestedDuration: 45,
     suggestedIntensity: 'high' as Intensity,
-    gradient: 'from-orange-500/20 to-red-500/20',
-    iconBg: 'bg-orange-500/20',
-    iconColor: 'text-orange-400',
-    activeGradient: 'from-orange-500/40 to-red-500/40',
-    borderColor: 'border-orange-500/50'
+    gradient: 'from-purple-500/20 to-purple-700/10',
+    iconBg: 'bg-purple-500/20',
+    iconColor: 'text-purple-300',
+    activeGradient: 'from-purple-500/40 to-purple-700/20',
+    borderColor: 'border-purple-500/50'
   },
   {
     value: 'Open Mat' as Kind,
@@ -84,11 +84,11 @@ const SESSION_TYPES = [
     description: 'Free rolling',
     suggestedDuration: 90,
     suggestedIntensity: 'medium' as Intensity,
-    gradient: 'from-cyan-500/20 to-blue-500/20',
-    iconBg: 'bg-cyan-500/20',
-    iconColor: 'text-cyan-400',
-    activeGradient: 'from-cyan-500/40 to-blue-500/40',
-    borderColor: 'border-cyan-500/50'
+    gradient: 'from-purple-500/20 to-purple-700/10',
+    iconBg: 'bg-purple-500/20',
+    iconColor: 'text-purple-300',
+    activeGradient: 'from-purple-500/40 to-purple-700/20',
+    borderColor: 'border-purple-500/50'
   }
 ]
 
@@ -97,28 +97,28 @@ const INTENSITY_OPTIONS = [
     value: 'low' as Intensity,
     label: 'Low',
     description: 'Easy flow, technique focus',
-    color: 'bg-emerald-500/20',
-    activeColor: 'bg-emerald-500',
+    color: 'bg-emerald-500/10',
+    activeColor: 'bg-emerald-500/20',
     textColor: 'text-emerald-400',
-    borderColor: 'border-emerald-500/50'
+    borderColor: 'border-emerald-500/60'
   },
   {
     value: 'medium' as Intensity,
     label: 'Medium',
     description: 'Good pace, some intensity',
-    color: 'bg-amber-500/20',
-    activeColor: 'bg-amber-500',
+    color: 'bg-amber-500/10',
+    activeColor: 'bg-amber-500/20',
     textColor: 'text-amber-400',
-    borderColor: 'border-amber-500/50'
+    borderColor: 'border-amber-500/60'
   },
   {
     value: 'high' as Intensity,
     label: 'High',
     description: 'Hard rolls, competition prep',
-    color: 'bg-red-500/20',
-    activeColor: 'bg-red-500',
+    color: 'bg-red-500/10',
+    activeColor: 'bg-red-500/20',
     textColor: 'text-red-400',
-    borderColor: 'border-red-500/50'
+    borderColor: 'border-red-500/60'
   }
 ]
 
@@ -442,7 +442,7 @@ export default function BJJPage() {
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-display uppercase bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-display uppercase bg-gradient-to-r from-purple-300 to-purple-500 bg-clip-text text-transparent">
                 Jiu Jitsu Training
               </h1>
               <p className="text-sm text-zinc-500 mt-0.5">Log your mat time</p>
@@ -522,7 +522,7 @@ export default function BJJPage() {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
             >
-              <AnimatedCard className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-500/30">
+              <AnimatedCard className="bg-gradient-to-br from-purple-500/15 to-purple-700/5 border-purple-500/30">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
@@ -772,8 +772,8 @@ export default function BJJPage() {
                     key={option.value}
                     className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
                       intensity === option.value
-                        ? `${option.activeColor} border-transparent text-white`
-                        : `${option.color} border-transparent hover:border-white/20`
+                        ? `${option.activeColor} ${option.borderColor} text-white`
+                        : `${option.color} border-transparent hover:border-white/10`
                     }`}
                     onClick={() => setIntensity(option.value)}
                   >
@@ -877,7 +877,7 @@ export default function BJJPage() {
                 size="lg"
                 loading={isLoading}
                 onClick={saveSession}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg shadow-purple-500/30"
+                className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 shadow-lg shadow-purple-500/30"
               >
                 Save {kind} ({duration} min{demo ? ' • Offline' : ''})
               </Button>
@@ -923,7 +923,7 @@ export default function BJJPage() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', damping: 15 }}
-            className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4"
+            className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center mx-auto mb-4"
           >
             <Check className="w-10 h-10 text-white" />
           </motion.div>

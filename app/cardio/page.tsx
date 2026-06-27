@@ -61,30 +61,30 @@ const ACTIVITY_CATEGORIES = {
   'Machine Cardio': {
     icon: <Dumbbell className="w-5 h-5" />,
     activities: ['Treadmill', 'Elliptical', 'Stationary Bike', 'Rowing Machine', 'StairMaster', 'Arc Trainer'],
-    gradient: 'from-orange-500/20 to-red-500/20',
-    iconBg: 'bg-orange-500/20',
-    iconColor: 'text-orange-400'
+    gradient: 'from-emerald-500/20 to-emerald-700/10',
+    iconBg: 'bg-emerald-500/20',
+    iconColor: 'text-emerald-300'
   },
   'Outdoor': {
     icon: <Mountain className="w-5 h-5" />,
     activities: ['Running', 'Walking', 'Cycling', 'Swimming', 'Hiking', 'Rock Climbing'],
-    gradient: 'from-emerald-500/20 to-cyan-500/20',
+    gradient: 'from-emerald-500/20 to-emerald-700/10',
     iconBg: 'bg-emerald-500/20',
-    iconColor: 'text-emerald-400'
+    iconColor: 'text-emerald-300'
   },
   'Sports': {
     icon: <Activity className="w-5 h-5" />,
     activities: ['Basketball', 'Soccer', 'Tennis', 'Volleyball', 'Pickup Sports', 'Martial Arts'],
-    gradient: 'from-blue-500/20 to-purple-500/20',
-    iconBg: 'bg-blue-500/20',
-    iconColor: 'text-blue-400'
+    gradient: 'from-emerald-500/20 to-emerald-700/10',
+    iconBg: 'bg-emerald-500/20',
+    iconColor: 'text-emerald-300'
   },
   'Classes': {
     icon: <Users className="w-5 h-5" />,
     activities: ['Spin Class', 'Yoga', 'Pilates', 'Dance Class', 'Aerobics', 'CrossFit'],
-    gradient: 'from-pink-500/20 to-rose-500/20',
-    iconBg: 'bg-pink-500/20',
-    iconColor: 'text-pink-400'
+    gradient: 'from-emerald-500/20 to-emerald-700/10',
+    iconBg: 'bg-emerald-500/20',
+    iconColor: 'text-emerald-300'
   }
 }
 
@@ -93,25 +93,28 @@ const INTENSITY_OPTIONS = [
     value: 'low' as const,
     label: 'Low',
     description: 'Easy pace, conversational',
-    color: 'bg-emerald-500/20',
-    activeColor: 'bg-emerald-500',
-    textColor: 'text-emerald-400'
+    color: 'bg-emerald-500/10',
+    activeColor: 'bg-emerald-500/20',
+    textColor: 'text-emerald-400',
+    borderColor: 'border-emerald-500/60'
   },
   {
     value: 'medium' as const,
     label: 'Medium',
     description: 'Steady effort, breathing harder',
-    color: 'bg-amber-500/20',
-    activeColor: 'bg-amber-500',
-    textColor: 'text-amber-400'
+    color: 'bg-amber-500/10',
+    activeColor: 'bg-amber-500/20',
+    textColor: 'text-amber-400',
+    borderColor: 'border-amber-500/60'
   },
   {
     value: 'high' as const,
     label: 'High',
     description: 'All out effort, HIIT',
-    color: 'bg-red-500/20',
-    activeColor: 'bg-red-500',
-    textColor: 'text-red-400'
+    color: 'bg-red-500/10',
+    activeColor: 'bg-red-500/20',
+    textColor: 'text-red-400',
+    borderColor: 'border-red-500/60'
   }
 ]
 
@@ -151,8 +154,8 @@ function TimerRing({ progress, size = 200, strokeWidth = 8 }: {
       />
       <defs>
         <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#10b981" />
-          <stop offset="100%" stopColor="#06b6d4" />
+          <stop offset="0%" stopColor="#34d399" />
+          <stop offset="100%" stopColor="#059669" />
         </linearGradient>
       </defs>
     </svg>
@@ -409,7 +412,7 @@ export default function CardioPage() {
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-display uppercase bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-display uppercase bg-gradient-to-r from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
                 Cardio Session
               </h1>
               <p className="text-sm text-zinc-500 mt-0.5">Track your cardio workout</p>
@@ -444,11 +447,11 @@ export default function CardioPage() {
                   <p className="text-xs text-zinc-500">mins</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-cyan-400">{weekStats.totalDistance.toFixed(1)}</p>
+                  <p className="text-lg font-bold text-white">{weekStats.totalDistance.toFixed(1)}</p>
                   <p className="text-xs text-zinc-500">mi</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-orange-400">{weekStats.totalCalories}</p>
+                  <p className="text-lg font-bold text-white">{weekStats.totalCalories}</p>
                   <p className="text-xs text-zinc-500">cal</p>
                 </div>
               </div>
@@ -502,7 +505,7 @@ export default function CardioPage() {
               </button>
             </div>
           ) : (
-            <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30">
+            <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-500/20 to-emerald-700/10 border border-emerald-500/40">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
@@ -532,7 +535,7 @@ export default function CardioPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <AnimatedCard delay={0.1} className="bg-gradient-to-br from-emerald-500/10 to-cyan-500/10">
+              <AnimatedCard delay={0.1} className="bg-gradient-to-br from-emerald-500/10 to-emerald-700/5">
                 <div className="flex items-center gap-2 mb-4">
                   <Clock className="w-5 h-5 text-emerald-400" />
                   <h3 className="font-display uppercase text-lg text-white">Session Timer</h3>
@@ -725,8 +728,8 @@ export default function CardioPage() {
                       onClick={() => setSession(prev => ({ ...prev, intensity: option.value }))}
                       className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
                         session.intensity === option.value
-                          ? `${option.activeColor} border-transparent text-white`
-                          : `${option.color} border-transparent hover:border-white/20`
+                          ? `${option.activeColor} ${option.borderColor} text-white`
+                          : `${option.color} border-transparent hover:border-white/10`
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -800,7 +803,7 @@ export default function CardioPage() {
                 size="lg"
                 loading={saving}
                 onClick={handleSave}
-                className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 shadow-lg shadow-emerald-500/30"
+                className="bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-600 hover:to-emerald-800 shadow-lg shadow-emerald-500/30"
               >
                 Save {session.activity}
                 {session.duration_minutes ? ` (${session.duration_minutes} min)` : ''}
@@ -901,7 +904,7 @@ export default function CardioPage() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', damping: 15 }}
-            className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center mx-auto mb-4"
+            className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center mx-auto mb-4"
           >
             <Check className="w-10 h-10 text-white" />
           </motion.div>
