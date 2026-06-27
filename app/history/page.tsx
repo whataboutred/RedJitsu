@@ -985,101 +985,59 @@ function HistoryClient() {
                 <div className="grid md:grid-cols-2 gap-4">
                   {/* Top 3 Growth */}
                   <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                        <ArrowUp className="w-3.5 h-3.5 text-emerald-400" />
-                      </div>
-                      <h4 className="text-sm font-medium text-emerald-400">Top Growth</h4>
-                    </div>
+                    <h4 className="text-xs font-display uppercase tracking-wider text-emerald-400 mb-1">Top Growth</h4>
                     {topGrowth.length > 0 ? (
-                      <div className="space-y-2">
+                      <div>
                         {topGrowth.map((exercise, idx) => (
                           <motion.div
                             key={exercise.exerciseId}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: idx * 0.1 }}
-                            className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl"
+                            transition={{ delay: idx * 0.08 }}
+                            className="flex items-center justify-between gap-3 py-2.5 border-b border-white/[0.04] last:border-0"
                           >
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="font-medium text-white text-sm truncate flex-1">{exercise.exerciseName}</span>
-                              <span className="text-emerald-400 font-bold text-sm ml-2">
-                                +{exercise.percentChange}%
-                              </span>
+                            <div className="min-w-0">
+                              <p className="font-medium text-white text-sm truncate">{exercise.exerciseName}</p>
+                              <p className="text-xs text-zinc-500">{exercise.firstWeight} → {exercise.latestWeight} lb · {exercise.sessionCount} sessions</p>
                             </div>
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2 text-xs text-zinc-500">
-                                <span>{exercise.firstWeight} → {exercise.latestWeight} lb</span>
-                                <span className="text-zinc-600">•</span>
-                                <span>{exercise.sessionCount} sessions</span>
-                              </div>
+                            <div className="flex items-center gap-3 flex-shrink-0">
                               <Sparkline data={exercise.series} stroke="#34D399" />
+                              <span className="font-display text-lg text-emerald-400 w-14 text-right">+{exercise.percentChange}%</span>
                             </div>
                           </motion.div>
                         ))}
                       </div>
                     ) : (
-                      <div className="p-4 bg-surface/50 rounded-xl text-center">
-                        <p className="text-zinc-500 text-sm">No improving exercises yet</p>
-                      </div>
+                      <p className="text-zinc-500 text-sm py-2">No improving exercises yet.</p>
                     )}
                   </div>
 
                   {/* Top 3 Need Work */}
                   <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                      </div>
-                      <h4 className="text-sm font-medium text-amber-400">Need Work</h4>
-                    </div>
+                    <h4 className="text-xs font-display uppercase tracking-wider text-amber-400 mb-1">Need Work</h4>
                     {needWork.length > 0 ? (
-                      <div className="space-y-2">
+                      <div>
                         {needWork.map((exercise, idx) => (
                           <motion.div
                             key={exercise.exerciseId}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: idx * 0.1 }}
-                            className={`p-3 rounded-xl ${
-                              exercise.trend === 'down'
-                                ? 'bg-red-500/10 border border-red-500/20'
-                                : 'bg-amber-500/10 border border-amber-500/20'
-                            }`}
+                            transition={{ delay: idx * 0.08 }}
+                            className="flex items-center justify-between gap-3 py-2.5 border-b border-white/[0.04] last:border-0"
                           >
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="font-medium text-white text-sm truncate flex-1">{exercise.exerciseName}</span>
-                              <div className="flex items-center gap-1 ml-2">
-                                {exercise.trend === 'down' ? (
-                                  <ArrowDown className="w-3 h-3 text-red-400" />
-                                ) : (
-                                  <Minus className="w-3 h-3 text-amber-400" />
-                                )}
-                                <span className={`font-bold text-sm ${
-                                  exercise.trend === 'down' ? 'text-red-400' : 'text-amber-400'
-                                }`}>
-                                  {exercise.percentChange > 0 ? '+' : ''}{exercise.percentChange}%
-                                </span>
-                              </div>
+                            <div className="min-w-0">
+                              <p className="font-medium text-white text-sm truncate">{exercise.exerciseName}</p>
+                              <p className="text-xs text-zinc-500">{exercise.firstWeight} → {exercise.latestWeight} lb · {exercise.trend === 'stagnant' ? 'Stagnant' : 'Regressed'}</p>
                             </div>
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2 text-xs text-zinc-500">
-                                <span>{exercise.firstWeight} → {exercise.latestWeight} lb</span>
-                                <span className="text-zinc-600">•</span>
-                                <span>{exercise.trend === 'stagnant' ? 'Stagnant' : 'Regressed'}</span>
-                              </div>
-                              <Sparkline
-                                data={exercise.series}
-                                stroke={exercise.trend === 'down' ? '#F87171' : '#FBBF24'}
-                              />
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                              <Sparkline data={exercise.series} stroke={exercise.trend === 'down' ? '#F87171' : '#FBBF24'} />
+                              <span className={`font-display text-lg w-14 text-right ${exercise.trend === 'down' ? 'text-red-400' : 'text-amber-400'}`}>{exercise.percentChange > 0 ? '+' : ''}{exercise.percentChange}%</span>
                             </div>
                           </motion.div>
                         ))}
                       </div>
                     ) : (
-                      <div className="p-4 bg-surface/50 rounded-xl text-center">
-                        <p className="text-zinc-500 text-sm">All exercises progressing well!</p>
-                      </div>
+                      <p className="text-zinc-500 text-sm py-2">All exercises progressing well!</p>
                     )}
                   </div>
                 </div>

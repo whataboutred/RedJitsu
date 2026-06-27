@@ -191,7 +191,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Cards — kept near-transparent so content reads as "on the page" (like Home)
    instead of inside a grey box. */
 .card {
-  @apply bg-white/[0.02];
+  @apply bg-transparent;
   @apply rounded-2xl p-4;
   @apply transition-all duration-200;
 }
