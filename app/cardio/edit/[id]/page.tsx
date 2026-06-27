@@ -186,7 +186,7 @@ export default function EditCardioPage() {
 
         {/* Activity */}
         <div className="card">
-          <div className="font-medium mb-4">🏃‍♀️ Activity</div>
+          <div className="font-display uppercase text-lg text-white mb-4">Activity</div>
           <div className="bg-brand-red/10 border border-brand-red/20 rounded-xl p-4">
             <Input
               type="text"
@@ -199,7 +199,7 @@ export default function EditCardioPage() {
 
         {/* Session Details */}
         <div className="card">
-          <div className="font-medium mb-4">📊 Session Details</div>
+          <div className="font-display uppercase text-lg text-white mb-4">Session Details</div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Date & Time */}

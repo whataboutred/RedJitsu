@@ -283,7 +283,7 @@ function HistoryClient() {
         title: w.title || 'Strength Training',
         subtitle: hasData
           ? `${w.exercise_count} exercise${w.exercise_count !== 1 ? 's' : ''} • ${new Date(w.performed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-          : `⚠️ No data • ${new Date(w.performed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+          : `No data • ${new Date(w.performed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
         data: w
       })
     })

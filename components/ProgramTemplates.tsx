@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { Dumbbell, Flame, Zap, Trophy, FileText, Info, ArrowRight, type LucideIcon } from 'lucide-react'
 
 type ProgramTemplate = {
   id: string
@@ -8,7 +9,7 @@ type ProgramTemplate = {
   duration: string
   level: 'Beginner' | 'Intermediate' | 'Advanced'
   focus: string[]
-  emoji: string
+  icon: LucideIcon
   days: Array<{
     name: string
     dows: number[]
@@ -29,7 +30,7 @@ const PROGRAM_TEMPLATES: ProgramTemplate[] = [
     duration: '4 days/week',
     level: 'Intermediate',
     focus: ['Strength', 'Muscle Building'],
-    emoji: '💪',
+    icon: Dumbbell,
     days: [
       {
         name: 'Upper A',
@@ -64,7 +65,7 @@ const PROGRAM_TEMPLATES: ProgramTemplate[] = [
     duration: '6 days/week',
     level: 'Advanced', 
     focus: ['Muscle Building', 'Volume'],
-    emoji: '🔥',
+    icon: Flame,
     days: [
       {
         name: 'Push',
@@ -111,7 +112,7 @@ const PROGRAM_TEMPLATES: ProgramTemplate[] = [
     duration: '3 days/week',
     level: 'Beginner',
     focus: ['Strength', 'General Fitness'],
-    emoji: '⚡',
+    icon: Zap,
     days: [
       {
         name: 'Full Body A',
@@ -134,7 +135,7 @@ const PROGRAM_TEMPLATES: ProgramTemplate[] = [
     duration: '4 days/week', 
     level: 'Advanced',
     focus: ['Powerlifting', 'Max Strength'],
-    emoji: '🏆',
+    icon: Trophy,
     days: [
       {
         name: 'Squat Focus',
@@ -204,7 +205,10 @@ export default function ProgramTemplates({ onSelectTemplate }: ProgramTemplatesP
   return (
     <div className="space-y-6">
       <div className="card">
-        <div className="font-medium mb-4">🚀 Quick Start - Program Templates</div>
+        <div className="flex items-center gap-2 mb-4">
+          <FileText className="w-5 h-5 text-brand-red" />
+          <span className="font-display uppercase text-lg text-white">Program Templates</span>
+        </div>
         
         {/* Level Filter */}
         <div className="flex flex-wrap gap-2 mb-6">
@@ -225,14 +229,18 @@ export default function ProgramTemplates({ onSelectTemplate }: ProgramTemplatesP
 
         {/* Template Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {filteredTemplates.map(template => (
+          {filteredTemplates.map(template => {
+            const Icon = template.icon
+            return (
             <button
               key={template.id}
               className="group text-left bg-black/30 hover:bg-black/40 rounded-2xl p-5 border border-white/10 hover:border-brand-red/30 transition-all duration-300"
               onClick={() => onSelectTemplate(template)}
             >
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-3xl group-hover:scale-110 transition-transform duration-200">{template.emoji}</span>
+                <div className="w-12 h-12 rounded-xl bg-brand-red/15 flex items-center justify-center group-hover:bg-brand-red/25 transition-colors flex-shrink-0">
+                  <Icon className="w-6 h-6 text-brand-red" />
+                </div>
                 <div>
                   <div className="font-semibold text-white/90 text-lg">{template.name}</div>
                   <div className="text-sm text-brand-red/80 font-medium">{template.duration}</div>
@@ -259,16 +267,18 @@ export default function ProgramTemplates({ onSelectTemplate }: ProgramTemplatesP
                   {template.days.length} training day{template.days.length !== 1 ? 's' : ''} • 
                   {template.days.reduce((acc, day) => acc + day.exercises.length, 0)} exercises
                 </span>
-                <span className="text-brand-red/70 group-hover:text-brand-red transition-colors">
-                  Select →
+                <span className="text-brand-red/70 group-hover:text-brand-red transition-colors inline-flex items-center gap-1">
+                  Select <ArrowRight className="w-3.5 h-3.5" />
                 </span>
               </div>
             </button>
-          ))}
+            )
+          })}
         </div>
 
-        <div className="text-xs text-white/60 mt-6 text-center bg-black/20 rounded-xl p-3">
-          💡 Templates include pre-configured exercises, sets, reps, and weekly schedules
+        <div className="text-xs text-white/60 mt-6 text-center bg-black/20 rounded-xl p-3 flex items-center justify-center gap-1.5">
+          <Info className="w-3.5 h-3.5 flex-shrink-0" />
+          Templates include pre-configured exercises, sets, reps, and weekly schedules
         </div>
       </div>
     </div>

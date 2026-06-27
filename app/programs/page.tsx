@@ -69,7 +69,6 @@ type ProgramTemplate = {
   duration: string
   level: 'Beginner' | 'Intermediate' | 'Advanced'
   focus: string[]
-  emoji: string
   days: Array<{
     name: string
     dows: number[]
