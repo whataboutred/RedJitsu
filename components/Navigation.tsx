@@ -130,48 +130,119 @@ function MobileHeader() {
   )
 }
 
-// Bottom Navigation for Mobile
+// Bottom Navigation for Mobile — 5-slot bar with a built-in center action
 function BottomNav() {
   const pathname = usePathname()
+  const [menuOpen, setMenuOpen] = useState(false)
 
-  const navItems = [
+  const leftItems = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/history', label: 'History', icon: History },
+  ]
+  const rightItems = [
     { href: '/programs', label: 'Programs', icon: FileText },
     { href: '/settings', label: 'Profile', icon: User },
   ]
+  const actions = [
+    { href: '/workouts/new', label: 'Workout', icon: Dumbbell, accent: 'text-brand-red' },
+    { href: '/jiu-jitsu', label: 'Jiu-Jitsu', icon: Activity, accent: 'text-purple-400' },
+    { href: '/cardio', label: 'Cardio', icon: Heart, accent: 'text-emerald-400' },
+  ]
+
+  const renderItem = (item: { href: string; label: string; icon: typeof Home }) => {
+    const Icon = item.icon
+    const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={() => hapticTap()}
+        className={`
+          flex flex-col items-center justify-center gap-1 flex-1 py-2
+          transition-colors duration-200 relative active:scale-90
+          ${isActive ? 'text-brand-red' : 'text-zinc-500'}
+        `}
+      >
+        {isActive && (
+          <motion.div
+            layoutId="bottomNavIndicator"
+            className="absolute top-0 w-8 h-0.5 bg-brand-red rounded-full"
+            transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+          />
+        )}
+        <Icon className="w-5 h-5" />
+        <span className="text-2xs font-medium">{item.label}</span>
+      </Link>
+    )
+  }
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-lg border-t border-red-500/10 pb-safe-bottom">
-      <div className="flex items-center justify-around h-16">
-        {navItems.map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => hapticTap()}
+    <div className="md:hidden">
+      {/* Quick-action menu */}
+      <AnimatePresence>
+        {menuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+              onClick={() => setMenuOpen(false)}
+            />
+            <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 flex flex-col-reverse items-stretch gap-2 w-48">
+              {actions.map((action, index) => {
+                const Icon = action.icon
+                return (
+                  <motion.div
+                    key={action.href}
+                    initial={{ opacity: 0, scale: 0.9, y: 16 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 16 }}
+                    transition={{ delay: index * 0.04 }}
+                  >
+                    <Link
+                      href={action.href}
+                      onClick={() => { hapticTap(); setMenuOpen(false) }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-surface-elevated border border-white/10 text-white font-medium shadow-xl active:scale-[0.98] transition-transform"
+                    >
+                      <Icon className={`w-5 h-5 ${action.accent}`} />
+                      <span>{action.label}</span>
+                    </Link>
+                  </motion.div>
+                )
+              })}
+            </div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Tab bar */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-lg border-t border-red-500/10 pb-safe-bottom">
+        <div className="flex items-center justify-around h-16">
+          {leftItems.map(renderItem)}
+
+          {/* Center action — built into the bar, raised slightly */}
+          <div className="flex-1 flex items-center justify-center">
+            <button
+              onClick={() => { hapticTap(); setMenuOpen(!menuOpen) }}
+              aria-label="Quick add"
               className={`
-                flex flex-col items-center justify-center gap-1 flex-1 py-2
-                transition-colors duration-200 relative active:scale-90
-                ${isActive ? 'text-brand-red' : 'text-zinc-500'}
+                -mt-7 w-14 h-14 rounded-2xl flex items-center justify-center
+                shadow-lg transition-all duration-200 active:scale-95
+                ${menuOpen
+                  ? 'bg-surface-elevated border border-white/15 rotate-45'
+                  : 'bg-brand-red shadow-glow-red'
+                }
               `}
             >
-              {isActive && (
-                <motion.div
-                  layoutId="bottomNavIndicator"
-                  className="absolute top-0 w-8 h-0.5 bg-brand-red rounded-full"
-                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                />
-              )}
-              <Icon className="w-5 h-5" />
-              <span className="text-2xs font-medium">{item.label}</span>
-            </Link>
-          )
-        })}
-      </div>
-    </nav>
+              {menuOpen ? <X className="w-6 h-6 text-white" /> : <Plus className="w-7 h-7 text-white" />}
+            </button>
+          </div>
+
+          {rightItems.map(renderItem)}
+        </div>
+      </nav>
+    </div>
   )
 }
 
@@ -200,7 +271,7 @@ function QuickActionFAB() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            className="hidden md:block fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
             onClick={() => setIsOpen(false)}
           />
         )}
@@ -209,7 +280,7 @@ function QuickActionFAB() {
       {/* Action Buttons */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed bottom-36 md:bottom-24 right-1/2 translate-x-1/2 md:right-4 md:translate-x-0 z-50 flex flex-col-reverse items-center gap-3">
+          <div className="hidden md:flex fixed bottom-24 right-4 z-50 flex-col-reverse items-center gap-3">
             {actions.map((action, index) => {
               const Icon = action.icon
               return (
@@ -243,7 +314,7 @@ function QuickActionFAB() {
       <motion.button
         onClick={() => { hapticTap(); setIsOpen(!isOpen) }}
         className={`
-          fixed bottom-20 md:bottom-8 right-1/2 translate-x-1/2 md:right-4 md:translate-x-0 z-50
+          hidden md:flex fixed bottom-8 right-4 z-50
           w-14 h-14 rounded-full
           flex items-center justify-center
           shadow-lg transition-all duration-200
