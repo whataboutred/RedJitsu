@@ -190,7 +190,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         <div className="flex items-center justify-between mb-4">
           <div>
             <div className="font-medium">{workout.title || 'Untitled workout'}</div>
-            <div className="text-sm text-white/70">{new Date(workout.performed_at).toLocaleString()}</div>
+            <div className="text-sm text-zinc-300">{new Date(workout.performed_at).toLocaleString()}</div>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -234,9 +234,9 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
               0
             )
             return (
-            <div key={exerciseId} className="bg-black/30 rounded-xl p-3 space-y-2">
+            <div key={exerciseId} className="bg-surface-elevated rounded-xl p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <div className="font-medium text-white/90">{getExerciseName(exerciseId)}</div>
+                <div className="font-medium text-white">{getExerciseName(exerciseId)}</div>
                 <div className="flex items-center gap-2">
                   {best1RM > 0 && (
                     <span className="text-xs text-amber-400 flex items-center gap-1">
@@ -244,14 +244,14 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
                       1RM: {best1RM}
                     </span>
                   )}
-                  <span className="text-xs text-white/50">{setsWithData}/{totalSets} sets</span>
+                  <span className="text-xs text-zinc-500">{setsWithData}/{totalSets} sets</span>
                 </div>
               </div>
               {exerciseSets.map((set, i) => {
                 const hasData = set.weight !== null || set.reps !== null
                 return (
-                <div key={set.id} className={`text-sm pl-2 ${hasData ? 'text-white/70' : 'text-white/40'}`}>
-                  <span className="text-white/50">Set {set.set_index}:</span>{' '}
+                <div key={set.id} className={`text-sm pl-2 ${hasData ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                  <span className="text-zinc-500">Set {set.set_index}:</span>{' '}
                   {set.weight !== null && `${set.weight} lb`}
                   {set.weight !== null && set.reps !== null && ' × '}
                   {set.reps !== null && `${set.reps} reps`}
@@ -264,9 +264,9 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
 
 
           {!sets.length && (
-            <div className="text-white/60 space-y-2">
+            <div className="text-zinc-400 space-y-2">
               <div>No sets recorded for this workout.</div>
-              <div className="text-xs text-white/40">
+              <div className="text-xs text-zinc-600">
                 This workout may have been saved before the data tracking was fully set up,
                 or the exercise data wasn&apos;t saved properly.
               </div>

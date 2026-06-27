@@ -782,7 +782,7 @@ export default function BJJPage() {
                         <p className={`font-semibold ${intensity === option.value ? 'text-white' : option.textColor}`}>
                           {option.label}
                         </p>
-                        <p className={`text-sm ${intensity === option.value ? 'text-white/80' : 'text-zinc-500'}`}>
+                        <p className={`text-sm ${intensity === option.value ? 'text-zinc-200' : 'text-zinc-500'}`}>
                           {option.description}
                         </p>
                       </div>

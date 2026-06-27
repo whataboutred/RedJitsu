@@ -109,7 +109,7 @@ export default function BJJDetail({ sessionId, onClose }: { sessionId: string; o
         <div className="flex items-center justify-between mb-4">
           <div>
             <div className="font-medium">Jiu Jitsu Session</div>
-            <div className="text-sm text-white/70">{new Date(session.performed_at).toLocaleString()}</div>
+            <div className="text-sm text-zinc-300">{new Date(session.performed_at).toLocaleString()}</div>
           </div>
           <div className="flex items-center gap-2">
             <button 
@@ -134,29 +134,29 @@ export default function BJJDetail({ sessionId, onClose }: { sessionId: string; o
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-          <div className="bg-black/30 rounded-xl p-3 space-y-3">
+          <div className="bg-surface-elevated rounded-xl p-3 space-y-3">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="text-sm text-white/70 mb-1">Type</div>
-                <div className="font-medium text-white/90">{formatKind(session.kind)}</div>
+                <div className="text-sm text-zinc-300 mb-1">Type</div>
+                <div className="font-medium text-white">{formatKind(session.kind)}</div>
               </div>
               <div>
-                <div className="text-sm text-white/70 mb-1">Duration</div>
-                <div className="font-medium text-white/90">{session.duration_min} minutes</div>
+                <div className="text-sm text-zinc-300 mb-1">Duration</div>
+                <div className="font-medium text-white">{session.duration_min} minutes</div>
               </div>
             </div>
             
             {session.intensity && (
               <div>
-                <div className="text-sm text-white/70 mb-1">Intensity</div>
-                <div className="font-medium text-white/90">{formatIntensity(session.intensity)}</div>
+                <div className="text-sm text-zinc-300 mb-1">Intensity</div>
+                <div className="font-medium text-white">{formatIntensity(session.intensity)}</div>
               </div>
             )}
             
             {session.notes && (
               <div>
-                <div className="text-sm text-white/70 mb-1">Notes</div>
-                <div className="text-white/90 whitespace-pre-wrap">{session.notes}</div>
+                <div className="text-sm text-zinc-300 mb-1">Notes</div>
+                <div className="text-white whitespace-pre-wrap">{session.notes}</div>
               </div>
             )}
           </div>

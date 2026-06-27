@@ -115,7 +115,7 @@ export default function CardioDetail({
         <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
           <div>
             <div className="font-medium text-lg">{session.activity}</div>
-            <div className="text-sm text-white/70">{new Date(session.performed_at).toLocaleString()}</div>
+            <div className="text-sm text-zinc-300">{new Date(session.performed_at).toLocaleString()}</div>
           </div>
           <div className="flex items-center gap-2">
             <button 
@@ -141,32 +141,32 @@ export default function CardioDetail({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-          <div className="bg-black/30 rounded-2xl p-4">
+          <div className="bg-surface-elevated rounded-2xl p-4">
             <div className="grid grid-cols-2 gap-4">
               {session.duration_minutes && (
                 <div>
-                  <div className="text-sm text-white/60">Duration</div>
+                  <div className="text-sm text-zinc-400">Duration</div>
                   <div className="font-medium">{session.duration_minutes} minutes</div>
                 </div>
               )}
               
               {session.distance && session.distance_unit && (
                 <div>
-                  <div className="text-sm text-white/60">Distance</div>
+                  <div className="text-sm text-zinc-400">Distance</div>
                   <div className="font-medium">{session.distance} {session.distance_unit}</div>
                 </div>
               )}
               
               {session.intensity && (
                 <div>
-                  <div className="text-sm text-white/60">Intensity</div>
+                  <div className="text-sm text-zinc-400">Intensity</div>
                   <div className="font-medium capitalize">{session.intensity}</div>
                 </div>
               )}
               
               {session.calories && (
                 <div>
-                  <div className="text-sm text-white/60">Calories</div>
+                  <div className="text-sm text-zinc-400">Calories</div>
                   <div className="font-medium">{session.calories} cal</div>
                 </div>
               )}
@@ -174,13 +174,13 @@ export default function CardioDetail({
 
             {session.notes && (
               <div className="mt-4 pt-4 border-t border-white/10">
-                <div className="text-sm text-white/60 mb-2">Notes</div>
-                <div className="text-white/90">{session.notes}</div>
+                <div className="text-sm text-zinc-400 mb-2">Notes</div>
+                <div className="text-white">{session.notes}</div>
               </div>
             )}
 
             {!session.duration_minutes && !session.distance && !session.calories && !session.notes && (
-              <div className="text-center text-white/60 py-4">
+              <div className="text-center text-zinc-400 py-4">
                 No additional details recorded for this session.
               </div>
             )}

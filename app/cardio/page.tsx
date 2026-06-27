@@ -734,7 +734,7 @@ export default function CardioPage() {
                           <p className={`font-semibold ${session.intensity === option.value ? 'text-white' : option.textColor}`}>
                             {option.label}
                           </p>
-                          <p className={`text-sm ${session.intensity === option.value ? 'text-white/80' : 'text-zinc-500'}`}>
+                          <p className={`text-sm ${session.intensity === option.value ? 'text-zinc-200' : 'text-zinc-500'}`}>
                             {option.description}
                           </p>
                         </div>
