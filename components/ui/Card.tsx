@@ -115,7 +115,7 @@ interface StatCardProps {
 
 const colorVariants = {
   default: 'from-zinc-500/20 to-zinc-600/20',
-  strength: 'from-red-500/20 to-orange-500/20',
+  strength: 'from-brand-red/20 to-red-700/20',
   bjj: 'from-purple-500/20 to-pink-500/20',
   cardio: 'from-emerald-500/20 to-cyan-500/20',
 };

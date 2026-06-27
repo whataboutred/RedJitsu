@@ -442,7 +442,7 @@ export default function BJJPage() {
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                 Jiu Jitsu Training
               </h1>
               <p className="text-sm text-zinc-500 mt-0.5">Log your mat time</p>

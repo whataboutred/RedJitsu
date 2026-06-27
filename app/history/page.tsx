@@ -974,7 +974,7 @@ function HistoryClient() {
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">Analytics</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-white">Analytics</h1>
               <p className="text-sm text-zinc-500 mt-0.5">Track your progress</p>
             </div>
             <div className="flex gap-2">

@@ -656,7 +656,7 @@ export default function ProgramsPage() {
             className="flex items-start justify-between gap-3"
           >
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold tracking-tight text-white">Workout Programs</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-white">Workout Programs</h1>
               <p className="text-sm text-zinc-500 mt-1">Build and manage your training plans</p>
             </div>
             <button className="btn shrink-0" onClick={startManualMode}>

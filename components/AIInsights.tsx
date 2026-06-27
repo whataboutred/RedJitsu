@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, RefreshCw, Clock, ChevronDown, ChevronUp } from 'lucide-react'
+import { Sparkles, RefreshCw, Clock, ChevronDown, ChevronUp, CheckCircle2, Zap, Search, Target } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO } from '@/lib/activeUser'
 import { useDataRefresh } from '@/hooks/useDataRefresh'
@@ -74,16 +74,16 @@ function renderInline(text: string) {
 function getSectionIcon(section: string) {
   const lower = section.toLowerCase()
   if (lower.includes('going well') || lower.includes('strength')) {
-    return <span className="text-emerald-400 text-xs">✓</span>
+    return <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
   }
   if (lower.includes('improve') || lower.includes('work')) {
-    return <span className="text-amber-400 text-xs">⚡</span>
+    return <Zap className="w-4 h-4 text-amber-400 shrink-0" />
   }
   if (lower.includes('observation') || lower.includes('pattern')) {
-    return <span className="text-blue-400 text-xs">🔍</span>
+    return <Search className="w-4 h-4 text-blue-400 shrink-0" />
   }
   if (lower.includes('focus') || lower.includes('week')) {
-    return <span className="text-red-400 text-xs">🎯</span>
+    return <Target className="w-4 h-4 text-brand-red shrink-0" />
   }
   return null
 }

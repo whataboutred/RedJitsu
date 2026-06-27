@@ -409,7 +409,7 @@ export default function CardioPage() {
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
                 Cardio Session
               </h1>
               <p className="text-sm text-zinc-500 mt-0.5">Track your cardio workout</p>

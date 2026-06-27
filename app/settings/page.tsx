@@ -313,7 +313,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="border-b border-red-500/10">
         <div className="px-4 py-4">
-          <h1 className="text-2xl font-bold text-white">Settings</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Settings</h1>
           <p className="text-sm text-zinc-500 mt-0.5">Customize your experience</p>
         </div>
       </div>
@@ -322,7 +322,7 @@ export default function SettingsPage() {
         {/* Profile Card */}
         <AnimatedCard delay={0}>
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-brand-red to-red-700 flex items-center justify-center">
               <User className="w-8 h-8 text-white" />
             </div>
             <div className="flex-1">
