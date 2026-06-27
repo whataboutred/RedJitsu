@@ -1548,14 +1548,16 @@ export default function NewWorkoutPage() {
           </AnimatePresence>
         </div>
 
-        {/* Add Exercise Button */}
-        <button
-          onClick={() => setShowExerciseSelector(true)}
-          className="w-full py-4 rounded-2xl border-2 border-dashed border-red-500/20 text-zinc-400 hover:border-brand-red/40 hover:text-brand-red active:scale-[0.99] transition-all flex items-center justify-center gap-2"
-        >
-          <Plus className="w-5 h-5" />
-          Add Exercise
-        </button>
+        {/* Add Exercise Button — hidden when empty (the empty state has its own CTA) */}
+        {exercises.length > 0 && (
+          <button
+            onClick={() => setShowExerciseSelector(true)}
+            className="w-full py-4 rounded-2xl border-2 border-dashed border-red-500/20 text-zinc-400 hover:border-brand-red/40 hover:text-brand-red active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            Add Exercise
+          </button>
+        )}
 
         {/* Empty State */}
         {exercises.length === 0 && (

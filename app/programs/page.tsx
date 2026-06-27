@@ -653,27 +653,16 @@ export default function ProgramsPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between"
+            className="flex items-start justify-between gap-3"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-red/20 to-orange-500/20 flex items-center justify-center">
-                <Dumbbell className="w-5 h-5 text-brand-red" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">Workout Programs</h1>
-                <p className="text-sm text-zinc-500">Build and manage your training plans</p>
-              </div>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold tracking-tight text-white">Workout Programs</h1>
+              <p className="text-sm text-zinc-500 mt-1">Build and manage your training plans</p>
             </div>
-            <div className="flex gap-3">
-              <button className="toggle" onClick={startQuickMode}>
-                <Zap className="w-4 h-4" />
-                <span className="hidden sm:inline">Quick Start</span>
-              </button>
-              <button className="btn" onClick={startManualMode}>
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">Create Custom</span>
-              </button>
-            </div>
+            <button className="btn shrink-0" onClick={startManualMode}>
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Create</span>
+            </button>
           </motion.div>
 
           {/* Quick Start Templates */}
@@ -694,18 +683,18 @@ export default function ProgramsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <AnimatedCard>
-                <div className="flex items-center justify-between mb-6">
+              <div>
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <LayoutGrid className="w-5 h-5 text-zinc-500" />
-                    <span className="font-semibold text-white">Your Programs</span>
+                    <span className="font-semibold text-white whitespace-nowrap">Your Programs</span>
                     <span className="text-xs bg-surface-elevated text-zinc-500 px-2 py-0.5 rounded-full">
                       {programs.length}
                     </span>
                   </div>
-                  <button className="toggle text-sm" onClick={startQuickMode}>
+                  <button className="toggle text-sm whitespace-nowrap" onClick={startQuickMode}>
                     <Sparkles className="w-4 h-4" />
-                    Browse Templates
+                    Templates
                   </button>
                 </div>
 
@@ -716,23 +705,12 @@ export default function ProgramsPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.05 * idx }}
-                      className={`relative bg-gradient-to-br rounded-2xl p-5 border transition-all duration-300 group hover:shadow-lg ${
+                      className={`relative rounded-2xl p-5 border transition-all duration-300 group hover:shadow-lg ${
                         p.is_active
-                          ? 'from-brand-red/10 to-orange-500/5 border-brand-red/30 hover:border-brand-red/50'
-                          : 'from-zinc-800/50 to-zinc-900/50 border-white/10 hover:border-white/20'
+                          ? 'bg-brand-red/[0.07] border-brand-red/30 hover:border-brand-red/50'
+                          : 'bg-surface border-white/10 hover:border-white/20'
                       }`}
                     >
-                      {p.is_active && (
-                        <div className="absolute -top-2 -right-2">
-                          <span className="flex h-5 w-5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-red/40"></span>
-                            <span className="relative inline-flex rounded-full h-5 w-5 bg-brand-red items-center justify-center">
-                              <Check className="w-3 h-3 text-white" />
-                            </span>
-                          </span>
-                        </div>
-                      )}
-
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-white truncate mb-1">{p.name}</div>
@@ -796,7 +774,7 @@ export default function ProgramsPage() {
                     </motion.div>
                   ))}
                 </div>
-              </AnimatedCard>
+              </div>
             </motion.div>
           )}
 
@@ -808,7 +786,7 @@ export default function ProgramsPage() {
               transition={{ delay: 0.2 }}
             >
               <AnimatedCard className="text-center py-12">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-brand-red/20 to-orange-500/20 flex items-center justify-center mx-auto mb-6">
+                <div className="w-20 h-20 rounded-2xl bg-brand-red/15 flex items-center justify-center mx-auto mb-6">
                   <Dumbbell className="w-10 h-10 text-brand-red" />
                 </div>
                 <h2 className="text-xl font-semibold text-white mb-2">Start Your Training Journey</h2>
