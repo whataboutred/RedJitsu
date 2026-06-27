@@ -68,6 +68,16 @@ export default function SafeAutoRefresh() {
                     return
                   }
                 }
+                // The new-workout flow persists to a draft, not the zustand store.
+                // An unsaved draft with exercises means a workout is in progress.
+                const draft = localStorage.getItem('workout-draft-v2')
+                if (draft) {
+                  const parsedDraft = JSON.parse(draft)
+                  if (parsedDraft?.items?.length > 0) {
+                    setTimeout(checkIdleAndRefresh, 5 * 60 * 1000)
+                    return
+                  }
+                }
               } catch { /* ignore parse errors */ }
 
               if (isIdle() && document.visibilityState === 'visible') {

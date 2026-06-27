@@ -37,6 +37,7 @@ import { useDraftAutoSave, getTimeAgo } from '@/hooks/useDraftAutoSave'
 import { hapticTap, hapticSuccess } from '@/lib/haptics'
 import { notifyDataChanged } from '@/lib/dataSync'
 import { getLastWorkoutSetsForExercises, WorkoutSet as LastWorkoutSet } from '@/lib/workoutSuggestions'
+import { searchByName } from '@/lib/exerciseSearch'
 import { Button, IconButton } from '@/components/ui/Button'
 import { BottomSheet, Modal, ConfirmDialog } from '@/components/ui/BottomSheet'
 import { NumberInput, Input, Textarea, Select } from '@/components/ui/Input'
@@ -549,11 +550,10 @@ function ExerciseSelectorSheet({
   ]
 
   const filtered = useMemo(() => {
-    return exercises.filter((ex) => {
-      const matchesSearch = ex.name.toLowerCase().includes(search.toLowerCase())
-      const matchesCategory = category === 'all' || ex.category === category
-      return matchesSearch && matchesCategory
-    })
+    const byCategory = exercises.filter(
+      (ex) => category === 'all' || ex.category === category
+    )
+    return searchByName(byCategory, search)
   }, [exercises, search, category])
 
   const searchHeader = (

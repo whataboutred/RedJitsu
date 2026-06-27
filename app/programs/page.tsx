@@ -13,6 +13,7 @@ import { useToast } from '@/components/Toast'
 import { AnimatedCard } from '@/components/ui/Card'
 import { ConfirmDialog } from '@/components/ui/BottomSheet'
 import { notifyDataChanged } from '@/lib/dataSync'
+import { searchByName } from '@/lib/exerciseSearch'
 import { useDataRefresh } from '@/hooks/useDataRefresh'
 import {
   Dumbbell,
@@ -107,12 +108,10 @@ export default function ProgramsPage() {
   const [programToDelete, setProgramToDelete] = useState<string | null>(null)
 
   const filteredExercises = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    return exercises.filter(e => {
-      const matchesSearch = !q || e.name.toLowerCase().includes(q)
-      const matchesCategory = selectedCategory === 'all' || e.category === selectedCategory
-      return matchesSearch && matchesCategory
-    })
+    const byCategory = exercises.filter(
+      e => selectedCategory === 'all' || e.category === selectedCategory
+    )
+    return searchByName(byCategory, search)
   }, [exercises, search, selectedCategory])
 
   useEffect(() => {
