@@ -452,7 +452,7 @@ function ExerciseCard({
   return (
     <motion.div
       layout
-      className="bg-surface rounded-2xl overflow-hidden border border-white/[0.07] border-l-2 border-l-brand-red/40"
+      className="bg-surface-elevated/30 rounded-2xl overflow-hidden border border-white/[0.06]"
     >
       {/* Header */}
       <div
@@ -845,31 +845,31 @@ function WorkoutSetupModal({
         <div className="space-y-4">
           {/* Date & Time */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-zinc-300 mb-2">
-              <Calendar className="w-4 h-4 text-zinc-500" />
-              Date & Time
-            </label>
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar className="w-5 h-5 text-brand-red" />
+              <h3 className="font-display uppercase text-lg text-white">When</h3>
+            </div>
             <input
               type="datetime-local"
               value={dateTime}
               onChange={(e) => setDateTime(e.target.value)}
-              className="input appearance-none min-w-0 max-w-full"
+              className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-brand-red focus:outline-none transition-colors appearance-none min-w-0 max-w-full"
             />
           </div>
 
           {/* Location */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-zinc-300 mb-2">
-              <MapPin className="w-4 h-4 text-zinc-500" />
-              Location
-            </label>
+            <div className="flex items-center gap-2 mb-3">
+              <MapPin className="w-5 h-5 text-brand-red" />
+              <h3 className="font-display uppercase text-lg text-white">Where</h3>
+            </div>
             <input
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="e.g., Home Gym, Planet Fitness"
               list="setup-locations"
-              className="input"
+              className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white placeholder-zinc-600 focus:border-brand-red focus:outline-none transition-colors"
             />
             <datalist id="setup-locations">
               {savedLocations.map((loc) => (

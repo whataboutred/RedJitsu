@@ -877,7 +877,7 @@ export default function BJJPage() {
                 size="lg"
                 loading={isLoading}
                 onClick={saveSession}
-                className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 shadow-lg shadow-purple-500/30"
+                className="bg-gradient-to-r from-red-500 to-purple-600 hover:from-red-600 hover:to-purple-700 shadow-lg shadow-purple-500/30"
               >
                 Save {kind} ({duration} min{demo ? ' • Offline' : ''})
               </Button>

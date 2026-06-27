@@ -803,7 +803,7 @@ export default function CardioPage() {
                 size="lg"
                 loading={saving}
                 onClick={handleSave}
-                className="bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-600 hover:to-emerald-800 shadow-lg shadow-emerald-500/30"
+                className="bg-gradient-to-r from-red-500 to-emerald-500 hover:from-red-600 hover:to-emerald-600 shadow-lg shadow-emerald-500/30"
               >
                 Save {session.activity}
                 {session.duration_minutes ? ` (${session.duration_minutes} min)` : ''}
