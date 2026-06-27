@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion'
 import {
   ArrowLeft,
   Plus,
   X,
+  GripVertical,
   ChevronDown,
   ChevronUp,
   Copy,
@@ -190,10 +191,10 @@ function SetRow({
       className={`
         rounded-xl overflow-hidden transition-all duration-200
         ${set.isCompleted
-          ? 'bg-emerald-500/10'
+          ? 'bg-emerald-500/[0.07]'
           : set.isWarmup
-            ? 'bg-amber-500/[0.07]'
-            : 'bg-surface-elevated/40'
+            ? 'bg-amber-500/[0.05]'
+            : 'bg-white/[0.02]'
         }
       `}
     >
@@ -350,6 +351,7 @@ function ExerciseCard({
   onToggle: () => void
 }) {
   const [showRestTimer, setShowRestTimer] = useState(false)
+  const dragControls = useDragControls()
   const completedSets = exercise.sets.filter((s) => s.isCompleted && !s.isWarmup).length
   const totalSets = exercise.sets.filter((s) => !s.isWarmup).length
 
@@ -450,47 +452,56 @@ function ExerciseCard({
   }
 
   return (
-    <motion.div
+    <Reorder.Item
+      value={exercise}
+      dragListener={false}
+      dragControls={dragControls}
       layout
-      className="bg-surface-elevated/30 rounded-2xl overflow-hidden border border-white/[0.06]"
+      whileDrag={{ scale: 1.02, backgroundColor: 'rgba(24,21,22,0.95)', zIndex: 50, boxShadow: '0 12px 32px rgba(0,0,0,0.45)' }}
+      className={`rounded-2xl ${isExpanded ? 'bg-surface-elevated/20' : ''}`}
     >
       {/* Header */}
       <div
         onClick={onToggle}
-        className="flex items-center justify-between p-4 bg-surface-elevated/50 cursor-pointer active:bg-surface-elevated/70 transition-colors"
+        className={`flex items-center gap-1.5 py-2.5 pl-1 pr-1 cursor-pointer select-none ${isExpanded ? '' : 'border-b border-white/[0.05]'}`}
       >
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-11 h-11 rounded-xl bg-brand-red/15 flex items-center justify-center">
-            <Dumbbell className="w-5 h-5 text-brand-red" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-white truncate text-base">{exercise.name}</h3>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="px-2 py-0.5 rounded-md bg-brand-red/10 text-brand-red text-xs font-medium">
-                {completedSets}/{totalSets} sets
+        {/* Drag handle */}
+        <div
+          onPointerDown={(e) => dragControls.start(e)}
+          onClick={(e) => e.stopPropagation()}
+          className="touch-none cursor-grab active:cursor-grabbing p-1.5 -mr-0.5 text-zinc-600 hover:text-zinc-400 transition-colors"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="w-5 h-5" />
+        </div>
+        <div className="w-10 h-10 rounded-xl bg-brand-red/15 flex items-center justify-center shrink-0">
+          <Dumbbell className="w-5 h-5 text-brand-red" />
+        </div>
+        <div className="flex-1 min-w-0 ml-1">
+          <h3 className="font-semibold text-white truncate text-[15px] leading-tight">{exercise.name}</h3>
+          <div className="flex items-center gap-1.5 text-xs mt-0.5">
+            <span className="text-brand-red font-semibold">
+              {completedSets}/{totalSets} sets
+            </span>
+            {exercise.lastWorkout && (
+              <span className="text-zinc-500">
+                · Last {new Date(exercise.lastWorkout.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </span>
-              {exercise.lastWorkout && (
-                <span className="text-zinc-500 text-xs">
-                  Last: {new Date(exercise.lastWorkout.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </span>
-              )}
-            </div>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onRemove()
-            }}
-            className="p-2.5 text-zinc-500 hover:text-red-400 transition-colors rounded-xl"
-          >
-            <X className="w-5 h-5" />
-          </button>
-          <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} className="p-1">
-            <ChevronDown className="w-5 h-5 text-zinc-400" />
-          </motion.div>
-        </div>
+        <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} className="p-1 text-zinc-500">
+          <ChevronDown className="w-5 h-5" />
+        </motion.div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onRemove()
+          }}
+          className="p-2 text-zinc-600 hover:text-red-400 transition-colors rounded-xl"
+        >
+          <X className="w-[18px] h-[18px]" />
+        </button>
       </div>
 
       {/* Content */}
@@ -502,44 +513,35 @@ function ExerciseCard({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="p-4 space-y-3">
-              {/* Last Workout Reference */}
+            <div className="px-2 pb-3 pt-1 space-y-3">
+              {/* Last Workout Reference — inline strip, no box */}
               {exercise.lastWorkout && exercise.lastWorkout.sets.length > 0 ? (
-                <div className="rounded-xl p-3 bg-surface-elevated/40 border border-white/5">
-                  <div className="flex items-center justify-between gap-2 text-xs font-medium mb-2 text-zinc-400">
-                    <span className="flex items-center gap-2">
-                      <TrendingUp className="w-3.5 h-3.5" />
-                      Previous Workout
+                <div className="flex items-center gap-2 flex-wrap pl-1">
+                  <span className="flex items-center gap-1 text-[11px] uppercase tracking-wider text-zinc-500 font-semibold">
+                    <TrendingUp className="w-3 h-3" />
+                    Last
+                  </span>
+                  {exercise.lastWorkout.sets.slice(0, 5).map((s, i) => (
+                    <button
+                      key={i}
+                      onClick={() => fillFromHistory(s.weight, s.reps)}
+                      className="px-2 py-1 bg-surface-elevated/60 hover:bg-surface-elevated active:scale-95 rounded-lg text-xs text-zinc-300 font-medium transition-all"
+                    >
+                      {s.weight}{unit} × {s.reps}
+                    </button>
+                  ))}
+                  {exercise.lastWorkout.sets.length > 5 && (
+                    <span className="text-xs text-zinc-600">
+                      +{exercise.lastWorkout.sets.length - 5}
                     </span>
-                    <span className="text-[10px] text-zinc-600 font-normal">tap to fill</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {exercise.lastWorkout.sets.slice(0, 5).map((s, i) => (
-                      <button
-                        key={i}
-                        onClick={() => fillFromHistory(s.weight, s.reps)}
-                        className="px-2.5 py-1 bg-surface-elevated hover:bg-surface-pressed active:scale-95 rounded-lg text-xs text-zinc-200 font-medium transition-all"
-                      >
-                        {s.weight}{unit} x {s.reps}
-                      </button>
-                    ))}
-                    {exercise.lastWorkout.sets.length > 5 && (
-                      <span className="px-2 py-1 text-xs text-zinc-500">
-                        +{exercise.lastWorkout.sets.length - 5} more
-                      </span>
-                    )}
-                  </div>
+                  )}
                 </div>
               ) : (
-                <div className="rounded-xl p-3 bg-surface-elevated/50 border border-white/[0.05]">
-                  <p className="text-xs text-zinc-500">
-                    First time — enter your sets below.
-                  </p>
-                </div>
+                <p className="text-xs text-zinc-600 pl-1">First time — log your sets below.</p>
               )}
 
               {/* Sets */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <AnimatePresence>
                   {exercise.sets.map((set, index) => (
                     <SetRow
@@ -574,7 +576,7 @@ function ExerciseCard({
                 )}
                 <button
                   onClick={addSet}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-surface-elevated/50 text-zinc-400 hover:text-zinc-300 hover:bg-surface-elevated transition-all"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-surface-elevated/40 text-zinc-400 hover:text-zinc-300 hover:bg-surface-elevated/70 transition-all"
                 >
                   <Plus className="w-4 h-4" />
                   Add Empty Set
@@ -589,7 +591,7 @@ function ExerciseCard({
       <AnimatePresence>
         {showRestTimer && <RestTimer onComplete={() => setShowRestTimer(false)} />}
       </AnimatePresence>
-    </motion.div>
+    </Reorder.Item>
   )
 }
 
@@ -1381,22 +1383,20 @@ export default function NewWorkoutPage() {
           </div>
         </AnimatedCard>
 
-        {/* Exercises */}
-        <div className="space-y-3">
-          <AnimatePresence>
-            {exercises.map((ex) => (
-              <ExerciseCard
-                key={ex.id}
-                exercise={ex}
-                unit={unit}
-                onUpdate={updateExercise}
-                onRemove={() => removeExercise(ex.id)}
-                isExpanded={expandedId === ex.id}
-                onToggle={() => setExpandedId(expandedId === ex.id ? null : ex.id)}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
+        {/* Exercises — drag the handle to reorder */}
+        <Reorder.Group axis="y" values={exercises} onReorder={setExercises} className="space-y-1">
+          {exercises.map((ex) => (
+            <ExerciseCard
+              key={ex.id}
+              exercise={ex}
+              unit={unit}
+              onUpdate={updateExercise}
+              onRemove={() => removeExercise(ex.id)}
+              isExpanded={expandedId === ex.id}
+              onToggle={() => setExpandedId(expandedId === ex.id ? null : ex.id)}
+            />
+          ))}
+        </Reorder.Group>
 
         {/* Add Exercise Button — hidden when empty (the empty state has its own CTA) */}
         {exercises.length > 0 && (
