@@ -183,7 +183,7 @@ export const BottomSheet = ({
               {/* Title */}
               {title && (
                 <div className="px-4 pb-3 border-b border-white/[0.07]">
-                  <h2 className="text-lg font-semibold text-white">{title}</h2>
+                  <h2 className="text-xl font-display uppercase text-white">{title}</h2>
                 </div>
               )}
             </motion.div>
@@ -300,7 +300,7 @@ export const Modal = ({ isOpen, onClose, children, title, size = 'md' }: ModalPr
               {/* Header */}
               {title && (
                 <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.07] flex-shrink-0">
-                  <h2 className="text-lg font-semibold text-white truncate pr-2">{title}</h2>
+                  <h2 className="text-xl font-display uppercase text-white truncate pr-2">{title}</h2>
                   <button
                     onClick={onClose}
                     className="p-2 text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-white/5 flex-shrink-0"
@@ -360,7 +360,7 @@ export const ConfirmDialog = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="sm">
       <div className="text-center">
-        <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+        <h3 className="text-xl font-display uppercase text-white mb-2">{title}</h3>
         <p className="text-zinc-400 mb-6">{message}</p>
         <div className="flex gap-3">
           <button

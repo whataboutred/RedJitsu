@@ -567,7 +567,7 @@ export default function BJJPage() {
               <AnimatedCard delay={0.1}>
                 <div className="flex items-center gap-2 mb-4">
                   <Sparkles className="w-5 h-5 text-purple-400" />
-                  <h3 className="font-semibold text-white">Your Training Patterns</h3>
+                  <h3 className="font-display uppercase text-lg text-white">Your Training Patterns</h3>
                 </div>
                 <div className="grid grid-cols-1 gap-3">
                   {patterns.slice(0, 3).map((pattern, index) => {
@@ -612,7 +612,7 @@ export default function BJJPage() {
               <AnimatedCard delay={0.1}>
                 <div className="flex items-center gap-2 mb-4">
                   <Sparkles className="w-5 h-5 text-purple-400" />
-                  <h3 className="font-semibold text-white">Quick Start</h3>
+                  <h3 className="font-display uppercase text-lg text-white">Quick Start</h3>
                 </div>
                 <p className="text-sm text-zinc-500 mb-4">
                   Select a session type to get started
@@ -661,7 +661,7 @@ export default function BJJPage() {
             <AnimatedCard delay={0.05}>
               <div className="flex items-center gap-2 mb-3">
                 <Calendar className="w-5 h-5 text-purple-400" />
-                <h3 className="font-semibold text-white">When did you train?</h3>
+                <h3 className="font-display uppercase text-lg text-white">When did you train?</h3>
               </div>
               <input
                 type="datetime-local"
@@ -675,7 +675,7 @@ export default function BJJPage() {
             <AnimatedCard delay={0.1}>
               <div className="flex items-center gap-2 mb-4">
                 <Target className="w-5 h-5 text-purple-400" />
-                <h3 className="font-semibold text-white">Training Type</h3>
+                <h3 className="font-display uppercase text-lg text-white">Training Type</h3>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {SESSION_TYPES.map((sessionType) => (
@@ -702,7 +702,7 @@ export default function BJJPage() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Clock className="w-5 h-5 text-purple-400" />
-                  <h3 className="font-semibold text-white">Duration</h3>
+                  <h3 className="font-display uppercase text-lg text-white">Duration</h3>
                 </div>
                 {!timerRunning && sessionTimer === 0 && (
                   <button
@@ -764,7 +764,7 @@ export default function BJJPage() {
             <AnimatedCard delay={0.2}>
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-5 h-5 text-purple-400" />
-                <h3 className="font-semibold text-white">Intensity</h3>
+                <h3 className="font-display uppercase text-lg text-white">Intensity</h3>
               </div>
               <div className="space-y-2">
                 {INTENSITY_OPTIONS.map((option) => (
@@ -800,7 +800,7 @@ export default function BJJPage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-purple-400" />
-                  <h3 className="font-semibold text-white">Notes</h3>
+                  <h3 className="font-display uppercase text-lg text-white">Notes</h3>
                 </div>
                 <button
                   className="text-xs text-purple-400 hover:text-purple-300"
@@ -825,7 +825,7 @@ export default function BJJPage() {
           <AnimatedCard delay={0.2} className={`bg-gradient-to-br ${selectedSessionType?.gradient} border-l-4 ${selectedSessionType?.borderColor}`}>
             <div className="flex items-center gap-2 mb-3">
               <Check className="w-5 h-5 text-purple-400" />
-              <h3 className="font-semibold text-white">Session Ready</h3>
+              <h3 className="font-display uppercase text-lg text-white">Session Ready</h3>
             </div>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
@@ -927,7 +927,7 @@ export default function BJJPage() {
           >
             <Check className="w-10 h-10 text-white" />
           </motion.div>
-          <h2 className="text-2xl font-bold text-white mb-2">Session Saved!</h2>
+          <h2 className="text-3xl font-display uppercase text-white mb-2">Session Saved!</h2>
           <p className="text-zinc-500 mb-6">
             {kind} • {duration} minutes • {intensity} intensity
           </p>

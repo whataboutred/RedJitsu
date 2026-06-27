@@ -518,7 +518,7 @@ export default function SettingsPage() {
         <AnimatedCard delay={0.4} className="border border-red-500/20">
           <div className="flex items-center gap-2 mb-4">
             <Trash2 className="w-5 h-5 text-red-400" />
-            <h3 className="font-semibold text-red-400">Danger Zone</h3>
+            <h3 className="font-display uppercase text-lg text-red-400">Danger Zone</h3>
           </div>
           <DeleteAllData />
         </AnimatedCard>

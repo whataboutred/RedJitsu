@@ -461,7 +461,7 @@ export default function CardioPage() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Activity className="w-5 h-5 text-emerald-400" />
-              <h3 className="font-semibold text-white">Activity</h3>
+              <h3 className="font-display uppercase text-lg text-white">Activity</h3>
             </div>
           </div>
 
@@ -535,7 +535,7 @@ export default function CardioPage() {
               <AnimatedCard delay={0.1} className="bg-gradient-to-br from-emerald-500/10 to-cyan-500/10">
                 <div className="flex items-center gap-2 mb-4">
                   <Clock className="w-5 h-5 text-emerald-400" />
-                  <h3 className="font-semibold text-white">Session Timer</h3>
+                  <h3 className="font-display uppercase text-lg text-white">Session Timer</h3>
                 </div>
 
                 <div className="flex flex-col items-center py-4">
@@ -624,7 +624,7 @@ export default function CardioPage() {
               <AnimatedCard delay={0.15}>
                 <div className="flex items-center gap-2 mb-3">
                   <Calendar className="w-5 h-5 text-emerald-400" />
-                  <h3 className="font-semibold text-white">When</h3>
+                  <h3 className="font-display uppercase text-lg text-white">When</h3>
                 </div>
                 <input
                   type="datetime-local"
@@ -638,7 +638,7 @@ export default function CardioPage() {
               <AnimatedCard delay={0.2}>
                 <div className="flex items-center gap-2 mb-4">
                   <Clock className="w-5 h-5 text-emerald-400" />
-                  <h3 className="font-semibold text-white">Duration (minutes)</h3>
+                  <h3 className="font-display uppercase text-lg text-white">Duration (minutes)</h3>
                 </div>
                 <div className="grid grid-cols-6 gap-2 mb-4">
                   {DURATION_PRESETS.map(preset => (
@@ -672,7 +672,7 @@ export default function CardioPage() {
               <AnimatedCard delay={0.25}>
                 <div className="flex items-center gap-2 mb-3">
                   <MapPin className="w-5 h-5 text-emerald-400" />
-                  <h3 className="font-semibold text-white">Distance</h3>
+                  <h3 className="font-display uppercase text-lg text-white">Distance</h3>
                 </div>
                 <div className="flex gap-2">
                   <input
@@ -716,7 +716,7 @@ export default function CardioPage() {
               <AnimatedCard delay={0.3}>
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp className="w-5 h-5 text-emerald-400" />
-                  <h3 className="font-semibold text-white">Intensity</h3>
+                  <h3 className="font-display uppercase text-lg text-white">Intensity</h3>
                 </div>
                 <div className="space-y-2">
                   {INTENSITY_OPTIONS.map(option => (
@@ -751,7 +751,7 @@ export default function CardioPage() {
               <AnimatedCard delay={0.35}>
                 <div className="flex items-center gap-2 mb-3">
                   <Flame className="w-5 h-5 text-emerald-400" />
-                  <h3 className="font-semibold text-white">Calories Burned</h3>
+                  <h3 className="font-display uppercase text-lg text-white">Calories Burned</h3>
                 </div>
                 <input
                   type="number"
@@ -770,7 +770,7 @@ export default function CardioPage() {
               <AnimatedCard delay={0.4}>
                 <div className="flex items-center gap-2 mb-3">
                   <FileText className="w-5 h-5 text-emerald-400" />
-                  <h3 className="font-semibold text-white">Notes</h3>
+                  <h3 className="font-display uppercase text-lg text-white">Notes</h3>
                 </div>
                 <textarea
                   className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none resize-none"
@@ -905,7 +905,7 @@ export default function CardioPage() {
           >
             <Check className="w-10 h-10 text-white" />
           </motion.div>
-          <h2 className="text-2xl font-bold text-white mb-2">Workout Saved!</h2>
+          <h2 className="text-3xl font-display uppercase text-white mb-2">Workout Saved!</h2>
           <p className="text-zinc-500 mb-6">
             {session.activity}
             {session.duration_minutes ? ` • ${session.duration_minutes} min` : ''}

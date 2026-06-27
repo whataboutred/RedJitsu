@@ -835,7 +835,7 @@ function WorkoutSetupModal({
           <div className="w-16 h-16 bg-brand-red/15 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Dumbbell className="w-8 h-8 text-brand-red" />
           </div>
-          <h2 className="text-xl font-bold text-white">Start Workout</h2>
+          <h2 className="text-2xl font-display uppercase text-white">Start Workout</h2>
           <p className="text-zinc-500 text-sm mt-1">
             Set the date, time, and location for your workout
           </p>

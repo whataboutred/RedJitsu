@@ -788,7 +788,7 @@ export default function ProgramsPage() {
                 <div className="w-20 h-20 rounded-2xl bg-brand-red/15 flex items-center justify-center mx-auto mb-6">
                   <Dumbbell className="w-10 h-10 text-brand-red" />
                 </div>
-                <h2 className="text-xl font-semibold text-white mb-2">Start Your Training Journey</h2>
+                <h2 className="text-2xl font-display uppercase text-white mb-2">Start Your Training Journey</h2>
                 <p className="text-zinc-500 mb-8 max-w-md mx-auto">
                   Choose from proven templates or create your own custom program to reach your fitness goals
                 </p>
@@ -867,7 +867,7 @@ export default function ProgramsPage() {
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-red/20 to-orange-500/20 flex items-center justify-center mx-auto mb-4">
                 <Target className="w-7 h-7 text-brand-red" />
               </div>
-              <h3 className="font-semibold text-white mb-2">Need Something Different?</h3>
+              <h3 className="font-display uppercase text-lg text-white mb-2">Need Something Different?</h3>
               <p className="text-zinc-500 mb-6 max-w-sm mx-auto">
                 Create a fully custom program tailored to your specific goals
               </p>

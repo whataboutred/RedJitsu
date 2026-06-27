@@ -173,7 +173,7 @@ export default function OnboardingWizard({
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/[0.06]">
               {current.icon}
             </div>
-            <h2 className="mb-3 text-center text-xl font-bold text-white">{current.title}</h2>
+            <h2 className="mb-3 text-center text-2xl font-display uppercase text-white">{current.title}</h2>
             <div className="text-center">{current.body}</div>
           </motion.div>
         </AnimatePresence>

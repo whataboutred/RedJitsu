@@ -87,7 +87,7 @@ export default function PRCelebration({
               <Trophy className="h-9 w-9 text-amber-400" />
             </motion.div>
 
-            <h2 className="mb-1 text-2xl font-bold text-white">
+            <h2 className="mb-1 text-3xl font-display uppercase text-white">
               {prs.length === 1 ? 'New Personal Record!' : `${prs.length} New PRs!`}
             </h2>
             <p className="mb-5 text-sm text-zinc-400">
