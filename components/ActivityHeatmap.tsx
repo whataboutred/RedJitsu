@@ -17,11 +17,11 @@ const DAYS = WEEKS * 7
 const DAY_LABELS: Record<number, string> = { 1: 'M', 3: 'W', 5: 'F' }
 
 function getColor(types: ActivityType[]): string {
-  if (types.length === 0) return 'bg-surface-elevated/50'
+  if (types.length === 0) return 'bg-white/[0.04]'
 
   const unique = [...new Set(types)]
 
-  if (unique.length > 1) return 'bg-white/70'
+  if (unique.length > 1) return 'bg-white/80'
 
   const type = unique[0]
   const count = types.length
@@ -95,7 +95,7 @@ export default function ActivityHeatmap({ activities, streakWeeks = 0 }: Activit
         </div>
         <div className="flex items-center gap-3">
           {streakWeeks > 0 && (
-            <span className="flex items-baseline gap-1 text-brand-red">
+            <span className="flex items-baseline gap-1 text-amber-400">
               <Flame className="w-4 h-4 self-center" />
               <span className="font-display text-xl leading-none">{streakWeeks}</span>
               <span className="text-xs text-zinc-500">wk streak</span>
@@ -152,7 +152,7 @@ export default function ActivityHeatmap({ activities, streakWeeks = 0 }: Activit
           {grid.map((cell, i) => (
             <div
               key={i}
-              className={`rounded-sm aspect-square ${getColor(cell.types)}`}
+              className={`rounded-[4px] aspect-square ${getColor(cell.types)}`}
               title={`${cell.date.toLocaleDateString()}: ${
                 cell.types.length > 0 ? cell.types.join(', ') : 'No activity'
               }`}
@@ -164,13 +164,13 @@ export default function ActivityHeatmap({ activities, streakWeeks = 0 }: Activit
       {/* Legend */}
       <div className="flex items-center gap-4 mt-3 text-[10px] text-zinc-500">
         <span className="flex items-center gap-1.5">
-          <span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-500" /> Strength
+          <span className="inline-block w-2.5 h-2.5 rounded-[3px] bg-red-500" /> Strength
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block w-2.5 h-2.5 rounded-sm bg-purple-500" /> BJJ
+          <span className="inline-block w-2.5 h-2.5 rounded-[3px] bg-purple-500" /> BJJ
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-500" /> Cardio
+          <span className="inline-block w-2.5 h-2.5 rounded-[3px] bg-emerald-500" /> Cardio
         </span>
       </div>
     </motion.div>

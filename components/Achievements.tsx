@@ -8,8 +8,26 @@ import { useToast } from '@/components/Toast'
 
 const SEEN_KEY = 'rj-seen-achievements'
 
-// On-brand flat badge — a woven "patch": a thick tier-colored edge, a dashed
-// stitch border, and the label in the Anton display font.
+// Shared gradient/shine defs (rendered once) so the badges get depth + gloss.
+function BadgeDefs() {
+  return (
+    <svg width="0" height="0" className="absolute" aria-hidden>
+      <defs>
+        <linearGradient id="rj-badge-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#F0473D" />
+          <stop offset="100%" stopColor="#A1151B" />
+        </linearGradient>
+        <radialGradient id="rj-badge-shine" cx="50%" cy="22%" r="65%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.45" />
+          <stop offset="55%" stopColor="#FFFFFF" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+    </svg>
+  )
+}
+
+// On-brand "patch": tier-colored embroidered edge, dashed stitch, glossy
+// red gradient + shine when earned, the label in the Anton display font.
 function AchievementBadge({
   label,
   earned,
@@ -26,13 +44,22 @@ function AchievementBadge({
         ? '#D1D5DB'
         : '#C2703D'
     : '#3F3F46'
-  const fill = earned ? '#DC2626' : '#161214'
   const text = earned ? '#FFFFFF' : '#52525B'
-  const stitch = earned ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.1)'
+  const stitch = earned ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.1)'
 
   return (
     <svg viewBox="0 0 100 100" className="w-full h-full">
-      <rect x="11" y="11" width="78" height="78" rx="24" fill={fill} stroke={ring} strokeWidth="5" />
+      <rect
+        x="11"
+        y="11"
+        width="78"
+        height="78"
+        rx="24"
+        fill={earned ? 'url(#rj-badge-fill)' : '#1A1518'}
+        stroke={ring}
+        strokeWidth="5"
+      />
+      {earned && <rect x="11" y="11" width="78" height="78" rx="24" fill="url(#rj-badge-shine)" />}
       <rect
         x="20"
         y="20"
@@ -117,6 +144,7 @@ export default function Achievements({
 
   return (
     <AnimatedCard delay={0.15}>
+      <BadgeDefs />
       <div className="flex items-end justify-between mb-5">
         <h3 className="text-2xl font-display uppercase text-white">Achievements</h3>
         <span className="text-sm text-zinc-500">
@@ -150,7 +178,11 @@ export default function Achievements({
                         animate={isNew ? { scale: [1, 1.2, 1] } : undefined}
                         transition={isNew ? { duration: 0.7, ease: 'easeOut', delay: 0.3 } : undefined}
                         style={
-                          isNew ? { filter: 'drop-shadow(0 0 10px rgba(220,38,38,0.75))' } : undefined
+                          isNew
+                            ? { filter: 'drop-shadow(0 0 10px rgba(220,38,38,0.75))' }
+                            : a.earned
+                              ? { filter: 'drop-shadow(0 0 5px rgba(220,38,38,0.4))' }
+                              : undefined
                         }
                       >
                         <AchievementBadge label={a.label} earned={a.earned} tier={a.tier} />

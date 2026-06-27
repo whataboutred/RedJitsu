@@ -329,28 +329,28 @@ export default function SettingsPage() {
             <div className="grid grid-cols-4 gap-3">
               <div className="text-center">
                 <div className="relative inline-flex items-center justify-center">
-                  <ProgressRing progress={(userStats.totalWorkouts / 20) * 100} color="#ef4444" />
+                  <ProgressRing progress={(userStats.totalWorkouts / 20) * 100} color="#DC2626" />
                   <span className="absolute font-display text-base text-white">{userStats.totalWorkouts}</span>
                 </div>
                 <p className="text-xs text-zinc-500 mt-1">Workouts</p>
               </div>
               <div className="text-center">
                 <div className="relative inline-flex items-center justify-center">
-                  <ProgressRing progress={(userStats.totalBjjSessions / 10) * 100} color="#a855f7" />
+                  <ProgressRing progress={(userStats.totalBjjSessions / 10) * 100} color="#7C3AED" />
                   <span className="absolute font-display text-base text-white">{userStats.totalBjjSessions}</span>
                 </div>
                 <p className="text-xs text-zinc-500 mt-1">BJJ</p>
               </div>
               <div className="text-center">
                 <div className="relative inline-flex items-center justify-center">
-                  <ProgressRing progress={(userStats.currentStreak / 7) * 100} color="#10b981" />
+                  <ProgressRing progress={(userStats.currentStreak / 7) * 100} color="#F59E0B" />
                   <span className="absolute font-display text-base text-white">{userStats.currentStreak}</span>
                 </div>
                 <p className="text-xs text-zinc-500 mt-1">Streak</p>
               </div>
               <div className="text-center">
                 <div className="relative inline-flex items-center justify-center">
-                  <ProgressRing progress={(userStats.avgWeeklyWorkouts / 7) * 100} color="#3b82f6" />
+                  <ProgressRing progress={(userStats.avgWeeklyWorkouts / 7) * 100} color="#10B981" />
                   <span className="absolute font-display text-base text-white">{userStats.avgWeeklyWorkouts}</span>
                 </div>
                 <p className="text-xs text-zinc-500 mt-1">Avg/Week</p>
@@ -399,7 +399,7 @@ export default function SettingsPage() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-zinc-500">Sessions per week <span className="text-zinc-600">· 0 = off</span></p>
-                <span className="text-lg font-bold text-red-400">{weeklyGoal === 0 ? 'Off' : weeklyGoal}</span>
+                <span className="font-display text-2xl text-red-400">{weeklyGoal === 0 ? 'Off' : weeklyGoal}</span>
               </div>
               <input
                 type="range"
@@ -407,7 +407,7 @@ export default function SettingsPage() {
                 max={14}
                 value={weeklyGoal}
                 onChange={(e) => setWeeklyGoal(Number(e.target.value))}
-                className="w-full h-2 bg-surface-elevated rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-red-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer"
+                className="w-full h-2 cursor-pointer accent-[#DC2626]"
               />
             </div>
           </div>
@@ -423,7 +423,7 @@ export default function SettingsPage() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-zinc-500">Sessions per week <span className="text-zinc-600">· 0 = off</span></p>
-                <span className="text-lg font-bold text-purple-400">{bjjWeeklyGoal === 0 ? 'Off' : bjjWeeklyGoal}</span>
+                <span className="font-display text-2xl text-purple-400">{bjjWeeklyGoal === 0 ? 'Off' : bjjWeeklyGoal}</span>
               </div>
               <input
                 type="range"
@@ -431,7 +431,7 @@ export default function SettingsPage() {
                 max={14}
                 value={bjjWeeklyGoal}
                 onChange={(e) => setBjjWeeklyGoal(Number(e.target.value))}
-                className="w-full h-2 bg-surface-elevated rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-purple-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer"
+                className="w-full h-2 cursor-pointer accent-[#7C3AED]"
               />
             </div>
           </div>
@@ -447,7 +447,7 @@ export default function SettingsPage() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-zinc-500">Sessions per week <span className="text-zinc-600">· 0 = off</span></p>
-                <span className="text-lg font-bold text-emerald-400">{cardioWeeklyGoal === 0 ? 'Off' : cardioWeeklyGoal}</span>
+                <span className="font-display text-2xl text-emerald-400">{cardioWeeklyGoal === 0 ? 'Off' : cardioWeeklyGoal}</span>
               </div>
               <input
                 type="range"
@@ -455,7 +455,7 @@ export default function SettingsPage() {
                 max={14}
                 value={cardioWeeklyGoal}
                 onChange={(e) => setCardioWeeklyGoal(Number(e.target.value))}
-                className="w-full h-2 bg-surface-elevated rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer"
+                className="w-full h-2 cursor-pointer accent-[#10B981]"
               />
             </div>
           </div>
