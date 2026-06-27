@@ -25,6 +25,44 @@ body {
   overscroll-behavior-y: contain;
 }
 
+/* ============================================
+   APP-LIKE TOUCH BEHAVIOR
+   Removes the web tells: gray tap-flash, long-press callout menus,
+   accidental text selection on UI chrome, and iOS focus-zoom.
+   ============================================ */
+
+/* No gray flash when tapping anything */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* No long-press callout / no selecting UI text by default */
+body {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ...but keep selection + callout working inside real text fields */
+input,
+textarea,
+select,
+[contenteditable='true'] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/* iOS Safari zooms the page when focusing any control under 16px.
+   Floor form controls at 16px on phones to stop the zoom jump. */
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 /* Visible focus for keyboard navigation (without affecting mouse/touch) */
 :focus-visible {
   outline: 2px solid #dc2626;
