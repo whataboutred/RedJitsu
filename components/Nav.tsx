@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
+import Wordmark from '@/components/Wordmark'
 import {
   Dumbbell,
   History,
@@ -171,15 +171,7 @@ export default function Nav() {
         <div className="max-w-4xl mx-auto flex items-center justify-between p-3">
         {/* Brand */}
         <Link href="/dashboard" className="flex items-center gap-2">
-          <Image
-            src="/red-jitsu-logo.png?v=16"
-            alt="Red Jitsu Training"
-            width={28}
-            height={28}
-            className="rounded-full"
-            priority
-          />
-          <span className="font-semibold">Red Jitsu Training</span>
+          <Wordmark size="md" />
           {/* Only show demo badge for actual demo visitors who aren't logged in */}
           <DemoBadge />
         </Link>

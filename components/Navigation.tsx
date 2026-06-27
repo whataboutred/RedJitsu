@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -24,6 +23,7 @@ import { DEMO, isDemoVisitor } from '@/lib/activeUser'
 import { hapticTap } from '@/lib/haptics'
 import SafeAutoRefresh from '@/components/SafeAutoRefresh'
 import SyncStatus from '@/components/SyncStatus'
+import Wordmark from '@/components/Wordmark'
 
 // Check if we're in workout mode (hide nav)
 const workoutModeRoutes = ['/workouts/new', '/workouts/edit']
@@ -61,15 +61,7 @@ function DesktopHeader({ signOut }: { signOut: () => Promise<void> }) {
         <div className="flex items-center justify-between h-24">
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-3">
-            <Image
-              src="/red-jitsu-logo.png?v=16"
-              alt="Red Jitsu Training"
-              width={72}
-              height={72}
-              className="rounded-xl"
-              priority
-            />
-            <span className="font-bold text-lg">Red Jitsu</span>
+            <Wordmark size="lg" />
             <DemoBadge />
           </Link>
 
@@ -130,15 +122,7 @@ function MobileHeader() {
     >
       <div className="flex items-center justify-between px-4 h-20">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <Image
-            src="/red-jitsu-logo.png?v=16"
-            alt="Red Jitsu Training"
-            width={56}
-            height={56}
-            className="rounded-lg"
-            priority
-          />
-          <span className="font-bold">Red Jitsu</span>
+          <Wordmark size="md" />
           <DemoBadge />
         </Link>
       </div>

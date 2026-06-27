@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect } from 'react'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import LoginForm from '@/components/LoginForm'
+import Wordmark from '@/components/Wordmark'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -19,17 +19,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-[radial-gradient(1200px_circle_at_50%_0%,rgba(239,68,68,0.15),transparent)]">
         <div className="w-full max-w-md space-y-6">
-        {/* Logo + title */}
-        <div className="flex flex-col items-center gap-3">
-          <Image
-            src="/red-jitsu-logo.png"
-            width={160}
-            height={160}
-            alt="Red Jitsu Training"
-            priority
-            className="mx-auto block drop-shadow-[0_0_24px_rgba(239,68,68,0.35)]"
-          />
-          <h1 className="text-xl font-semibold">Red Jitsu Training</h1>
+        {/* Brand wordmark */}
+        <div className="flex flex-col items-center gap-2">
+          <Wordmark size="xl" className="drop-shadow-[0_0_24px_rgba(239,68,68,0.25)]" />
+          <p className="text-sm text-zinc-500 uppercase tracking-[0.2em]">Training</p>
         </div>
 
         {/* Auth card */}

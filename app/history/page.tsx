@@ -970,7 +970,7 @@ function HistoryClient() {
     <div className="relative min-h-screen bg-brand-dark pb-24">
       <BackgroundLogo />
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-brand-dark/80 backdrop-blur-lg border-b border-red-500/10">
+      <div className="border-b border-red-500/10">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
