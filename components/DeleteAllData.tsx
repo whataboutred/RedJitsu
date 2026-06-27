@@ -44,9 +44,9 @@ export default function DeleteAllData() {
 
   if (done) {
     return (
-      <div className="rounded-xl border border-white/10 p-4 bg-black/40">
+      <div className="rounded-xl border border-white/10 p-4 bg-surface-elevated">
         <div className="font-semibold mb-1">All data deleted</div>
-        <div className="text-white/70 text-sm">
+        <div className="text-zinc-300 text-sm">
           Your logs and programs have been removed from our database.
         </div>
       </div>
@@ -54,20 +54,20 @@ export default function DeleteAllData() {
   }
 
   return (
-    <div className="rounded-xl border border-white/10 p-4 bg-black/40">
+    <div className="rounded-xl border border-white/10 p-4 bg-surface-elevated">
       <div className="font-semibold mb-2 text-red-400">Danger zone</div>
-      <p className="text-white/70 text-sm mb-3">
+      <p className="text-zinc-300 text-sm mb-3">
         Permanently delete all your workouts, sets, programs, and Jiu Jitsu sessions.
         This cannot be undone.
       </p>
       <div className="mb-3">
-        <label className="text-white/70 text-sm block mb-1">Type <strong className="text-red-400">DELETE</strong> to confirm</label>
+        <label className="text-zinc-300 text-sm block mb-1">Type <strong className="text-red-400">DELETE</strong> to confirm</label>
         <input
           type="text"
           value={confirmText}
           onChange={(e) => setConfirmText(e.target.value)}
           placeholder="DELETE"
-          className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-600"
+          className="w-full rounded-xl border border-white/10 bg-surface-elevated px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-600"
         />
       </div>
       {error && <p className="text-red-400 text-sm mb-2">{error}</p>}

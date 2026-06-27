@@ -66,7 +66,7 @@ function ResetPasswordForm() {
     return (
       <div className="max-w-md mx-auto p-6">
         <h1 className="text-lg font-semibold mb-2">Resetting password…</h1>
-        <p className="text-white/70 text-sm">Please wait.</p>
+        <p className="text-zinc-300 text-sm">Please wait.</p>
       </div>
     )
   }
@@ -75,7 +75,7 @@ function ResetPasswordForm() {
     return (
       <div className="max-w-md mx-auto p-6">
         <h1 className="text-lg font-semibold mb-2">Password updated</h1>
-        <p className="text-white/70 text-sm mb-4">You can now sign in with your new password.</p>
+        <p className="text-zinc-300 text-sm mb-4">You can now sign in with your new password.</p>
         <Link href="/login" className="btn">Go to login</Link>
       </div>
     )
@@ -97,10 +97,10 @@ function ResetPasswordForm() {
       <h1 className="text-xl font-semibold mb-4">Set a new password</h1>
       <form onSubmit={submit} className="space-y-4">
         <div>
-          <label className="block text-sm text-white/70 mb-1">New password</label>
+          <label className="block text-sm text-zinc-300 mb-1">New password</label>
           <input
             type="password"
-            className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
+            className="w-full rounded-xl border border-white/10 bg-surface-elevated px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
@@ -108,10 +108,10 @@ function ResetPasswordForm() {
           />
         </div>
         <div>
-          <label className="block text-sm text-white/70 mb-1">Confirm password</label>
+          <label className="block text-sm text-zinc-300 mb-1">Confirm password</label>
           <input
             type="password"
-            className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
+            className="w-full rounded-xl border border-white/10 bg-surface-elevated px-3 py-2 outline-none focus:ring-2 focus:ring-red-600"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             autoComplete="new-password"
@@ -129,7 +129,7 @@ function ResetPasswordForm() {
           {step === 'saving' ? 'Saving…' : 'Update password'}
         </button>
 
-        <div className="text-sm text-white/60 mt-2">
+        <div className="text-sm text-zinc-400 mt-2">
           <Link href="/login" className="underline">Back to login</Link>
         </div>
       </form>
@@ -145,7 +145,7 @@ export default function ResetPasswordPage() {
         <Suspense fallback={
           <div className="max-w-md mx-auto p-6">
             <h1 className="text-lg font-semibold mb-2">Loading...</h1>
-            <p className="text-white/70 text-sm">Please wait.</p>
+            <p className="text-zinc-300 text-sm">Please wait.</p>
           </div>
         }>
           <ResetPasswordForm />

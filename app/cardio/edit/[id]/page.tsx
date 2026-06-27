@@ -93,7 +93,7 @@ export default function EditCardioPage() {
         <Nav />
         <main className="relative z-10 p-4 max-w-xl mx-auto">
           <h1 className="text-xl font-semibold mb-2">Demo mode</h1>
-          <p className="text-white/70">
+          <p className="text-zinc-300">
             You&apos;re viewing the app in read-only demo mode. To edit cardio sessions,
             please <Link href="/login" className="underline">sign in</Link>.
           </p>
@@ -124,7 +124,7 @@ export default function EditCardioPage() {
         <Nav />
         <main className="relative z-10 p-4 max-w-xl mx-auto">
           <h1 className="text-xl font-semibold mb-2">Session not found</h1>
-          <p className="text-white/70">
+          <p className="text-zinc-300">
             This cardio session doesn&apos;t exist.{' '}
             <Link href="/cardio" className="underline">Back to cardio</Link>
           </p>
@@ -271,7 +271,7 @@ export default function EditCardioPage() {
 
             {/* Intensity */}
             <div>
-              <label className="block text-sm text-white/80 font-medium mb-2">
+              <label className="block text-sm text-zinc-200 font-medium mb-2">
                 Intensity Level
               </label>
               <div className="flex gap-2">
@@ -281,7 +281,7 @@ export default function EditCardioPage() {
                     className={`px-4 py-2 rounded-xl text-sm font-medium capitalize flex-1 transition-all duration-200 ${
                       session.intensity === intensity
                         ? `border ${INTENSITY_COLORS[intensity]}`
-                        : 'bg-black/30 border border-white/10 text-white/70 hover:bg-black/50'
+                        : 'bg-surface-elevated border border-white/10 text-zinc-300 hover:bg-surface-elevated'
                     }`}
                     onClick={() => updateSession({ intensity })}
                   >

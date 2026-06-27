@@ -218,7 +218,7 @@ export default function ProgramTemplates({ onSelectTemplate }: ProgramTemplatesP
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                 selectedLevel === level 
                   ? 'bg-brand-red/20 border-brand-red text-white border' 
-                  : 'bg-black/30 border border-white/10 text-white/70 hover:bg-black/50 hover:border-white/20'
+                  : 'bg-surface-elevated border border-white/10 text-zinc-300 hover:bg-surface-elevated hover:border-white/20'
               }`}
               onClick={() => setSelectedLevel(level)}
             >
@@ -234,7 +234,7 @@ export default function ProgramTemplates({ onSelectTemplate }: ProgramTemplatesP
             return (
             <button
               key={template.id}
-              className="group text-left bg-black/30 hover:bg-black/40 rounded-2xl p-5 border border-white/10 hover:border-brand-red/30 transition-all duration-300"
+              className="group text-left bg-surface-elevated hover:bg-surface-elevated rounded-2xl p-5 border border-white/10 hover:border-brand-red/30 transition-all duration-300"
               onClick={() => onSelectTemplate(template)}
             >
               <div className="flex items-center gap-3 mb-4">
@@ -242,12 +242,12 @@ export default function ProgramTemplates({ onSelectTemplate }: ProgramTemplatesP
                   <Icon className="w-6 h-6 text-brand-red" />
                 </div>
                 <div>
-                  <div className="font-semibold text-white/90 text-lg">{template.name}</div>
+                  <div className="font-semibold text-white text-lg">{template.name}</div>
                   <div className="text-sm text-brand-red/80 font-medium">{template.duration}</div>
                 </div>
               </div>
 
-              <div className="text-sm text-white/80 mb-4 leading-relaxed">{template.description}</div>
+              <div className="text-sm text-zinc-200 mb-4 leading-relaxed">{template.description}</div>
 
               <div className="flex items-center flex-wrap gap-2 mb-4">
                 <span className={`px-2 py-1 rounded-full text-xs border font-medium ${LEVEL_COLORS[template.level]}`}>
@@ -262,7 +262,7 @@ export default function ProgramTemplates({ onSelectTemplate }: ProgramTemplatesP
                 </div>
               </div>
 
-              <div className="text-xs text-white/60 flex items-center justify-between">
+              <div className="text-xs text-zinc-400 flex items-center justify-between">
                 <span>
                   {template.days.length} training day{template.days.length !== 1 ? 's' : ''} • 
                   {template.days.reduce((acc, day) => acc + day.exercises.length, 0)} exercises
@@ -276,7 +276,7 @@ export default function ProgramTemplates({ onSelectTemplate }: ProgramTemplatesP
           })}
         </div>
 
-        <div className="text-xs text-white/60 mt-6 text-center bg-black/20 rounded-xl p-3 flex items-center justify-center gap-1.5">
+        <div className="text-xs text-zinc-400 mt-6 text-center bg-black/20 rounded-xl p-3 flex items-center justify-center gap-1.5">
           <Info className="w-3.5 h-3.5 flex-shrink-0" />
           Templates include pre-configured exercises, sets, reps, and weekly schedules
         </div>

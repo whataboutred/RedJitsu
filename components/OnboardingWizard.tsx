@@ -60,7 +60,7 @@ export default function OnboardingWizard({
     accent: string
   }) {
     return (
-      <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 px-4 py-3">
+      <div className="flex items-center justify-between rounded-xl border border-white/10 bg-surface-elevated px-4 py-3">
         <span className="text-sm text-zinc-300">{label}</span>
         <div className="flex items-center gap-3">
           <button
@@ -101,7 +101,7 @@ export default function OnboardingWizard({
                 className={`rounded-xl border px-4 py-4 text-lg font-semibold transition-all ${
                   unit === u
                     ? 'border-brand-red bg-brand-red/15 text-white'
-                    : 'border-white/10 bg-black/30 text-zinc-400 hover:border-white/25'
+                    : 'border-white/10 bg-surface-elevated text-zinc-400 hover:border-white/25'
                 }`}
               >
                 {u === 'lb' ? 'Pounds (lb)' : 'Kilograms (kg)'}
