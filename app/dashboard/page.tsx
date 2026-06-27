@@ -105,7 +105,7 @@ function GoalCard({
               )}
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold">{current}</span>
+              <span className="text-3xl font-bold tracking-tight">{current}</span>
               <span className="text-zinc-500 text-sm">/ {goal}</span>
               <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-md ${
                 isOnTrack ? 'text-emerald-400 bg-emerald-500/10' : 'text-amber-400 bg-amber-500/10'

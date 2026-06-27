@@ -1292,7 +1292,7 @@ function HistoryClient() {
                     <Flame className="w-6 h-6 text-red-400" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-red-400">{workoutStats.thisWeek}</p>
+                <p className="text-3xl font-bold tracking-tight text-red-400">{workoutStats.thisWeek}</p>
                 <p className="text-xs text-zinc-500">This Week</p>
               </AnimatedCard>
 
@@ -1302,7 +1302,7 @@ function HistoryClient() {
                     <Calendar className="w-6 h-6 text-blue-400" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-blue-400">{workoutStats.thisMonth}</p>
+                <p className="text-3xl font-bold tracking-tight text-blue-400">{workoutStats.thisMonth}</p>
                 <p className="text-xs text-zinc-500">This Month</p>
               </AnimatedCard>
 
@@ -1312,7 +1312,7 @@ function HistoryClient() {
                     <TrendingUp className="w-6 h-6 text-emerald-400" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-emerald-400">{workoutStats.avgPerWeek}</p>
+                <p className="text-3xl font-bold tracking-tight text-emerald-400">{workoutStats.avgPerWeek}</p>
                 <p className="text-xs text-zinc-500">Avg/Week</p>
               </AnimatedCard>
 
@@ -1322,7 +1322,7 @@ function HistoryClient() {
                     <Trophy className="w-6 h-6 text-purple-400" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-purple-400">{workoutStats.total}</p>
+                <p className="text-3xl font-bold tracking-tight text-purple-400">{workoutStats.total}</p>
                 <p className="text-xs text-zinc-500">Total</p>
               </AnimatedCard>
             </div>
