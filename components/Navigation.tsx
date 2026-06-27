@@ -61,7 +61,10 @@ function DesktopHeader({ signOut }: { signOut: () => Promise<void> }) {
         <div className="flex items-center justify-between h-24">
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-3">
-            <Wordmark size="lg" />
+            <div className="flex flex-col">
+              <Wordmark size="lg" />
+              <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 leading-none mt-1">A Red Labs App</span>
+            </div>
             <DemoBadge />
           </Link>
 
@@ -122,7 +125,10 @@ function MobileHeader() {
     >
       <div className="flex items-center justify-between px-4 h-20">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <Wordmark size="md" />
+          <div className="flex flex-col">
+            <Wordmark size="md" />
+            <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 leading-none mt-1">A Red Labs App</span>
+          </div>
           <DemoBadge />
         </Link>
       </div>
