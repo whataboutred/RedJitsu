@@ -18,7 +18,7 @@ export default function Wordmark({
   }
   return (
     <span
-      className={`font-black uppercase italic tracking-tight leading-none select-none whitespace-nowrap ${sizes[size]} ${className}`}
+      className={`font-display uppercase italic tracking-wide leading-none select-none whitespace-nowrap ${sizes[size]} ${className}`}
     >
       <span className="text-brand-red">Red</span>
       <span className="text-white">&nbsp;Jitsu</span>
