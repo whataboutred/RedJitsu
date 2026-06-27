@@ -133,7 +133,7 @@ export default function SafeAutoRefresh() {
       <div className="flex items-start gap-3">
         <div className="flex-1">
           <div className="font-medium text-sm mb-1">Update Available</div>
-          <div className="text-xs text-white/90 mb-3">
+          <div className="text-xs text-white mb-3">
             A new version is ready. We&apos;ll update automatically when you&apos;re not actively using the app, or you can update now.
           </div>
           <div className="flex gap-2">
@@ -144,7 +144,7 @@ export default function SafeAutoRefresh() {
               Update Now
             </button>
             <button 
-              className="px-3 py-1 bg-black/20 hover:bg-black/30 rounded-lg text-xs font-medium transition-all"
+              className="px-3 py-1 bg-black/20 hover:bg-surface-elevated rounded-lg text-xs font-medium transition-all"
               onClick={dismissNotification}
             >
               Later
@@ -152,7 +152,7 @@ export default function SafeAutoRefresh() {
           </div>
         </div>
         <button 
-          className="text-white/70 hover:text-white transition-colors p-1"
+          className="text-zinc-300 hover:text-white transition-colors p-1"
           onClick={dismissNotification}
         >
           ×

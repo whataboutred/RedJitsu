@@ -98,7 +98,7 @@ export default function PRCelebration({
               {prs.map((pr) => (
                 <div
                   key={pr.exerciseId}
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 px-4 py-3"
+                  className="flex items-center justify-between rounded-xl border border-white/10 bg-surface-elevated px-4 py-3"
                 >
                   <div>
                     <div className="font-medium text-white">{pr.exerciseName}</div>

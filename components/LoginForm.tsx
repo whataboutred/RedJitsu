@@ -83,7 +83,7 @@ export default function LoginForm() {
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
 
-          <div className="text-sm text-white/60">
+          <div className="text-sm text-zinc-400">
             <button 
               type="button"
               onClick={() => setMode('reset')}
@@ -116,7 +116,7 @@ export default function LoginForm() {
             {loading ? 'Sending...' : 'Send reset link'}
           </button>
 
-          <div className="text-sm text-white/60">
+          <div className="text-sm text-zinc-400">
             <button 
               type="button"
               onClick={() => setMode('login')}

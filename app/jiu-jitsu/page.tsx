@@ -95,7 +95,7 @@ const SESSION_TYPES = [
 const INTENSITY_OPTIONS = [
   {
     value: 'low' as Intensity,
-    label: 'Light',
+    label: 'Low',
     description: 'Easy flow, technique focus',
     color: 'bg-emerald-500/20',
     activeColor: 'bg-emerald-500',
@@ -104,7 +104,7 @@ const INTENSITY_OPTIONS = [
   },
   {
     value: 'medium' as Intensity,
-    label: 'Moderate',
+    label: 'Medium',
     description: 'Good pace, some intensity',
     color: 'bg-amber-500/20',
     activeColor: 'bg-amber-500',
@@ -113,7 +113,7 @@ const INTENSITY_OPTIONS = [
   },
   {
     value: 'high' as Intensity,
-    label: 'Intense',
+    label: 'High',
     description: 'Hard rolls, competition prep',
     color: 'bg-red-500/20',
     activeColor: 'bg-red-500',

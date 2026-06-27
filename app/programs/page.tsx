@@ -178,7 +178,7 @@ export default function ProgramsPage() {
           <div className="bg-surface/80 rounded-2xl p-6 border border-white/[0.07]">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-black/30 rounded-2xl p-5 border border-white/10">
+                <div key={i} className="bg-surface-elevated rounded-2xl p-5 border border-white/10">
                   <div className="flex justify-between mb-4">
                     <div className="space-y-2">
                       <div className="h-5 bg-surface-elevated rounded w-32 animate-pulse"></div>
@@ -981,7 +981,7 @@ export default function ProgramsPage() {
                     className={`rounded-2xl overflow-hidden border transition-all duration-300 ${
                       isExpanded
                         ? 'bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 border-white/10'
-                        : 'bg-black/30 border-white/[0.07] hover:border-white/10'
+                        : 'bg-surface-elevated border-white/[0.07] hover:border-white/10'
                     }`}
                   >
                     {/* Collapsible Header */}
