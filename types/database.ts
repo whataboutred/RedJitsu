@@ -26,13 +26,8 @@ export interface Database {
           display_name: string | null
           unit: string
           weekly_goal: number | null
-          target_weeks: number | null
-          goal_start: string | null
           bjj_weekly_goal: number | null
           cardio_weekly_goal: number | null
-          show_strength_goal: boolean | null
-          show_bjj_goal: boolean | null
-          show_cardio_goal: boolean | null
           coach_context: string | null
           created_at: string | null
         }
@@ -41,13 +36,8 @@ export interface Database {
           display_name?: string | null
           unit?: string
           weekly_goal?: number | null
-          target_weeks?: number | null
-          goal_start?: string | null
           bjj_weekly_goal?: number | null
           cardio_weekly_goal?: number | null
-          show_strength_goal?: boolean | null
-          show_bjj_goal?: boolean | null
-          show_cardio_goal?: boolean | null
           coach_context?: string | null
           created_at?: string | null
         }
@@ -56,13 +46,8 @@ export interface Database {
           display_name?: string | null
           unit?: string
           weekly_goal?: number | null
-          target_weeks?: number | null
-          goal_start?: string | null
           bjj_weekly_goal?: number | null
           cardio_weekly_goal?: number | null
-          show_strength_goal?: boolean | null
-          show_bjj_goal?: boolean | null
-          show_cardio_goal?: boolean | null
           coach_context?: string | null
           created_at?: string | null
         }
