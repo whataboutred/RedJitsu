@@ -25,6 +25,10 @@ const MILESTONES: { n: number; tier: Tier }[] = [
   { n: 25, tier: 'silver' },
   { n: 50, tier: 'gold' },
   { n: 100, tier: 'gold' },
+  { n: 200, tier: 'gold' },
+  { n: 365, tier: 'gold' },
+  { n: 500, tier: 'gold' },
+  { n: 1000, tier: 'gold' },
 ]
 
 const STREAKS: { w: number; tier: Tier }[] = [
@@ -33,6 +37,7 @@ const STREAKS: { w: number; tier: Tier }[] = [
   { w: 8, tier: 'silver' },
   { w: 12, tier: 'gold' },
   { w: 26, tier: 'gold' },
+  { w: 52, tier: 'gold' },
 ]
 
 export function computeAchievements(stats: AchievementStats): Achievement[] {

@@ -136,6 +136,8 @@ function HistoryClient() {
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [bjj, setBjj] = useState<BJJ[]>([])
   const [cardio, setCardio] = useState<Cardio[]>([])
+  // True all-time count (workouts are paginated, so workouts.length is only a page)
+  const [totalWorkoutCount, setTotalWorkoutCount] = useState(0)
   const [progressionData, setProgressionData] = useState<ProgressionData[]>([])
   const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress[]>([])
   const [streakData, setStreakData] = useState<StreakData | null>(null)
@@ -316,6 +318,13 @@ function HistoryClient() {
   const loadHistoryData = useCallback(async () => {
     const userId = await getActiveUserId()
     if (!userId) return
+
+    // True all-time workout count (head-only, no rows) for achievements
+    const { count: wCount } = await supabase
+      .from('workouts')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+    setTotalWorkoutCount(wCount ?? 0)
 
     const { data: w } = await supabase
       .from('workouts')
@@ -1054,7 +1063,7 @@ function HistoryClient() {
 
         {selectedView === 'achievements' && (
           <Achievements
-            totalWorkouts={workoutStats.total}
+            totalWorkouts={totalWorkoutCount}
             streakWeeks={streakData?.strength.current ?? 0}
           />
         )}
