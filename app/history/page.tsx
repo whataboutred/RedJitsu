@@ -136,8 +136,9 @@ function HistoryClient() {
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [bjj, setBjj] = useState<BJJ[]>([])
   const [cardio, setCardio] = useState<Cardio[]>([])
-  // True all-time count (workouts are paginated, so workouts.length is only a page)
-  const [totalWorkoutCount, setTotalWorkoutCount] = useState(0)
+  // True all-time counts (lists are paginated, so .length is only a page).
+  // Feeds the Achievements stats header + badge unlocks.
+  const [totalCounts, setTotalCounts] = useState({ workouts: 0, bjj: 0, cardio: 0 })
   const [progressionData, setProgressionData] = useState<ProgressionData[]>([])
   const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress[]>([])
   const [streakData, setStreakData] = useState<StreakData | null>(null)
@@ -319,12 +320,17 @@ function HistoryClient() {
     const userId = await getActiveUserId()
     if (!userId) return
 
-    // True all-time workout count (head-only, no rows) for achievements
-    const { count: wCount } = await supabase
-      .from('workouts')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-    setTotalWorkoutCount(wCount ?? 0)
+    // True all-time counts (head-only, no rows) for achievements
+    const [wHead, bjjHead, cardioHead] = await Promise.all([
+      supabase.from('workouts').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+      supabase.from('bjj_sessions').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+      supabase.from('cardio_sessions').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+    ])
+    setTotalCounts({
+      workouts: wHead.count ?? 0,
+      bjj: bjjHead.count ?? 0,
+      cardio: cardioHead.count ?? 0,
+    })
 
     const { data: w } = await supabase
       .from('workouts')
@@ -1063,7 +1069,9 @@ function HistoryClient() {
 
         {selectedView === 'achievements' && (
           <Achievements
-            totalWorkouts={totalWorkoutCount}
+            totalWorkouts={totalCounts.workouts}
+            bjjSessions={totalCounts.bjj}
+            cardioSessions={totalCounts.cardio}
             streakWeeks={streakData?.strength.current ?? 0}
           />
         )}

@@ -30,11 +30,18 @@ function FallbackBadge({ label, earned, tier }: { label: string; earned: boolean
   )
 }
 
+const BADGE_TYPE: Record<Achievement['group'], string> = {
+  Workouts: 'milestone',
+  BJJ: 'bjj',
+  Cardio: 'cardio',
+  Streaks: 'streak',
+}
+
 // Rendered badge: a tier/type PNG with the count overlaid in the Anton font.
 // Falls back to the SVG patch if the image isn't there yet.
 function BadgeIcon({ a }: { a: Achievement }) {
   const [imgError, setImgError] = useState(false)
-  const type = a.group === 'Streaks' ? 'streak' : 'milestone'
+  const type = BADGE_TYPE[a.group]
   const num = a.label.replace('w', '')
 
   if (imgError) return <FallbackBadge label={a.label} earned={a.earned} tier={a.tier} />
@@ -58,23 +65,42 @@ function BadgeIcon({ a }: { a: Achievement }) {
   )
 }
 
+const STAT_COLOR: Record<string, string> = {
+  Workouts: 'text-brand-red',
+  BJJ: 'text-[#A78BFA]',
+  Cardio: 'text-[#34D399]',
+  Streak: 'text-amber-400',
+}
+
 export default function Achievements({
   totalWorkouts,
   streakWeeks,
+  bjjSessions,
+  cardioSessions,
 }: {
   totalWorkouts: number
   streakWeeks: number
+  bjjSessions: number
+  cardioSessions: number
 }) {
   const toast = useToast()
-  const all = computeAchievements({ totalWorkouts, streakWeeks })
+  const stats = { totalWorkouts, streakWeeks, bjjSessions, cardioSessions }
+  const all = computeAchievements(stats)
   const earnedCount = all.filter((a) => a.earned).length
-  const groups: Achievement['group'][] = ['Milestones', 'Streaks']
+  const groups: Achievement['group'][] = ['Workouts', 'BJJ', 'Cardio', 'Streaks']
+
+  const headlineStats = [
+    { key: 'Workouts', value: totalWorkouts, label: 'Workouts' },
+    { key: 'BJJ', value: bjjSessions, label: 'BJJ' },
+    { key: 'Cardio', value: cardioSessions, label: 'Cardio' },
+    { key: 'Streak', value: streakWeeks, label: 'Wk Streak' },
+  ]
 
   // Badges earned since the last visit get a one-time celebration (pop + glow + toast).
   const [newlyEarned, setNewlyEarned] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    const earnedIds = computeAchievements({ totalWorkouts, streakWeeks })
+    const earnedIds = computeAchievements(stats)
       .filter((a) => a.earned)
       .map((a) => a.id)
 
@@ -98,7 +124,7 @@ export default function Achievements({
     const fresh = earnedIds.filter((id) => !(seen as string[]).includes(id))
     if (fresh.length > 0) {
       setNewlyEarned(new Set(fresh))
-      const titles = computeAchievements({ totalWorkouts, streakWeeks })
+      const titles = computeAchievements(stats)
         .filter((a) => fresh.includes(a.id))
         .map((a) => a.title)
       toast.success(
@@ -112,7 +138,7 @@ export default function Achievements({
     }
     // toast is stable (from context); intentionally not a dep
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalWorkouts, streakWeeks])
+  }, [totalWorkouts, streakWeeks, bjjSessions, cardioSessions])
 
   return (
     <div className="space-y-9">
@@ -126,6 +152,16 @@ export default function Achievements({
           <span className="font-display text-brand-red text-xl">{earnedCount}</span>
           <span className="text-zinc-600"> / {all.length}</span>
         </span>
+      </div>
+
+      {/* Lifetime stats — your numbers at a glance, badges below */}
+      <div className="grid grid-cols-4 gap-2 border-y border-white/[0.06] py-5">
+        {headlineStats.map((s) => (
+          <div key={s.key} className="text-center">
+            <div className={`font-display text-3xl leading-none ${STAT_COLOR[s.key]}`}>{s.value}</div>
+            <div className="mt-1.5 text-[11px] uppercase tracking-wide text-zinc-500">{s.label}</div>
+          </div>
+        ))}
       </div>
 
       {groups.map((g) => {

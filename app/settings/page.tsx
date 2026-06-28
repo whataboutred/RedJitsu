@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
-  Trophy,
   User,
   Target,
   ShieldCheck,
@@ -13,21 +12,12 @@ import {
   LogIn,
 } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/Card'
-import { ProgressRing } from '@/components/ui/ProgressRing'
 import { ConfirmDialog } from '@/components/ui/BottomSheet'
 import { supabase } from '@/lib/supabaseClient'
 import { ensureProfile } from '@/lib/api'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import { useRouter } from 'next/navigation'
 import BackgroundLogo from '@/components/BackgroundLogo'
-
-type UserStats = {
-  totalWorkouts: number
-  totalBjjSessions: number
-  currentStreak: number
-  avgWeeklyWorkouts: number
-  joinedDate: string
-}
 
 const NAV_ITEMS = [
   { href: '/settings/account', label: 'Account', sub: 'Name, email & password', icon: User },
@@ -39,7 +29,7 @@ export default function ProfileHubPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [displayName, setDisplayName] = useState('')
-  const [userStats, setUserStats] = useState<UserStats | null>(null)
+  const [joinedDate, setJoinedDate] = useState<string | null>(null)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [demo, setDemo] = useState(false)
 
@@ -54,54 +44,12 @@ export default function ProfileHubPage() {
       } catch (err) {
         console.error('Error loading profile:', err)
       }
-      await loadUserStats(userId)
+      const { data: { user } } = await supabase.auth.getUser()
+      setJoinedDate(user?.created_at ?? null)
       setLoading(false)
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  async function loadUserStats(userId: string) {
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-
-    const { data: workouts } = await supabase
-      .from('workouts')
-      .select('created_at')
-      .eq('user_id', userId)
-      .gte('created_at', thirtyDaysAgo.toISOString())
-
-    const { data: bjjSessions } = await supabase
-      .from('bjj_sessions')
-      .select('created_at')
-      .eq('user_id', userId)
-      .gte('created_at', thirtyDaysAgo.toISOString())
-
-    const { data: { user } } = await supabase.auth.getUser()
-    const joinedDate = user?.created_at || new Date().toISOString()
-
-    const totalWorkouts = workouts?.length || 0
-    const totalBjjSessions = bjjSessions?.length || 0
-    const avgWeeklyWorkouts = Math.round((totalWorkouts / 4.3) * 10) / 10
-    const currentStreak = calculateCurrentStreak(workouts || [], bjjSessions || [])
-
-    setUserStats({ totalWorkouts, totalBjjSessions, currentStreak, avgWeeklyWorkouts, joinedDate })
-  }
-
-  function calculateCurrentStreak(workouts: any[], bjjSessions: any[]): number {
-    const allSessions = [
-      ...workouts.map(w => ({ date: w.created_at })),
-      ...bjjSessions.map(b => ({ date: b.created_at })),
-    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
-    let streak = 0
-    let lastDate = new Date()
-    for (const session of allSessions) {
-      const sessionDate = new Date(session.date)
-      const diffDays = Math.floor((lastDate.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24))
-      if (diffDays <= 2) { streak++; lastDate = sessionDate } else { break }
-    }
-    return streak
-  }
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -133,54 +81,16 @@ export default function ProfileHubPage() {
               <p className="text-xl font-semibold text-white truncate">
                 {displayName || 'Set your name'}
               </p>
-              {userStats && (
+              {joinedDate && (
                 <p className="text-sm text-zinc-500">
-                  Member since {new Date(userStats.joinedDate).toLocaleDateString()}
+                  Member since {new Date(joinedDate).toLocaleDateString()}
                 </p>
               )}
             </div>
           </div>
         </AnimatedCard>
 
-        {/* Stats Overview */}
-        {userStats && (
-          <AnimatedCard delay={0.05}>
-            <div className="flex items-center gap-2 mb-4">
-              <Trophy className="w-5 h-5 text-zinc-400" />
-              <h3 className="font-display uppercase text-lg text-white">Your Stats (30 days)</h3>
-            </div>
-            <div className="grid grid-cols-4 gap-3">
-              <div className="text-center">
-                <div className="relative inline-flex items-center justify-center">
-                  <ProgressRing progress={(userStats.totalWorkouts / 20) * 100} color="#DC2626" />
-                  <span className="absolute font-display text-base text-white">{userStats.totalWorkouts}</span>
-                </div>
-                <p className="text-xs text-zinc-500 mt-1">Workouts</p>
-              </div>
-              <div className="text-center">
-                <div className="relative inline-flex items-center justify-center">
-                  <ProgressRing progress={(userStats.totalBjjSessions / 10) * 100} color="#7C3AED" />
-                  <span className="absolute font-display text-base text-white">{userStats.totalBjjSessions}</span>
-                </div>
-                <p className="text-xs text-zinc-500 mt-1">BJJ</p>
-              </div>
-              <div className="text-center">
-                <div className="relative inline-flex items-center justify-center">
-                  <ProgressRing progress={(userStats.currentStreak / 7) * 100} color="#F59E0B" />
-                  <span className="absolute font-display text-base text-white">{userStats.currentStreak}</span>
-                </div>
-                <p className="text-xs text-zinc-500 mt-1">Streak</p>
-              </div>
-              <div className="text-center">
-                <div className="relative inline-flex items-center justify-center">
-                  <ProgressRing progress={(userStats.avgWeeklyWorkouts / 7) * 100} color="#10B981" />
-                  <span className="absolute font-display text-base text-white">{userStats.avgWeeklyWorkouts}</span>
-                </div>
-                <p className="text-xs text-zinc-500 mt-1">Avg/Week</p>
-              </div>
-            </div>
-          </AnimatedCard>
-        )}
+        {/* Stats live on the Progress → Achievements tab now (avoids duplicating the numbers here) */}
 
         {/* Navigation */}
         <div className="space-y-2 pt-1">
