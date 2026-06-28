@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, RefreshCw, Clock, ChevronDown, ChevronUp, CheckCircle2, Zap, Search, Target } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
-import { DEMO } from '@/lib/activeUser'
+import { isDemoVisitor, DEMO_USER_ID } from '@/lib/activeUser'
 import { useDataRefresh } from '@/hooks/useDataRefresh'
 
 type InsightsResponse = {
@@ -94,22 +94,44 @@ export default function AIInsights() {
   const [error, setError] = useState<string | null>(null)
   const [expanded, setExpanded] = useState(true)
   const [hasCheckedCache, setHasCheckedCache] = useState(false)
+  const [isDemo, setIsDemo] = useState(false)
+  const isDemoRef = useRef(false)
 
-  // Auto-load cached insights on mount
+  // On mount: real users hit the API; anon demo visitors get the seeded
+  // sample insight read-only (no API call, so no tokens are ever spent).
   useEffect(() => {
-    if (DEMO) return
-    loadInsights(false)
+    isDemoVisitor().then((d) => {
+      isDemoRef.current = d
+      setIsDemo(d)
+      if (d) loadDemoInsight()
+      else loadInsights(false)
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // When training data or settings change, ask the server again — it
   // regenerates automatically once the data signature stops matching.
   useDataRefresh(() => {
-    if (!DEMO && !loading) loadInsights(false)
+    if (!isDemoRef.current && !loading) loadInsights(false)
   })
 
-  // Hide in demo mode — requires real auth for API calls
-  if (DEMO) return null
+  // Read-only sample insight for the public demo (no auth, no model call).
+  async function loadDemoInsight() {
+    try {
+      const { data } = await supabase
+        .from('ai_insights')
+        .select('content, created_at')
+        .eq('user_id', DEMO_USER_ID)
+        .order('created_at', { ascending: false })
+        .limit(1)
+      const row = data?.[0]
+      if (row) setInsights({ content: row.content, cached: true, generatedAt: row.created_at })
+    } catch {
+      /* ignore */
+    } finally {
+      setHasCheckedCache(true)
+    }
+  }
 
   async function loadInsights(forceRefresh: boolean) {
     if (loading) return // Prevent concurrent requests
@@ -175,7 +197,7 @@ export default function AIInsights() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {insights && (
+          {insights && !isDemo && (
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -238,7 +260,7 @@ export default function AIInsights() {
               )}
 
               {/* No insights yet - show generate button */}
-              {!insights && !loading && !error && hasCheckedCache && (
+              {!insights && !loading && !error && hasCheckedCache && !isDemo && (
                 <div className="py-3 text-center">
                   <p className="text-sm text-zinc-400 mb-3">
                     Get AI-powered analysis of your training trends
@@ -257,6 +279,11 @@ export default function AIInsights() {
               {insights && !loading && (
                 <div className="space-y-0.5">
                   {renderMarkdown(insights.content)}
+                  {isDemo && (
+                    <p className="pt-3 mt-2 border-t border-white/[0.06] text-xs text-zinc-500">
+                      Sample insight — <span className="text-violet-400">sign in</span> for live AI coaching on your own training.
+                    </p>
+                  )}
                 </div>
               )}
 
