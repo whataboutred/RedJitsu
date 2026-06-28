@@ -82,7 +82,7 @@ export default function BJJDetail({ sessionId, onClose }: { sessionId: string; o
             <Skeleton variant="text" className="w-1/3" />
             <Skeleton variant="rounded" className="h-24 w-full" />
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg" title="Close">
+          <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -95,7 +95,7 @@ export default function BJJDetail({ sessionId, onClose }: { sessionId: string; o
       <div className="card max-w-lg w-full">
         <div className="flex items-center justify-between">
           <div>Session not found or access denied.</div>
-          <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg" title="Close">
+          <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -114,8 +114,8 @@ export default function BJJDetail({ sessionId, onClose }: { sessionId: string; o
           <div className="flex items-center gap-2">
             <button 
               onClick={handleEdit}
-              className="p-1 hover:bg-white/5 rounded-lg text-blue-400 hover:text-blue-300" 
-              title="Edit session"
+              className="p-1 hover:bg-white/5 rounded-lg text-zinc-400 hover:text-white" 
+              aria-label="Edit session"
             >
               <Edit3 className="w-5 h-5" />
             </button>
@@ -123,11 +123,11 @@ export default function BJJDetail({ sessionId, onClose }: { sessionId: string; o
               onClick={() => setConfirmDelete(true)}
               disabled={deleting}
               className="p-1 hover:bg-white/5 rounded-lg text-red-400 hover:text-red-300 disabled:opacity-50" 
-              title="Delete session"
+              aria-label="Delete session"
             >
               <Trash2 className="w-5 h-5" />
             </button>
-            <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg" title="Close">
+            <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg" aria-label="Close">
               <X className="w-5 h-5" />
             </button>
           </div>

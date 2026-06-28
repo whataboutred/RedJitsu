@@ -2,6 +2,7 @@
 
 import { forwardRef, HTMLAttributes, ReactNode } from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
+import { ArrowUp, ArrowDown, ArrowRight } from 'lucide-react';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
@@ -119,8 +120,8 @@ interface StatCardProps {
 const colorVariants = {
   default: 'from-zinc-500/20 to-zinc-600/20',
   strength: 'from-brand-red/20 to-red-700/20',
-  bjj: 'from-purple-500/20 to-pink-500/20',
-  cardio: 'from-emerald-500/20 to-cyan-500/20',
+  bjj: 'from-purple-500/20 to-purple-700/20',
+  cardio: 'from-emerald-500/20 to-emerald-700/20',
 };
 
 export const StatCard = ({ label, value, icon, trend, trendValue, color = 'default' }: StatCardProps) => {
@@ -130,11 +131,12 @@ export const StatCard = ({ label, value, icon, trend, trendValue, color = 'defau
         {icon && <span className="text-zinc-400">{icon}</span>}
         {trend && (
           <span
-            className={`text-xs font-medium ${
+            className={`inline-flex items-center gap-1 text-xs font-medium ${
               trend === 'up' ? 'text-emerald-400' : trend === 'down' ? 'text-red-400' : 'text-zinc-400'
             }`}
           >
-            {trend === 'up' ? '↑' : trend === 'down' ? '↓' : '→'} {trendValue}
+            {trend === 'up' ? <ArrowUp className="w-3 h-3" /> : trend === 'down' ? <ArrowDown className="w-3 h-3" /> : <ArrowRight className="w-3 h-3" />}
+            {trendValue}
           </span>
         )}
       </div>

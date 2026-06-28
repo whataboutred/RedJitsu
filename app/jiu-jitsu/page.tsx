@@ -869,7 +869,8 @@ export default function BJJPage() {
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-brand-dark via-brand-dark/95 to-transparent p-4 pb-20"
+            className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-brand-dark via-brand-dark/95 to-transparent px-4 pt-4"
+            style={{ paddingBottom: 'calc(6.25rem + env(safe-area-inset-bottom, 0px))' }}
           >
             <div className="max-w-lg mx-auto flex gap-2">
               <Button

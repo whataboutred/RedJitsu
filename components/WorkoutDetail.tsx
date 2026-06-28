@@ -164,7 +164,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
             <Skeleton variant="text" className="w-1/3" />
             <Skeleton variant="rounded" className="h-24 w-full" />
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg" title="Close">
+          <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -177,7 +177,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
       <div className="card max-w-lg w-full mx-4">
         <div className="flex items-center justify-between">
           <div>Workout not found or access denied.</div>
-          <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg" title="Close">
+          <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -197,14 +197,14 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
             <button
               onClick={handleRepeat}
               className="p-1 hover:bg-white/5 rounded-lg text-emerald-400 hover:text-emerald-300"
-              title="Repeat this workout"
+              aria-label="Repeat this workout"
             >
               <Copy className="w-5 h-5" />
             </button>
             <button
               onClick={handleEdit}
-              className="p-1 hover:bg-white/5 rounded-lg text-blue-400 hover:text-blue-300"
-              title="Edit workout"
+              className="p-1 hover:bg-white/5 rounded-lg text-zinc-400 hover:text-white"
+              aria-label="Edit workout"
             >
               <Edit3 className="w-5 h-5" />
             </button>
@@ -212,11 +212,11 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
               onClick={() => setConfirmDelete(true)}
               disabled={deleting}
               className="p-1 hover:bg-white/5 rounded-lg text-red-400 hover:text-red-300 disabled:opacity-50" 
-              title="Delete workout"
+              aria-label="Delete workout"
             >
               <Trash2 className="w-5 h-5" />
             </button>
-            <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg" title="Close">
+            <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg" aria-label="Close">
               <X className="w-5 h-5" />
             </button>
           </div>

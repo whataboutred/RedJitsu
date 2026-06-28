@@ -90,7 +90,7 @@ function MiniBarChart({ data, maxValue }: { data: number[]; maxValue: number }) 
       {data.map((value, i) => (
         <motion.div
           key={i}
-          className="flex-1 bg-gradient-to-t from-red-500 to-orange-400 rounded-t"
+          className="flex-1 bg-gradient-to-t from-red-600 to-red-400 rounded-t"
           initial={{ height: 0 }}
           animate={{ height: `${(value / maxValue) * 100}%` }}
           transition={{ delay: i * 0.05, duration: 0.3 }}

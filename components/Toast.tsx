@@ -75,8 +75,8 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
     },
     info: {
       icon: <Info className="w-5 h-5" />,
-      colors: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
-      iconColor: 'text-blue-400',
+      colors: 'bg-surface-elevated border-white/10 text-zinc-200',
+      iconColor: 'text-zinc-300',
     },
     warning: {
       icon: <AlertTriangle className="w-5 h-5" />,
@@ -107,6 +107,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
       <p className="flex-1 text-sm text-white font-medium">{toast.message}</p>
       <button
         onClick={() => onDismiss(toast.id)}
+        aria-label="Dismiss notification"
         className="text-zinc-400 hover:text-white transition-colors p-1 -m-1 rounded-lg hover:bg-white/10"
       >
         <X className="w-4 h-4" />

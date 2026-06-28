@@ -306,17 +306,17 @@ h1, h2, h3, h4, h5, h6 {
    ============================================ */
 
 .gradient-strength {
-  @apply bg-gradient-to-r from-strength/20 to-orange-500/20;
+  @apply bg-gradient-to-r from-strength/20 to-red-800/20;
   @apply border-l-4 border-strength;
 }
 
 .gradient-bjj {
-  @apply bg-gradient-to-r from-bjj/20 to-pink-500/20;
+  @apply bg-gradient-to-r from-bjj/20 to-purple-800/20;
   @apply border-l-4 border-bjj;
 }
 
 .gradient-cardio {
-  @apply bg-gradient-to-r from-cardio/20 to-cyan-500/20;
+  @apply bg-gradient-to-r from-cardio/20 to-emerald-800/20;
   @apply border-l-4 border-cardio;
 }
 
@@ -342,7 +342,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .badge-info {
-  @apply bg-info/20 text-blue-400;
+  @apply bg-surface-elevated text-zinc-300;
 }
 
 /* ============================================
@@ -551,7 +551,7 @@ h1, h2, h3, h4, h5, h6 {
 .pr-badge {
   @apply inline-flex items-center gap-1;
   @apply px-2 py-1 rounded-lg;
-  @apply bg-gradient-to-r from-amber-500 to-orange-500;
+  @apply bg-gradient-to-r from-amber-500 to-amber-600;
   @apply text-xs font-bold text-white;
   @apply animate-pulse-soft;
 }
