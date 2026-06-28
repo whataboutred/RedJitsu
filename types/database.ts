@@ -23,6 +23,7 @@ export interface Database {
       profiles: {
         Row: {
           id: string
+          display_name: string | null
           unit: string
           weekly_goal: number | null
           target_weeks: number | null
@@ -37,6 +38,7 @@ export interface Database {
         }
         Insert: {
           id: string
+          display_name?: string | null
           unit?: string
           weekly_goal?: number | null
           target_weeks?: number | null
@@ -51,6 +53,7 @@ export interface Database {
         }
         Update: {
           id?: string
+          display_name?: string | null
           unit?: string
           weekly_goal?: number | null
           target_weeks?: number | null

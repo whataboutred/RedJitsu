@@ -1,138 +1,61 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
+import { motion } from 'framer-motion'
 import {
-  Settings,
-  User,
-  Dumbbell,
-  Target,
-  Activity,
-  Eye,
-  Lock,
-  ChevronRight,
-  Check,
-  Flame,
   Trophy,
-  Calendar,
-  TrendingUp,
+  User,
+  Target,
+  ShieldCheck,
+  ChevronRight,
   LogOut,
-  Trash2,
-  Scale,
-  Sparkles
 } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/Card'
 import { ProgressRing } from '@/components/ui/ProgressRing'
-import { Button } from '@/components/ui/Button'
-import { BottomSheet, ConfirmDialog } from '@/components/ui/BottomSheet'
-import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
-import { useToast } from '@/components/Toast'
+import { ConfirmDialog } from '@/components/ui/BottomSheet'
 import { supabase } from '@/lib/supabaseClient'
-import { ensureProfile, upsertProfile } from '@/lib/api'
+import { ensureProfile } from '@/lib/api'
 import { getActiveUserId } from '@/lib/activeUser'
 import { useRouter } from 'next/navigation'
-import DeleteAllData from '@/components/DeleteAllData'
-import DataExport from '@/components/DataExport'
 import BackgroundLogo from '@/components/BackgroundLogo'
-
-type Profile = {
-  unit: 'lb' | 'kg' | null
-  weekly_goal: number | null
-  bjj_weekly_goal: number | null
-  cardio_weekly_goal: number | null
-}
 
 type UserStats = {
   totalWorkouts: number
   totalBjjSessions: number
   currentStreak: number
   avgWeeklyWorkouts: number
-  avgWeeklyBjj: number
   joinedDate: string
 }
 
-// Toggle switch component
-function Toggle({ enabled, onChange, color = 'bg-red-500' }: {
-  enabled: boolean
-  onChange: (value: boolean) => void
-  color?: string
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={enabled}
-      onClick={() => onChange(!enabled)}
-      className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${enabled ? color : 'bg-surface-pressed'
-        }`}
-    >
-      <motion.span
-        className="inline-block h-5 w-5 rounded-full bg-white shadow-lg"
-        animate={{ x: enabled ? 24 : 4 }}
-        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-      />
-    </button>
-  )
-}
+const NAV_ITEMS = [
+  { href: '/settings/account', label: 'Account', sub: 'Name, email & password', icon: User },
+  { href: '/settings/goals', label: 'Goals', sub: 'Weekly targets & coach context', icon: Target },
+  { href: '/settings/privacy', label: 'Privacy & Data', sub: 'Export or delete your data', icon: ShieldCheck },
+]
 
-
-export default function SettingsPage() {
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+export default function ProfileHubPage() {
   const router = useRouter()
-  const toast = useToast()
-
-  // Profile settings
-  const [unit, setUnit] = useState<'lb' | 'kg'>('lb')
-  const [weeklyGoal, setWeeklyGoal] = useState<number>(4)
-  const [bjjWeeklyGoal, setBjjWeeklyGoal] = useState<number>(2)
-  const [cardioWeeklyGoal, setCardioWeeklyGoal] = useState<number>(3)
-
-  // Goal visibility
-  const [coachContext, setCoachContext] = useState<string>('')
-
-  // User stats
+  const [loading, setLoading] = useState(true)
+  const [displayName, setDisplayName] = useState('')
   const [userStats, setUserStats] = useState<UserStats | null>(null)
-  const [userEmail, setUserEmail] = useState<string>('')
-
-  // Password change
-  const [showPasswordSheet, setShowPasswordSheet] = useState(false)
-  const [currentPassword, setCurrentPassword] = useState<string>('')
-  const [newPassword, setNewPassword] = useState<string>('')
-  const [confirmPassword, setConfirmPassword] = useState<string>('')
-  const [changingPassword, setChangingPassword] = useState<boolean>(false)
-
-  // Logout confirm
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   useEffect(() => {
-    loadUserData()
-  }, [])
-
-  async function loadUserData() {
-    const userId = await getActiveUserId()
-    if (!userId) { router.push('/login'); return }
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user?.email) setUserEmail(user.email)
-
-    try {
-      const p = await ensureProfile(userId)
-
-      if (p) {
-        setUnit((p.unit ?? 'lb') as 'lb' | 'kg')
-        setWeeklyGoal(p.weekly_goal ?? 4)
-        setBjjWeeklyGoal(p.bjj_weekly_goal ?? 2)
-        setCardioWeeklyGoal(p.cardio_weekly_goal ?? 3)
-        setCoachContext(p.coach_context ?? '')
+    ;(async () => {
+      const userId = await getActiveUserId()
+      if (!userId) { router.push('/login'); return }
+      try {
+        const p = await ensureProfile(userId)
+        if (p) setDisplayName(p.display_name ?? '')
+      } catch (err) {
+        console.error('Error loading profile:', err)
       }
-    } catch (err) {
-      console.error('Error in loadUserData:', err)
-    }
-
-    await loadUserStats(userId)
-    setLoading(false)
-  }
+      await loadUserStats(userId)
+      setLoading(false)
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function loadUserStats(userId: string) {
     const thirtyDaysAgo = new Date()
@@ -156,118 +79,25 @@ export default function SettingsPage() {
     const totalWorkouts = workouts?.length || 0
     const totalBjjSessions = bjjSessions?.length || 0
     const avgWeeklyWorkouts = Math.round((totalWorkouts / 4.3) * 10) / 10
-    const avgWeeklyBjj = Math.round((totalBjjSessions / 4.3) * 10) / 10
-
     const currentStreak = calculateCurrentStreak(workouts || [], bjjSessions || [])
 
-    setUserStats({
-      totalWorkouts,
-      totalBjjSessions,
-      currentStreak,
-      avgWeeklyWorkouts,
-      avgWeeklyBjj,
-      joinedDate
-    })
+    setUserStats({ totalWorkouts, totalBjjSessions, currentStreak, avgWeeklyWorkouts, joinedDate })
   }
 
   function calculateCurrentStreak(workouts: any[], bjjSessions: any[]): number {
     const allSessions = [
-      ...workouts.map(w => ({ date: w.created_at, type: 'workout' })),
-      ...bjjSessions.map(b => ({ date: b.created_at, type: 'bjj' }))
+      ...workouts.map(w => ({ date: w.created_at })),
+      ...bjjSessions.map(b => ({ date: b.created_at })),
     ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     let streak = 0
     let lastDate = new Date()
-
     for (const session of allSessions) {
       const sessionDate = new Date(session.date)
       const diffDays = Math.floor((lastDate.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24))
-
-      if (diffDays <= 2) {
-        streak++
-        lastDate = sessionDate
-      } else {
-        break
-      }
+      if (diffDays <= 2) { streak++; lastDate = sessionDate } else { break }
     }
-
     return streak
-  }
-
-  async function save() {
-    const userId = await getActiveUserId()
-    if (!userId) { toast.error('Please sign in again'); return }
-
-    setSaving(true)
-    try {
-      await upsertProfile(userId, {
-        unit,
-        weekly_goal: Math.min(14, Math.max(0, weeklyGoal)),
-        bjj_weekly_goal: Math.min(14, Math.max(0, bjjWeeklyGoal)),
-        cardio_weekly_goal: Math.min(14, Math.max(0, cardioWeeklyGoal)),
-        coach_context: coachContext.trim() || null
-      })
-
-      toast.success('Settings saved!')
-      setTimeout(() => router.push('/dashboard'), 500)
-    } catch (err) {
-      toast.error('Failed to save settings')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function changePassword() {
-    if (!currentPassword || !newPassword) {
-      toast.warning('Please fill in all password fields')
-      return
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast.error('New passwords do not match')
-      return
-    }
-
-    if (newPassword.length < 12) {
-      toast.warning('New password must be at least 12 characters')
-      return
-    }
-    if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
-      toast.warning('Password must include uppercase, lowercase, and a number')
-      return
-    }
-
-    setChangingPassword(true)
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: userEmail,
-        password: currentPassword
-      })
-
-      if (signInError) {
-        toast.error('Current password is incorrect')
-        return
-      }
-
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword
-      })
-
-      if (updateError) {
-        toast.error('Failed to change password')
-        return
-      }
-
-      toast.success('Password changed!')
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
-      setShowPasswordSheet(false)
-    } catch (err) {
-      toast.error('Failed to change password')
-    } finally {
-      setChangingPassword(false)
-    }
   }
 
   async function handleLogout() {
@@ -275,21 +105,10 @@ export default function SettingsPage() {
     router.push('/login')
   }
 
-  if (loading) {
-    return (
-      <div className="relative min-h-screen bg-brand-dark p-4 pb-24 space-y-4">
-        <BackgroundLogo />
-        <Skeleton variant="rectangular" className="h-10 w-32" />
-        <SkeletonCard className="h-32" />
-        <SkeletonCard className="h-48" />
-        <SkeletonCard className="h-32" />
-      </div>
-    )
-  }
-
   return (
     <div className="relative min-h-screen bg-brand-dark pb-32">
       <BackgroundLogo />
+
       {/* Header */}
       <div className="border-b border-red-500/10">
         <div className="px-4 py-4">
@@ -299,17 +118,18 @@ export default function SettingsPage() {
       </div>
 
       <div className="p-4 space-y-4">
-        {/* Profile Card */}
+        {/* Identity */}
         <AnimatedCard delay={0}>
           <div className="flex items-center gap-4">
-            {/* Skull crest — the old logo reframed as an embroidered patch */}
             <div className="relative w-16 h-16 rounded-full bg-surface-elevated border-2 border-brand-red/50 flex items-center justify-center overflow-hidden flex-shrink-0">
               <div className="absolute inset-[3px] rounded-full border border-dashed border-white/15" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/red-jitsu-logo.png" alt="" className="w-[52px] h-[52px] object-contain" />
             </div>
-            <div className="flex-1">
-              <p className="text-lg font-semibold text-white">{userEmail || 'User'}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-xl font-semibold text-white truncate">
+                {displayName || 'Set your name'}
+              </p>
               {userStats && (
                 <p className="text-sm text-zinc-500">
                   Member since {new Date(userStats.joinedDate).toLocaleDateString()}
@@ -359,233 +179,45 @@ export default function SettingsPage() {
           </AnimatedCard>
         )}
 
-        {/* Units — compact inline toggle */}
-        <AnimatedCard delay={0.1}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <Scale className="w-4 h-4 text-zinc-500" />
-              <span className="text-sm text-zinc-300">Weight unit</span>
-            </div>
-            <div className="flex items-center gap-1 p-1 rounded-full bg-surface-elevated/60">
-              {(['lb', 'kg'] as const).map((u) => (
-                <button
-                  key={u}
-                  onClick={() => setUnit(u)}
-                  className={`px-3.5 py-1 rounded-full text-sm font-semibold transition-all ${unit === u
-                    ? 'bg-brand-red text-white'
-                    : 'text-zinc-400 hover:text-white'
-                    }`}
+        {/* Navigation */}
+        <div className="space-y-2 pt-1">
+          {NAV_ITEMS.map((item, i) => {
+            const Icon = item.icon
+            return (
+              <motion.div
+                key={item.href}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + i * 0.04 }}
+              >
+                <Link
+                  href={item.href}
+                  className="flex items-center gap-3 px-4 py-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-white/10 hover:bg-white/[0.04] active:scale-[0.99] transition-all"
                 >
-                  {u}
-                </button>
-              ))}
-            </div>
-          </div>
-        </AnimatedCard>
+                  <div className="w-10 h-10 rounded-xl bg-brand-red/15 flex items-center justify-center shrink-0">
+                    <Icon className="w-5 h-5 text-brand-red" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-white">{item.label}</p>
+                    <p className="text-xs text-zinc-500">{item.sub}</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-zinc-600 shrink-0" />
+                </Link>
+              </motion.div>
+            )
+          })}
+        </div>
 
-        {/* Strength Goals */}
-        <AnimatedCard delay={0.15}>
-          <div className="flex items-center gap-2 mb-4">
-            <Dumbbell className="w-5 h-5 text-red-400" />
-            <h3 className="font-display uppercase text-lg text-white">Strength Goal</h3>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-zinc-500">Sessions per week <span className="text-zinc-600">· 0 = off</span></p>
-                <span className="font-display text-2xl text-red-400">{weeklyGoal === 0 ? 'Off' : weeklyGoal}</span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={14}
-                value={weeklyGoal}
-                onChange={(e) => setWeeklyGoal(Number(e.target.value))}
-                className="w-full h-2 cursor-pointer accent-[#DC2626]"
-              />
-            </div>
-          </div>
-        </AnimatedCard>
-
-        {/* BJJ Goals */}
-        <AnimatedCard delay={0.2}>
-          <div className="flex items-center gap-2 mb-4">
-            <Target className="w-5 h-5 text-purple-400" />
-            <h3 className="font-display uppercase text-lg text-white">BJJ Goal</h3>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-zinc-500">Sessions per week <span className="text-zinc-600">· 0 = off</span></p>
-                <span className="font-display text-2xl text-purple-400">{bjjWeeklyGoal === 0 ? 'Off' : bjjWeeklyGoal}</span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={14}
-                value={bjjWeeklyGoal}
-                onChange={(e) => setBjjWeeklyGoal(Number(e.target.value))}
-                className="w-full h-2 cursor-pointer accent-[#7C3AED]"
-              />
-            </div>
-          </div>
-        </AnimatedCard>
-
-        {/* Cardio Goals */}
-        <AnimatedCard delay={0.25}>
-          <div className="flex items-center gap-2 mb-4">
-            <Activity className="w-5 h-5 text-emerald-400" />
-            <h3 className="font-display uppercase text-lg text-white">Cardio Goal</h3>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-zinc-500">Sessions per week <span className="text-zinc-600">· 0 = off</span></p>
-                <span className="font-display text-2xl text-emerald-400">{cardioWeeklyGoal === 0 ? 'Off' : cardioWeeklyGoal}</span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={14}
-                value={cardioWeeklyGoal}
-                onChange={(e) => setCardioWeeklyGoal(Number(e.target.value))}
-                className="w-full h-2 cursor-pointer accent-[#10B981]"
-              />
-            </div>
-          </div>
-        </AnimatedCard>
-
-        {/* AI Coach Context */}
-        <AnimatedCard delay={0.28}>
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-5 h-5 text-violet-400" />
-            <h3 className="font-display uppercase text-lg text-white">AI Coach Context</h3>
-          </div>
-          <p className="text-sm text-zinc-500 mb-4">
-            Tell the AI coach about your goals, injuries, or anything else it should factor
-            into your insights — e.g. &quot;cutting until August, left shoulder impingement,
-            prepping for my first BJJ competition.&quot;
-          </p>
-          <textarea
-            value={coachContext}
-            onChange={(e) => setCoachContext(e.target.value.slice(0, 1000))}
-            placeholder="Your goals, injuries, schedule constraints…"
-            className="w-full h-28 bg-surface border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 outline-none resize-none transition-all duration-200 focus:border-brand-red focus:ring-2 focus:ring-brand-red/25"
-          />
-          <p className="mt-1.5 text-xs text-zinc-600 text-right">{coachContext.length}/1000</p>
-        </AnimatedCard>
-
-        {/* Account Section */}
-        <AnimatedCard delay={0.35}>
-          <div className="flex items-center gap-2 mb-4">
-            <Lock className="w-5 h-5 text-zinc-500" />
-            <h3 className="font-display uppercase text-lg text-white">Account</h3>
-          </div>
-          <div className="space-y-2">
-            <button
-              onClick={() => setShowPasswordSheet(true)}
-              className="w-full p-4 rounded-xl bg-surface/50 hover:bg-surface-elevated transition-colors flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <Lock className="w-5 h-5 text-zinc-500" />
-                <span className="text-white">Change Password</span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-zinc-500" />
-            </button>
-            <button
-              onClick={() => setShowLogoutConfirm(true)}
-              className="w-full p-4 rounded-xl bg-surface/50 hover:bg-surface-elevated transition-colors flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <LogOut className="w-5 h-5 text-zinc-500" />
-                <span className="text-white">Sign Out</span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-zinc-500" />
-            </button>
-          </div>
-        </AnimatedCard>
-
-        {/* Danger Zone */}
-        {/* Data Export */}
-        <DataExport />
-
-        <AnimatedCard delay={0.4} className="border border-red-500/20">
-          <div className="flex items-center gap-2 mb-4">
-            <Trash2 className="w-5 h-5 text-red-400" />
-            <h3 className="font-display uppercase text-lg text-red-400">Danger Zone</h3>
-          </div>
-          <DeleteAllData />
-        </AnimatedCard>
+        {/* Log out */}
+        <button
+          onClick={() => setShowLogoutConfirm(true)}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl text-zinc-400 hover:text-red-400 hover:bg-red-500/[0.06] transition-colors mt-2"
+        >
+          <LogOut className="w-4 h-4" />
+          Log out
+        </button>
       </div>
 
-      {/* Sticky Save Button */}
-      <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-brand-dark via-brand-dark/95 to-transparent p-4"
-        style={{ paddingBottom: 'calc(6.25rem + env(safe-area-inset-bottom, 0px))' }}
-      >
-        <div className="max-w-lg mx-auto">
-          <Button
-            fullWidth
-            size="lg"
-            loading={saving}
-            onClick={save}
-          >
-            Save Settings
-          </Button>
-        </div>
-      </motion.div>
-
-      {/* Password Change Sheet */}
-      <BottomSheet
-        isOpen={showPasswordSheet}
-        onClose={() => setShowPasswordSheet(false)}
-        title="Change Password"
-      >
-        <div className="space-y-4 py-4">
-          <div>
-            <label className="block text-sm text-zinc-500 mb-2">Current Password</label>
-            <input
-              type="password"
-              className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-red-500 focus:outline-none"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="Enter current password"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-zinc-500 mb-2">New Password</label>
-            <input
-              type="password"
-              className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-red-500 focus:outline-none"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="At least 6 characters"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-zinc-500 mb-2">Confirm New Password</label>
-            <input
-              type="password"
-              className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-red-500 focus:outline-none"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Repeat new password"
-            />
-          </div>
-          <Button
-            fullWidth
-            onClick={changePassword}
-            loading={changingPassword}
-            disabled={!currentPassword || !newPassword || !confirmPassword}
-          >
-            Update Password
-          </Button>
-        </div>
-      </BottomSheet>
-
-      {/* Logout Confirmation */}
       <ConfirmDialog
         isOpen={showLogoutConfirm}
         onClose={() => setShowLogoutConfirm(false)}

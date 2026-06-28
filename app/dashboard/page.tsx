@@ -64,6 +64,7 @@ export default function Dashboard() {
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [bjj, setBjj] = useState<BJJ[]>([])
   const [cardio, setCardio] = useState<Cardio[]>([])
+  const [displayName, setDisplayName] = useState<string>('')
   const [weeklyGoal, setWeeklyGoal] = useState<number>(4)
   const [bjjWeeklyGoal, setBjjWeeklyGoal] = useState<number>(2)
   const [cardioWeeklyGoal, setCardioWeeklyGoal] = useState<number>(3)
@@ -91,7 +92,7 @@ export default function Dashboard() {
     const [profRes, workoutsRes, bjjRes, cardioRes, activeProgramRes] = await Promise.all([
       supabase
         .from('profiles')
-        .select('weekly_goal,bjj_weekly_goal,cardio_weekly_goal')
+        .select('display_name,weekly_goal,bjj_weekly_goal,cardio_weekly_goal')
         .eq('id', userId)
         .maybeSingle(),
       supabase
@@ -122,6 +123,7 @@ export default function Dashboard() {
 
     const prof = profRes.data
     if (prof) {
+      setDisplayName(prof.display_name ?? '')
       setWeeklyGoal(prof.weekly_goal ?? 4)
       setBjjWeeklyGoal(prof.bjj_weekly_goal ?? 2)
       setCardioWeeklyGoal(prof.cardio_weekly_goal ?? 3)
@@ -238,7 +240,7 @@ export default function Dashboard() {
         className="space-y-1 pt-1"
       >
         <h1 className="text-4xl font-display uppercase text-white">
-          {greeting}
+          {greeting}{displayName ? <span>, <span className="text-brand-red">{displayName}</span></span> : ''}
         </h1>
         <p className="text-zinc-500 text-sm">
           {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
