@@ -359,33 +359,27 @@ export default function SettingsPage() {
           </AnimatedCard>
         )}
 
-        {/* Units */}
+        {/* Units — compact inline toggle */}
         <AnimatedCard delay={0.1}>
-          <div className="flex items-center gap-2 mb-4">
-            <Scale className="w-5 h-5 text-zinc-400" />
-            <h3 className="font-display uppercase text-lg text-white">Weight Unit</h3>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => setUnit('lb')}
-              className={`p-4 rounded-xl border-2 transition-all ${unit === 'lb'
-                ? 'bg-red-500/20 border-red-500/50 text-white'
-                : 'bg-surface/50 border-white/[0.07] text-zinc-500 hover:border-white/20'
-                }`}
-            >
-              <p className="font-semibold">Pounds (lb)</p>
-              <p className="text-xs opacity-70">Imperial</p>
-            </button>
-            <button
-              onClick={() => setUnit('kg')}
-              className={`p-4 rounded-xl border-2 transition-all ${unit === 'kg'
-                ? 'bg-red-500/20 border-red-500/50 text-white'
-                : 'bg-surface/50 border-white/[0.07] text-zinc-500 hover:border-white/20'
-                }`}
-            >
-              <p className="font-semibold">Kilograms (kg)</p>
-              <p className="text-xs opacity-70">Metric</p>
-            </button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Scale className="w-4 h-4 text-zinc-500" />
+              <span className="text-sm text-zinc-300">Weight unit</span>
+            </div>
+            <div className="flex items-center gap-1 p-1 rounded-full bg-surface-elevated/60">
+              {(['lb', 'kg'] as const).map((u) => (
+                <button
+                  key={u}
+                  onClick={() => setUnit(u)}
+                  className={`px-3.5 py-1 rounded-full text-sm font-semibold transition-all ${unit === u
+                    ? 'bg-brand-red text-white'
+                    : 'text-zinc-400 hover:text-white'
+                    }`}
+                >
+                  {u}
+                </button>
+              ))}
+            </div>
           </div>
         </AnimatedCard>
 
