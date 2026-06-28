@@ -3,86 +3,58 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { computeAchievements, type Achievement, type Tier } from '@/lib/achievements'
-import { AnimatedCard } from '@/components/ui/Card'
 import { useToast } from '@/components/Toast'
 
 const SEEN_KEY = 'rj-seen-achievements'
 
-// Shared gradient/shine defs (rendered once) so the badges get depth + gloss.
-function BadgeDefs() {
+const TIER_RING: Record<Tier, string> = { gold: '#FBBF24', silver: '#D1D5DB', bronze: '#C2703D' }
+
+// SVG fallback "patch" — shown until the rendered PNG badges exist in
+// /public/badges/. Once those load, this is never used.
+function FallbackBadge({ label, earned, tier }: { label: string; earned: boolean; tier: Tier }) {
+  const ring = earned ? TIER_RING[tier] : '#3F3F46'
+  const text = earned ? '#FFFFFF' : '#52525B'
   return (
-    <svg width="0" height="0" className="absolute" aria-hidden>
+    <svg viewBox="0 0 100 100" className="w-full h-full">
       <defs>
         <linearGradient id="rj-badge-fill" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#F0473D" />
           <stop offset="100%" stopColor="#A1151B" />
         </linearGradient>
-        <radialGradient id="rj-badge-shine" cx="50%" cy="22%" r="65%">
-          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.45" />
-          <stop offset="55%" stopColor="#FFFFFF" stopOpacity="0" />
-        </radialGradient>
       </defs>
+      <rect x="11" y="11" width="78" height="78" rx="24" fill={earned ? 'url(#rj-badge-fill)' : '#1A1518'} stroke={ring} strokeWidth="5" />
+      <text x="50" y="55" textAnchor="middle" dominantBaseline="central" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic' }} fontSize="34" fill={text}>
+        {label}
+      </text>
     </svg>
   )
 }
 
-// On-brand "patch": tier-colored embroidered edge, dashed stitch, glossy
-// red gradient + shine when earned, the label in the Anton display font.
-function AchievementBadge({
-  label,
-  earned,
-  tier,
-}: {
-  label: string
-  earned: boolean
-  tier: Tier
-}) {
-  const ring = earned
-    ? tier === 'gold'
-      ? '#FBBF24'
-      : tier === 'silver'
-        ? '#D1D5DB'
-        : '#C2703D'
-    : '#3F3F46'
-  const text = earned ? '#FFFFFF' : '#52525B'
-  const stitch = earned ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.1)'
+// Rendered badge: a tier/type PNG with the count overlaid in the Anton font.
+// Falls back to the SVG patch if the image isn't there yet.
+function BadgeIcon({ a }: { a: Achievement }) {
+  const [imgError, setImgError] = useState(false)
+  const type = a.group === 'Streaks' ? 'streak' : 'milestone'
+  const num = a.label.replace('w', '')
+
+  if (imgError) return <FallbackBadge label={a.label} earned={a.earned} tier={a.tier} />
 
   return (
-    <svg viewBox="0 0 100 100" className="w-full h-full">
-      <rect
-        x="11"
-        y="11"
-        width="78"
-        height="78"
-        rx="24"
-        fill={earned ? 'url(#rj-badge-fill)' : '#1A1518'}
-        stroke={ring}
-        strokeWidth="5"
+    <div className="relative w-full h-full">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={`/badges/${type}-${a.tier}.png`}
+        alt=""
+        onError={() => setImgError(true)}
+        className={`w-full h-full object-contain transition ${a.earned ? '' : 'grayscale opacity-40'}`}
       />
-      {earned && <rect x="11" y="11" width="78" height="78" rx="24" fill="url(#rj-badge-shine)" />}
-      <rect
-        x="20"
-        y="20"
-        width="60"
-        height="60"
-        rx="17"
-        fill="none"
-        stroke={stitch}
-        strokeWidth="1.5"
-        strokeDasharray="3.5 3.5"
-      />
-      <text
-        x="50"
-        y="55"
-        textAnchor="middle"
-        dominantBaseline="central"
-        style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic' }}
-        fontSize="34"
-        fill={text}
+      <span
+        className={`absolute inset-0 flex items-center justify-center font-display italic text-xl ${a.earned ? 'text-white' : 'text-zinc-600'}`}
+        style={{ textShadow: '0 1px 5px rgba(0,0,0,0.75)' }}
       >
-        {label}
-      </text>
-    </svg>
+        {num}
+      </span>
+    </div>
   )
 }
 
@@ -98,7 +70,7 @@ export default function Achievements({
   const earnedCount = all.filter((a) => a.earned).length
   const groups: Achievement['group'][] = ['Milestones', 'Streaks']
 
-  // Patches earned since the last visit get a one-time celebration (pop + glow + toast).
+  // Badges earned since the last visit get a one-time celebration (pop + glow + toast).
   const [newlyEarned, setNewlyEarned] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -113,7 +85,7 @@ export default function Achievements({
       /* ignore */
     }
 
-    // First run on this device: seed the baseline without celebrating existing patches.
+    // First run on this device: seed the baseline without celebrating existing badges.
     if (!Array.isArray(seen)) {
       try {
         localStorage.setItem(SEEN_KEY, JSON.stringify(earnedIds))
@@ -130,7 +102,7 @@ export default function Achievements({
         .filter((a) => fresh.includes(a.id))
         .map((a) => a.title)
       toast.success(
-        fresh.length === 1 ? `Patch unlocked — ${titles[0]}` : `${fresh.length} new patches unlocked!`
+        fresh.length === 1 ? `Badge unlocked — ${titles[0]}` : `${fresh.length} new badges unlocked!`
       )
       try {
         localStorage.setItem(SEEN_KEY, JSON.stringify(earnedIds))
@@ -143,61 +115,64 @@ export default function Achievements({
   }, [totalWorkouts, streakWeeks])
 
   return (
-    <AnimatedCard delay={0.15}>
-      <BadgeDefs />
-      <div className="flex items-end justify-between mb-5">
-        <h3 className="text-2xl font-display uppercase text-white">Achievements</h3>
+    <div className="space-y-9">
+      {/* Header */}
+      <div className="flex items-end justify-between">
+        <div>
+          <h2 className="text-2xl font-display uppercase text-white">Achievements</h2>
+          <p className="text-sm text-zinc-500 mt-0.5">Earned by showing up</p>
+        </div>
         <span className="text-sm text-zinc-500">
-          <span className="font-display text-brand-red text-base">{earnedCount}</span> / {all.length} earned
+          <span className="font-display text-brand-red text-xl">{earnedCount}</span>
+          <span className="text-zinc-600"> / {all.length}</span>
         </span>
       </div>
 
-      <div className="space-y-6">
-        {groups.map((g) => {
-          const items = all.filter((a) => a.group === g)
-          return (
-            <div key={g} className="space-y-3">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                {g}
-              </h4>
-              <div className="grid grid-cols-3 gap-x-4 gap-y-5">
-                {items.map((a, i) => {
-                  const isNew = newlyEarned.has(a.id)
-                  return (
-                    <motion.div
-                      key={a.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.03 * i }}
-                      className={`flex flex-col items-center text-center ${
-                        a.earned ? '' : 'opacity-45'
-                      }`}
-                    >
-                      <motion.div
-                        className="w-[72px] h-[72px]"
-                        animate={isNew ? { scale: [1, 1.2, 1] } : undefined}
-                        transition={isNew ? { duration: 0.7, ease: 'easeOut', delay: 0.3 } : undefined}
-                        style={
-                          isNew
-                            ? { filter: 'drop-shadow(0 0 10px rgba(220,38,38,0.75))' }
-                            : a.earned
-                              ? { filter: 'drop-shadow(0 0 5px rgba(220,38,38,0.4))' }
-                              : undefined
-                        }
-                      >
-                        <AchievementBadge label={a.label} earned={a.earned} tier={a.tier} />
-                      </motion.div>
-                      <span className="mt-1.5 text-xs font-medium text-white leading-tight">
-                        {a.title}
-                      </span>
-                    </motion.div>
-                  )
-                })}
-              </div>
+      {groups.map((g) => {
+        const items = all.filter((a) => a.group === g)
+        const earned = items.filter((i) => i.earned).length
+        return (
+          <section key={g}>
+            <div className="flex items-center gap-3 mb-5">
+              <h3 className="font-display uppercase text-lg text-white">{g}</h3>
+              <span className="text-xs text-zinc-600">{earned}/{items.length}</span>
+              <div className="flex-1 h-px bg-white/[0.06]" />
             </div>
-          )
-        })}
-      </div>
-    </AnimatedCard>
+            <div className="grid grid-cols-3 gap-x-4 gap-y-7">
+              {items.map((a, i) => {
+                const isNew = newlyEarned.has(a.id)
+                return (
+                  <motion.div
+                    key={a.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.03 * i }}
+                    className="flex flex-col items-center text-center"
+                  >
+                    <motion.div
+                      className="w-[84px] h-[84px]"
+                      animate={isNew ? { scale: [1, 1.18, 1] } : undefined}
+                      transition={isNew ? { duration: 0.7, ease: 'easeOut', delay: 0.3 } : undefined}
+                      style={
+                        isNew
+                          ? { filter: 'drop-shadow(0 0 12px rgba(220,38,38,0.8))' }
+                          : a.earned
+                            ? { filter: 'drop-shadow(0 0 8px rgba(220,38,38,0.35))' }
+                            : undefined
+                      }
+                    >
+                      <BadgeIcon a={a} />
+                    </motion.div>
+                    <span className={`mt-2 text-xs font-medium leading-tight ${a.earned ? 'text-white' : 'text-zinc-500'}`}>
+                      {a.title}
+                    </span>
+                  </motion.div>
+                )
+              })}
+            </div>
+          </section>
+        )
+      })}
+    </div>
   )
 }
