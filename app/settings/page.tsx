@@ -10,13 +10,14 @@ import {
   ShieldCheck,
   ChevronRight,
   LogOut,
+  LogIn,
 } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/Card'
 import { ProgressRing } from '@/components/ui/ProgressRing'
 import { ConfirmDialog } from '@/components/ui/BottomSheet'
 import { supabase } from '@/lib/supabaseClient'
 import { ensureProfile } from '@/lib/api'
-import { getActiveUserId } from '@/lib/activeUser'
+import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import { useRouter } from 'next/navigation'
 import BackgroundLogo from '@/components/BackgroundLogo'
 
@@ -40,9 +41,11 @@ export default function ProfileHubPage() {
   const [displayName, setDisplayName] = useState('')
   const [userStats, setUserStats] = useState<UserStats | null>(null)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [demo, setDemo] = useState(false)
 
   useEffect(() => {
     ;(async () => {
+      setDemo(await isDemoVisitor())
       const userId = await getActiveUserId()
       if (!userId) { router.push('/login'); return }
       try {
@@ -208,14 +211,24 @@ export default function ProfileHubPage() {
           })}
         </div>
 
-        {/* Log out */}
-        <button
-          onClick={() => setShowLogoutConfirm(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl text-zinc-400 hover:text-red-400 hover:bg-red-500/[0.06] transition-colors mt-2"
-        >
-          <LogOut className="w-4 h-4" />
-          Log out
-        </button>
+        {/* Sign in (demo) / Log out (real user) */}
+        {demo ? (
+          <Link
+            href="/login"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl bg-brand-red text-white font-semibold hover:bg-red-600 active:scale-[0.99] transition-all mt-2 shadow-lg shadow-red-500/20"
+          >
+            <LogIn className="w-4 h-4" />
+            Sign in to your account
+          </Link>
+        ) : (
+          <button
+            onClick={() => setShowLogoutConfirm(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl text-zinc-400 hover:text-red-400 hover:bg-red-500/[0.06] transition-colors mt-2"
+          >
+            <LogOut className="w-4 h-4" />
+            Log out
+          </button>
+        )}
       </div>
 
       <ConfirmDialog

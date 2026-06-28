@@ -38,9 +38,12 @@ function DemoBadge() {
   if (!isDemo) return null
 
   return (
-    <span className="ml-2 text-2xs px-2 py-0.5 rounded-full bg-white/10 text-zinc-400">
-      demo
-    </span>
+    <Link
+      href="/login"
+      className="ml-2 inline-flex items-center text-2xs px-2 py-0.5 rounded-full bg-brand-red/15 text-brand-red hover:bg-brand-red/25 transition-colors whitespace-nowrap"
+    >
+      Demo · Sign in
+    </Link>
   )
 }
 
