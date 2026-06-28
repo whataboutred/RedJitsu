@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { getBjjSession, updateBjjSession } from '@/lib/api'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { useRouter, useParams } from 'next/navigation'
 import { isoToDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useToast } from '@/components/Toast'
@@ -109,7 +110,7 @@ export default function EditJiuJitsuPage() {
 
   if (loading) {
     return (
-      <div className="relative min-h-screen bg-black">
+      <div className="relative min-h-screen bg-brand-dark">
         <BackgroundLogo />
         <main className="relative z-10 max-w-3xl mx-auto p-4">
           <div className="animate-pulse space-y-6">
@@ -123,14 +124,18 @@ export default function EditJiuJitsuPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-black">
+    <div className="relative min-h-screen bg-brand-dark">
       <BackgroundLogo />
       <main className="relative z-10 max-w-3xl mx-auto p-4 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl">Edit Jiu Jitsu Session</h1>
-          <Link href="/history" className="toggle">
-            ← Back to History
+        <div className="flex items-center gap-3">
+          <Link
+            href="/history"
+            className="p-2.5 -ml-2 rounded-xl text-zinc-300 hover:bg-white/5 active:scale-95 transition-all"
+            aria-label="Back to history"
+          >
+            <ArrowLeft className="w-5 h-5" />
           </Link>
+          <h1 className="text-3xl font-display uppercase text-white">Edit Session</h1>
         </div>
 
         {/* Session Details Form */}
