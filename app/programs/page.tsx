@@ -19,7 +19,6 @@ import {
   Dumbbell,
   Calendar,
   ChevronDown,
-  ChevronRight,
   Plus,
   Zap,
   Target,
@@ -29,6 +28,7 @@ import {
   X,
   Search,
   GripVertical,
+  ArrowLeft,
   Sparkles,
   LayoutGrid,
 } from 'lucide-react'
@@ -798,8 +798,9 @@ export default function ProgramsPage() {
                           </button>
                         )}
                         <button
-                          className="toggle text-sm px-3 py-2 text-red-400 hover:bg-red-500/20 hover:border-red-500/30"
+                          className="w-9 h-9 rounded-xl bg-surface-elevated/60 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center transition-colors shrink-0"
                           onClick={() => setProgramToDelete(p.id)}
+                          aria-label="Delete program"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -869,9 +870,12 @@ export default function ProgramsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-4"
           >
-            <button className="toggle" onClick={backToList}>
-              <ChevronRight className="w-4 h-4 rotate-180" />
-              Back
+            <button
+              onClick={backToList}
+              className="p-2.5 -ml-2 rounded-xl text-zinc-300 hover:bg-white/5 active:scale-95 transition-all"
+              aria-label="Back"
+            >
+              <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-red/20 to-red-700/20 flex items-center justify-center">
@@ -928,9 +932,12 @@ export default function ProgramsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-4"
         >
-          <button className="toggle" onClick={backToList}>
-            <ChevronRight className="w-4 h-4 rotate-180" />
-            Back
+          <button
+            onClick={backToList}
+            className="p-2.5 -ml-2 rounded-xl text-zinc-300 hover:bg-white/5 active:scale-95 transition-all"
+            aria-label="Back"
+          >
+            <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
@@ -1056,11 +1063,12 @@ export default function ProgramsPage() {
                       <div className="flex items-center gap-2">
                         {days.length > 1 && (
                           <button
-                            className="toggle text-sm px-3 py-2 text-red-400 hover:bg-red-500/20 hover:border-red-500/30"
+                            className="w-9 h-9 rounded-xl bg-surface-elevated/60 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center transition-colors shrink-0"
                             onClick={(e) => {
                               e.stopPropagation()
                               removeDay(dayIdx)
                             }}
+                            aria-label="Delete day"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
