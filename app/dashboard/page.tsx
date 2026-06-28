@@ -319,6 +319,34 @@ export default function Dashboard() {
       {/* Goal progress, activity heatmap, and recent activity now live in the
           Activity/History tab to keep Home clean. */}
 
+      {/* Brand sign-off — fills the lower space and signs the page */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+        className="flex flex-col items-center gap-3 pt-12 pb-4"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/red-jitsu-mark.png"
+          alt="Red Jitsu"
+          className="w-16 h-16 opacity-90"
+          style={{ filter: 'drop-shadow(0 0 16px rgba(220,38,38,0.18))' }}
+        />
+        <div className="flex items-center gap-2 opacity-50">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/redlabs-mark.png"
+            alt=""
+            className="h-3.5 w-auto"
+            style={{ mixBlendMode: 'lighten' }}
+          />
+          <span className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">
+            A Red Labs App
+          </span>
+        </div>
+      </motion.div>
+
     </div>
   )
 }
