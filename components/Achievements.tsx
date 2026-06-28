@@ -49,8 +49,8 @@ function BadgeIcon({ a }: { a: Achievement }) {
         className={`w-full h-full object-contain transition ${a.earned ? '' : 'grayscale opacity-40'}`}
       />
       <span
-        className={`absolute inset-0 flex items-center justify-center font-display italic text-xl ${a.earned ? 'text-white' : 'text-zinc-600'}`}
-        style={{ textShadow: '0 1px 5px rgba(0,0,0,0.75)' }}
+        className={`absolute left-0 right-0 -translate-y-1/2 flex items-center justify-center font-display italic text-lg leading-none ${type === 'streak' ? 'top-[60%]' : 'top-[53%]'} ${a.earned ? 'text-white' : 'text-zinc-400'}`}
+        style={{ textShadow: '0 2px 6px rgba(0,0,0,0.85), 0 0 3px rgba(0,0,0,0.95)' }}
       >
         {num}
       </span>
