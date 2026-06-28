@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion, Reorder, useDragControls } from 'framer-motion'
 import { supabase } from '@/lib/supabaseClient'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/Toast'
 import { AnimatedCard } from '@/components/ui/Card'
@@ -141,9 +140,7 @@ export default function ProgramsPage() {
     ;(async () => {
       const isDemo = await isDemoVisitor()
       setDemo(isDemo)
-      if (!isDemo) {
-        await loadData()
-      }
+      await loadData()
       setLoading(false)
     })()
   }, [])
@@ -152,38 +149,6 @@ export default function ProgramsPage() {
   useDataRefresh(() => {
     if (!demo && !loading) reloadPrograms()
   })
-
-  if (demo) {
-    return (
-      <div className="relative min-h-screen bg-black">
-        <BackgroundLogo />
-        <main className="relative z-10 p-4 max-w-xl mx-auto pt-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <AnimatedCard className="text-center py-12">
-              <div className="w-16 h-16 rounded-full bg-brand-red/20 flex items-center justify-center mx-auto mb-4">
-                <Target className="w-8 h-8 text-brand-red" />
-              </div>
-              <h1 className="text-xl font-semibold mb-2">Demo Mode</h1>
-              <p className="text-zinc-500 mb-6">
-                You&apos;re viewing the app in read-only demo mode. To create your own
-                programs, please sign in.
-              </p>
-              <Link
-                href="/login"
-                className="btn inline-flex"
-              >
-                Sign In to Continue
-              </Link>
-            </AnimatedCard>
-          </motion.div>
-        </main>
-      </div>
-    )
-  }
 
   if (loading) {
     return (
@@ -226,8 +191,10 @@ export default function ProgramsPage() {
   }
 
   async function loadData() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/login'); return }
+    // getActiveUserId resolves the demo user id for demo visitors, so the
+    // seeded program loads read-only instead of redirecting to login.
+    const userId = await getActiveUserId()
+    if (!userId) { router.push('/login'); return }
 
     const { data: ex } = await supabase.from('exercises').select('id,name,category').order('name')
     setExercises((ex || []) as Exercise[])
@@ -354,6 +321,7 @@ export default function ProgramsPage() {
   }
 
   async function setActive(id: string) {
+    if (demo) { toast.warning('Sign in to use your own programs'); return }
     const userId = await getActiveUserId()
     if (!userId) return
     
@@ -363,6 +331,7 @@ export default function ProgramsPage() {
   }
 
   async function deleteProgram(id: string) {
+    if (demo) { toast.warning('Sign in to manage your own programs'); return }
     // If deleting the active program, deactivate it first to avoid broken dashboard state
     const programToDelete = programs.find(p => p.id === id)
     if (programToDelete?.is_active) {
@@ -560,6 +529,7 @@ export default function ProgramsPage() {
   }
 
   async function saveProgram() {
+    if (demo) { toast.warning('Sign in to save your own programs'); return }
     const userId = await getActiveUserId()
     if (!userId) return
 

@@ -22,8 +22,7 @@ import {
   Users,
   Search,
   Sparkles,
-  Activity,
-  Footprints
+  Activity
 } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/Card'
 import { Button, IconButton } from '@/components/ui/Button'
@@ -234,9 +233,7 @@ export default function CardioPage() {
     ;(async () => {
       const isDemo = await isDemoVisitor()
       setDemo(isDemo)
-      if (!isDemo) {
-        await loadWeekStats()
-      }
+      await loadWeekStats()
       setLoading(false)
     })()
   }, [])
@@ -328,6 +325,7 @@ export default function CardioPage() {
   }
 
   async function handleSave() {
+    if (demo) { toast.warning('Sign in to save your own sessions'); return }
     const userId = await getActiveUserId()
     if (!userId) {
       toast.error('Please sign in to save cardio sessions')
@@ -380,26 +378,6 @@ export default function CardioPage() {
         <Skeleton variant="rectangular" className="h-10 w-48" />
         <SkeletonCard className="h-32" />
         <SkeletonCard className="h-48" />
-      </div>
-    )
-  }
-
-  if (demo) {
-    return (
-      <div className="relative min-h-screen bg-brand-dark p-4 pb-24">
-        <BackgroundLogo />
-        <AnimatedCard>
-          <div className="text-center py-8">
-            <Footprints className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-white mb-2">Demo Mode</h2>
-            <p className="text-zinc-500 mb-4">
-              Sign in to log cardio sessions and track your progress.
-            </p>
-            <Link href="/login">
-              <Button>Sign In</Button>
-            </Link>
-          </div>
-        </AnimatedCard>
       </div>
     )
   }

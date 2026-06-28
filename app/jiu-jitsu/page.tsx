@@ -203,13 +203,11 @@ export default function BJJPage() {
     ;(async () => {
       const isDemo = await isDemoVisitor()
       setDemo(isDemo)
-      if (isDemo) {
-        setLoading(false)
-        return
-      }
 
+      // Demo visitors resolve to the demo user id and load the seeded mat
+      // history read-only (saving is gated below).
       const userId = await getActiveUserId()
-      if (!userId && !DEMO) {
+      if (!userId) {
         router.push('/login')
         return
       }
