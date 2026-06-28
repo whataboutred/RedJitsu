@@ -4,7 +4,7 @@ import Nav from '@/components/Nav'
 import BackgroundLogo from '@/components/BackgroundLogo'
 import ProgramTemplates from '@/components/ProgramTemplates'
 import { useEffect, useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, Reorder, useDragControls } from 'framer-motion'
 import { supabase } from '@/lib/supabaseClient'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import Link from 'next/link'
@@ -28,8 +28,7 @@ import {
   Check,
   X,
   Search,
-  ArrowUp,
-  ArrowDown,
+  GripVertical,
   Sparkles,
   LayoutGrid,
 } from 'lucide-react'
@@ -84,6 +83,32 @@ type ProgramTemplate = {
 const DOWS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] as const
 const CATEGORIES = ['all', 'barbell', 'dumbbell', 'machine', 'cable', 'other'] as const
 
+// Render-prop drag wrapper: provides per-item drag controls (handle-based, so
+// it never fights page scroll) while the card JSX stays in the parent closure.
+function DraggableItem<T>({
+  value,
+  className,
+  children,
+}: {
+  value: T
+  className?: string
+  children: (controls: ReturnType<typeof useDragControls>) => React.ReactNode
+}) {
+  const controls = useDragControls()
+  return (
+    <Reorder.Item
+      value={value}
+      dragListener={false}
+      dragControls={controls}
+      layout
+      whileDrag={{ scale: 1.02, zIndex: 50, boxShadow: '0 12px 32px rgba(0,0,0,0.45)' }}
+      className={className}
+    >
+      {children(controls)}
+    </Reorder.Item>
+  )
+}
+
 export default function ProgramsPage() {
   const router = useRouter()
   const toast = useToast()
@@ -96,7 +121,7 @@ export default function ProgramsPage() {
 
   // Program creation state
   const [pName, setPName] = useState('')
-  const [days, setDays] = useState<DayDraft[]>([{ name: '', dows: [], items: [] }])
+  const [days, setDays] = useState<DayDraft[]>([{ id: crypto.randomUUID(), name: '', dows: [], items: [] }])
 
   // Enhanced search and filtering
   const [search, setSearch] = useState('')
@@ -261,6 +286,7 @@ export default function ProgramsPage() {
         
         if (existingExercise) {
           items.push({
+            id: crypto.randomUUID(),
             exercise_id: existingExercise.id,
             display_name: exercise.name,
             default_sets: exercise.sets,
@@ -271,6 +297,7 @@ export default function ProgramsPage() {
           const newExercise = await createCustomExercise(exercise.name, exercise.category as Exercise['category'])
           if (newExercise) {
             items.push({
+              id: crypto.randomUUID(),
               exercise_id: newExercise.id,
               display_name: exercise.name,
               default_sets: exercise.sets,
@@ -281,6 +308,7 @@ export default function ProgramsPage() {
       }
       
       templateDays.push({
+        id: crypto.randomUUID(),
         name: templateDay.name,
         dows: templateDay.dows,
         items
@@ -312,14 +340,14 @@ export default function ProgramsPage() {
   function startQuickMode() {
     setSelected(null)
     setPName('')
-    setDays([{ name: '', dows: [], items: [] }])
+    setDays([{ id: crypto.randomUUID(), name: '', dows: [], items: [] }])
     setMode('quick')
   }
 
   function startManualMode() {
     setSelected(null)
     setPName('')
-    setDays([{ name: '', dows: [], items: [] }])
+    setDays([{ id: crypto.randomUUID(), name: '', dows: [], items: [] }])
     setMode('manual')
   }
 
@@ -387,7 +415,7 @@ export default function ProgramsPage() {
       })
     }
     
-    setDays(out.length ? out : [{ name: '', dows: [], items: [] }])
+    setDays(out.length ? out : [{ id: crypto.randomUUID(), name: '', dows: [], items: [] }])
     setMode('manual')
   }
 
@@ -407,7 +435,7 @@ export default function ProgramsPage() {
   // Program creation helper functions
   function addDay() {
     const newDayIndex = days.length
-    setDays(prev => [...prev, { name: '', dows: [], items: [] }])
+    setDays(prev => [...prev, { id: crypto.randomUUID(), name: '', dows: [], items: [] }])
     // Auto-expand the new day
     setExpandedDays(prev => new Set([...prev, newDayIndex]))
   }
@@ -452,6 +480,7 @@ export default function ProgramsPage() {
         ? { 
             ...day, 
             items: [...day.items, {
+              id: crypto.randomUUID(),
               exercise_id: exercise.id,
               display_name: exercise.name,
               default_sets: 3,
@@ -497,20 +526,25 @@ export default function ProgramsPage() {
     ))
   }
 
-  function moveExercise(dayIndex: number, exerciseIndex: number, direction: 'up' | 'down') {
-    setDays(prev => prev.map((day, idx) => {
-      if (idx !== dayIndex) return day
-      
-      const items = [...day.items]
-      const newIndex = direction === 'up' ? exerciseIndex - 1 : exerciseIndex + 1
-      
-      if (newIndex < 0 || newIndex >= items.length) return day
-      
-      const [movedItem] = items.splice(exerciseIndex, 1)
-      items.splice(newIndex, 0, movedItem)
-      
-      return { ...day, items }
-    }))
+  // Drag-reorder the training days. Remaps the (index-based) expanded set by
+  // object identity so the right days stay open after the move.
+  function reorderDays(newOrder: DayDraft[]) {
+    setExpandedDays(prev => {
+      const next = new Set<number>()
+      newOrder.forEach((day, newIdx) => {
+        const oldIdx = days.indexOf(day)
+        if (oldIdx !== -1 && prev.has(oldIdx)) next.add(newIdx)
+      })
+      return next
+    })
+    setDays(newOrder)
+  }
+
+  // Drag-reorder the exercises within a single day.
+  function reorderDayItems(dayIndex: number, newItems: DayDraft['items']) {
+    setDays(prev => prev.map((day, idx) =>
+      idx === dayIndex ? { ...day, items: newItems } : day
+    ))
   }
 
   async function addCustomExerciseToDay(dayIndex: number) {
@@ -840,8 +874,8 @@ export default function ProgramsPage() {
               Back
             </button>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
-                <Zap className="w-5 h-5 text-amber-400" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-red/20 to-red-700/20 flex items-center justify-center">
+                <Zap className="w-5 h-5 text-brand-red" />
               </div>
               <div>
                 <h1 className="text-4xl font-display uppercase text-white">Quick Start Templates</h1>
@@ -864,7 +898,7 @@ export default function ProgramsPage() {
             transition={{ delay: 0.2 }}
           >
             <AnimatedCard className="text-center py-10 bg-gradient-to-br from-zinc-800/50 to-zinc-900/50">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-red/20 to-orange-500/20 flex items-center justify-center mx-auto mb-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-red/20 to-red-700/20 flex items-center justify-center mx-auto mb-4">
                 <Target className="w-7 h-7 text-brand-red" />
               </div>
               <h3 className="font-display uppercase text-lg text-white mb-2">Need Something Different?</h3>
@@ -901,17 +935,17 @@ export default function ProgramsPage() {
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
               selected
-                ? 'bg-gradient-to-br from-amber-500/20 to-orange-500/20'
-                : 'bg-gradient-to-br from-brand-red/20 to-orange-500/20'
+                ? 'bg-gradient-to-br from-brand-red/20 to-red-700/20'
+                : 'bg-gradient-to-br from-brand-red/20 to-red-700/20'
             }`}>
               {selected ? (
-                <Edit3 className="w-5 h-5 text-amber-400" />
+                <Edit3 className="w-5 h-5 text-brand-red" />
               ) : (
                 <Plus className="w-5 h-5 text-brand-red" />
               )}
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">
+              <h1 className="text-3xl font-display uppercase text-white">
                 {selected ? 'Edit Program' : 'Create Program'}
               </h1>
               <p className="text-sm text-zinc-500">
@@ -929,8 +963,8 @@ export default function ProgramsPage() {
         >
           <AnimatedCard>
             <div className="flex items-center gap-2 mb-4">
-              <Dumbbell className="w-5 h-5 text-zinc-500" />
-              <span className="font-semibold text-white">Program Details</span>
+              <Dumbbell className="w-5 h-5 text-brand-red" />
+              <span className="font-display uppercase text-lg text-white">Program Details</span>
             </div>
             <label className="block">
               <div className="mb-2 text-sm text-zinc-500 font-medium">Program Name</div>
@@ -954,8 +988,8 @@ export default function ProgramsPage() {
           <AnimatedCard>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-zinc-500" />
-                <span className="font-semibold text-white">Training Days</span>
+                <Calendar className="w-5 h-5 text-brand-red" />
+                <span className="font-display uppercase text-lg text-white">Training Days</span>
                 <span className="text-xs bg-surface-elevated text-zinc-500 px-2 py-0.5 rounded-full">
                   {days.length}
                 </span>
@@ -966,31 +1000,39 @@ export default function ProgramsPage() {
               </button>
             </div>
 
-            <div className="space-y-4">
+            <Reorder.Group axis="y" values={days} onReorder={reorderDays} className="space-y-2">
               {days.map((day, dayIdx) => {
                 const isExpanded = expandedDays.has(dayIdx)
                 const dayName = day.name || `Day ${dayIdx + 1}`
                 const dowsText = day.dows.length > 0 ? day.dows.map(d => DOWS[d]).join(', ') : 'No days assigned'
 
                 return (
-                  <motion.div
-                    key={dayIdx}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.05 * dayIdx }}
-                    className={`rounded-2xl overflow-hidden border transition-all duration-300 ${
+                  <DraggableItem
+                    key={day.id}
+                    value={day}
+                    className={`rounded-2xl overflow-hidden border transition-colors ${
                       isExpanded
-                        ? 'bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 border-white/10'
-                        : 'bg-surface-elevated border-white/[0.07] hover:border-white/10'
+                        ? 'bg-surface-elevated/20 border-white/10'
+                        : 'bg-white/[0.02] border-white/[0.06] hover:border-white/10'
                     }`}
                   >
+                    {(controls) => (
+                    <>
                     {/* Collapsible Header */}
                     <div
-                      className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/5 transition-colors"
+                      className="flex items-center justify-between p-3 pl-2 cursor-pointer hover:bg-white/5 transition-colors"
                       onClick={() => toggleDayExpanded(dayIdx)}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          onPointerDown={(e) => controls.start(e)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="touch-none cursor-grab active:cursor-grabbing p-1 text-zinc-600 hover:text-zinc-400 transition-colors shrink-0"
+                          aria-label="Drag to reorder day"
+                        >
+                          <GripVertical className="w-5 h-5" />
+                        </div>
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 shrink-0 ${
                           isExpanded ? 'bg-brand-red/20' : 'bg-surface-elevated'
                         }`}>
                           <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${
@@ -1162,41 +1204,35 @@ export default function ProgramsPage() {
                               <div className="text-xs text-zinc-500 mb-2 font-medium uppercase tracking-wide">
                                 Day {dayIdx + 1} Exercises ({day.items.length})
                               </div>
-                              <div className="space-y-2">
+                              <Reorder.Group axis="y" values={day.items} onReorder={(n) => reorderDayItems(dayIdx, n)} className="space-y-2">
                                 {day.items.map((item, itemIdx) => (
-                                  <div
-                                    key={itemIdx}
-                                    className="bg-surface/50 rounded-xl p-3 border border-white/[0.07] hover:border-white/10 transition-all duration-200"
+                                  <DraggableItem
+                                    key={item.id}
+                                    value={item}
+                                    className="bg-white/[0.02] rounded-xl p-3 border border-white/[0.06] hover:border-white/10 transition-colors"
                                   >
-                                    <div className="flex items-start justify-between mb-3">
-                                      <div className="flex items-center gap-2">
-                                        <div className="w-6 h-6 rounded-md bg-brand-red/10 flex items-center justify-center text-xs font-medium text-brand-red">
+                                    {(controls) => (
+                                    <>
+                                    <div className="flex items-center justify-between mb-3">
+                                      <div className="flex items-center gap-2 min-w-0">
+                                        <div
+                                          onPointerDown={(e) => controls.start(e)}
+                                          className="touch-none cursor-grab active:cursor-grabbing p-0.5 text-zinc-600 hover:text-zinc-400 transition-colors shrink-0"
+                                          aria-label="Drag to reorder exercise"
+                                        >
+                                          <GripVertical className="w-4 h-4" />
+                                        </div>
+                                        <div className="w-6 h-6 rounded-md bg-brand-red/10 flex items-center justify-center text-xs font-medium text-brand-red shrink-0">
                                           {itemIdx + 1}
                                         </div>
-                                        <div className="font-medium text-white">{item.display_name}</div>
+                                        <div className="font-medium text-white truncate">{item.display_name}</div>
                                       </div>
-                                      <div className="flex items-center gap-1">
-                                        <button
-                                          className="w-7 h-7 rounded-lg bg-surface-elevated hover:bg-surface-pressed flex items-center justify-center transition-colors disabled:opacity-30"
-                                          onClick={() => moveExercise(dayIdx, itemIdx, 'up')}
-                                          disabled={itemIdx === 0}
-                                        >
-                                          <ArrowUp className="w-3 h-3 text-zinc-500" />
-                                        </button>
-                                        <button
-                                          className="w-7 h-7 rounded-lg bg-surface-elevated hover:bg-surface-pressed flex items-center justify-center transition-colors disabled:opacity-30"
-                                          onClick={() => moveExercise(dayIdx, itemIdx, 'down')}
-                                          disabled={itemIdx === day.items.length - 1}
-                                        >
-                                          <ArrowDown className="w-3 h-3 text-zinc-500" />
-                                        </button>
-                                        <button
-                                          className="w-7 h-7 rounded-lg bg-surface-elevated hover:bg-red-500/20 flex items-center justify-center transition-colors"
-                                          onClick={() => removeExerciseFromDay(dayIdx, itemIdx)}
-                                        >
-                                          <X className="w-3 h-3 text-red-400" />
-                                        </button>
-                                      </div>
+                                      <button
+                                        className="w-7 h-7 rounded-lg bg-surface-elevated hover:bg-red-500/20 flex items-center justify-center transition-colors shrink-0"
+                                        onClick={() => removeExerciseFromDay(dayIdx, itemIdx)}
+                                      >
+                                        <X className="w-3 h-3 text-red-400" />
+                                      </button>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3">
@@ -1228,7 +1264,9 @@ export default function ProgramsPage() {
                                         </label>
                                       </div>
                                     </div>
-                                  </div>
+                                    </>
+                                    )}
+                                  </DraggableItem>
                                 ))}
 
                                 {day.items.length === 0 && (
@@ -1237,16 +1275,18 @@ export default function ProgramsPage() {
                                     No exercises added yet
                                   </div>
                                 )}
-                              </div>
+                              </Reorder.Group>
                             </div>
                           </div>
                         </div>
                       </motion.div>
                     )}
-                  </motion.div>
+                    </>
+                    )}
+                  </DraggableItem>
                 )
               })}
-            </div>
+            </Reorder.Group>
           </AnimatedCard>
         </motion.div>
 
