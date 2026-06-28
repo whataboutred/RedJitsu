@@ -16,6 +16,7 @@ import {
   Flame,
   RefreshCw,
   Play,
+  ArrowRight,
 } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/Card'
 import CountUp from '@/components/ui/CountUp'
@@ -347,9 +348,10 @@ export default function Dashboard() {
         </div>
         <Link
           href="/about"
-          className="text-xs text-zinc-600 hover:text-brand-red transition-colors mt-1"
+          className="group mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-brand-red/30 bg-brand-red/[0.06] text-brand-red text-sm font-medium hover:bg-brand-red/[0.12] hover:border-brand-red/50 active:scale-95 transition-all shadow-[0_0_20px_rgba(220,38,38,0.08)]"
         >
-          Why I built this ›
+          Why I built this
+          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
         </Link>
       </motion.div>
 
