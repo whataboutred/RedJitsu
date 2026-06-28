@@ -345,6 +345,12 @@ export default function Dashboard() {
             A Red Labs App
           </span>
         </div>
+        <Link
+          href="/about"
+          className="text-xs text-zinc-600 hover:text-brand-red transition-colors mt-1"
+        >
+          Why I built this ›
+        </Link>
       </motion.div>
 
     </div>
