@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { getCardioSession, updateCardioSession } from '@/lib/api'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { useRouter, useParams } from 'next/navigation'
 import { isoToDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useToast } from '@/components/Toast'
@@ -23,8 +24,8 @@ type CardioSession = {
 }
 
 const INTENSITY_COLORS = {
-  'low': 'bg-green-500/20 text-green-400 border-green-500/30',
-  'medium': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  'low': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  'medium': 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   'high': 'bg-red-500/20 text-red-400 border-red-500/30'
 }
 
@@ -87,7 +88,7 @@ export default function EditCardioPage() {
 
   if (demo) {
     return (
-      <div className="relative min-h-screen bg-black">
+      <div className="relative min-h-screen bg-brand-dark">
         <BackgroundLogo />
         <main className="relative z-10 p-4 max-w-xl mx-auto">
           <h1 className="text-xl font-semibold mb-2">Demo mode</h1>
@@ -102,7 +103,7 @@ export default function EditCardioPage() {
 
   if (loading) {
     return (
-      <div className="relative min-h-screen bg-black">
+      <div className="relative min-h-screen bg-brand-dark">
         <BackgroundLogo />
         <main className="relative z-10 max-w-4xl mx-auto p-4">
           <div className="animate-pulse space-y-6">
@@ -116,7 +117,7 @@ export default function EditCardioPage() {
 
   if (!isUuid(cardioId)) {
     return (
-      <div className="relative min-h-screen bg-black">
+      <div className="relative min-h-screen bg-brand-dark">
         <BackgroundLogo />
         <main className="relative z-10 p-4 max-w-xl mx-auto">
           <h1 className="text-xl font-semibold mb-2">Session not found</h1>
@@ -169,14 +170,18 @@ export default function EditCardioPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-black">
+    <div className="relative min-h-screen bg-brand-dark">
       <BackgroundLogo />
       <main className="relative z-10 max-w-4xl mx-auto p-4 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Edit Cardio Session</h1>
-          <Link href="/history" className="toggle">
-            Back to History
+        <div className="flex items-center gap-3">
+          <Link
+            href="/history"
+            className="p-2.5 -ml-2 rounded-xl text-zinc-300 hover:bg-white/5 active:scale-95 transition-all"
+            aria-label="Back to history"
+          >
+            <ArrowLeft className="w-5 h-5" />
           </Link>
+          <h1 className="text-3xl font-display uppercase text-white">Edit Session</h1>
         </div>
 
         {/* Activity */}
@@ -300,7 +305,7 @@ export default function EditCardioPage() {
         </div>
 
         {/* Save Button */}
-        <div className="sticky bottom-4 bg-black/90 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+        <div className="sticky bottom-4 bg-surface/95 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
           <div className="flex gap-3">
             <Link href="/history" className="toggle flex-1 text-center py-3">
               Cancel
