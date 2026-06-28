@@ -125,6 +125,12 @@ function HistoryLoading() {
   )
 }
 
+const PROGRESS_TABS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'achievements', label: 'Achievements' },
+  { id: 'history', label: 'History' },
+] as const
+
 function HistoryClient() {
   const [loading, setLoading] = useState(true)
   const [workouts, setWorkouts] = useState<Workout[]>([])
@@ -135,7 +141,7 @@ function HistoryClient() {
   const [streakData, setStreakData] = useState<StreakData | null>(null)
   const [activeProgramExercises, setActiveProgramExercises] = useState<Set<string>>(new Set())
   const [hasActiveProgram, setHasActiveProgram] = useState(false)
-  const [selectedView, setSelectedView] = useState<'analytics' | 'workouts'>('analytics')
+  const [selectedView, setSelectedView] = useState<'overview' | 'achievements' | 'history'>('overview')
   const [workoutFilter, setWorkoutFilter] = useState<'all' | 'week' | 'month' | 'custom'>('month')
   const [selectedExercise, setSelectedExercise] = useState<string>('')
   const [activityFilter, setActivityFilter] = useState<'all' | 'strength' | 'bjj' | 'cardio'>('all')
@@ -900,35 +906,25 @@ function HistoryClient() {
     <div className="relative min-h-screen bg-brand-dark pb-24">
       <BackgroundLogo />
       {/* Header */}
-      <div className="border-b border-red-500/10">
-        <div className="px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-display uppercase text-white">Progress</h1>
-              <p className="text-sm text-zinc-500 mt-0.5">Insights &amp; training log</p>
-            </div>
-            <div className="flex gap-2">
+      <div className="border-b border-white/[0.06]">
+        <div className="px-4 pt-4">
+          <h1 className="text-4xl font-display uppercase text-white">Progress</h1>
+          <p className="text-sm text-zinc-500 mt-0.5">Insights &amp; training log</p>
+          {/* Inline tabs */}
+          <div className="flex gap-7 mt-4">
+            {PROGRESS_TABS.map((t) => (
               <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedView === 'analytics'
-                  ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                  : 'text-zinc-500 hover:text-white'
+                key={t.id}
+                onClick={() => setSelectedView(t.id)}
+                className={`relative pb-3 -mb-px text-sm font-semibold tracking-wide transition-colors ${selectedView === t.id ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
                   }`}
-                onClick={() => setSelectedView('analytics')}
               >
-                <BarChart3 className="w-4 h-4 inline mr-1" />
-                Overview
+                {t.label}
+                {selectedView === t.id && (
+                  <span className="absolute left-0 right-0 -bottom-px h-0.5 rounded-full bg-brand-red" />
+                )}
               </button>
-              <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedView === 'workouts'
-                  ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                  : 'text-zinc-500 hover:text-white'
-                  }`}
-                onClick={() => setSelectedView('workouts')}
-              >
-                <Calendar className="w-4 h-4 inline mr-1" />
-                History
-              </button>
-            </div>
+            ))}
           </div>
         </div>
       </div>
@@ -945,7 +941,7 @@ function HistoryClient() {
       )}
 
       <div className="p-4 space-y-4">
-        {selectedView === 'analytics' ? (
+        {selectedView === 'overview' && (
           <>
             {/* AI Coach Insights */}
             {!loading && <AIInsights />}
@@ -1053,13 +1049,17 @@ function HistoryClient() {
                 ...cardio.map((c) => ({ date: c.performed_at.split('T')[0], type: 'cardio' as const })),
               ]}
             />
-
-            <Achievements
-              totalWorkouts={workoutStats.total}
-              streakWeeks={streakData?.strength.current ?? 0}
-            />
           </>
-        ) : (
+        )}
+
+        {selectedView === 'achievements' && (
+          <Achievements
+            totalWorkouts={workoutStats.total}
+            streakWeeks={streakData?.strength.current ?? 0}
+          />
+        )}
+
+        {selectedView === 'history' && (
           /* Workout History View */
           <>
             {/* Filter Pills */}
