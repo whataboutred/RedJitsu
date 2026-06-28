@@ -1,6 +1,5 @@
 'use client'
 
-import Nav from '@/components/Nav'
 import BackgroundLogo from '@/components/BackgroundLogo'
 import { useEffect, useState } from 'react'
 import { getBjjSession, updateBjjSession } from '@/lib/api'
@@ -112,7 +111,6 @@ export default function EditJiuJitsuPage() {
     return (
       <div className="relative min-h-screen bg-black">
         <BackgroundLogo />
-        <Nav />
         <main className="relative z-10 max-w-3xl mx-auto p-4">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-white/10 rounded w-1/3"></div>
@@ -127,7 +125,6 @@ export default function EditJiuJitsuPage() {
   return (
     <div className="relative min-h-screen bg-black">
       <BackgroundLogo />
-      <Nav />
       <main className="relative z-10 max-w-3xl mx-auto p-4 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl">Edit Jiu Jitsu Session</h1>

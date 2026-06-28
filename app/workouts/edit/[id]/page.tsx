@@ -352,12 +352,16 @@ function ExerciseCard({
   const totalSets = exercise.sets.filter((s) => !s.isWarmup).length
 
   const handleSetComplete = (setIndex: number) => {
-    const newSets = [...exercise.sets]
-    newSets[setIndex].isCompleted = !newSets[setIndex].isCompleted
+    // Immutable update — mutating the spread-copied objects shares references
+    // with the previous state and can drop React updates.
+    const nowCompleted = !exercise.sets[setIndex].isCompleted
+    const newSets = exercise.sets.map((s, i) =>
+      i === setIndex ? { ...s, isCompleted: nowCompleted } : s
+    )
     onUpdate({ ...exercise, sets: newSets })
 
-    // Start rest timer if completing a set
-    if (!newSets[setIndex].isCompleted === false) {
+    // Start rest timer only when completing (not un-completing) a set
+    if (nowCompleted) {
       hapticTap()
       setShowRestTimer(true)
     }

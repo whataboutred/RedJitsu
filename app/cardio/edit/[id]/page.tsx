@@ -1,6 +1,5 @@
 'use client'
 
-import Nav from '@/components/Nav'
 import BackgroundLogo from '@/components/BackgroundLogo'
 import { useEffect, useState } from 'react'
 import { getCardioSession, updateCardioSession } from '@/lib/api'
@@ -90,7 +89,6 @@ export default function EditCardioPage() {
     return (
       <div className="relative min-h-screen bg-black">
         <BackgroundLogo />
-        <Nav />
         <main className="relative z-10 p-4 max-w-xl mx-auto">
           <h1 className="text-xl font-semibold mb-2">Demo mode</h1>
           <p className="text-zinc-300">
@@ -106,7 +104,6 @@ export default function EditCardioPage() {
     return (
       <div className="relative min-h-screen bg-black">
         <BackgroundLogo />
-        <Nav />
         <main className="relative z-10 max-w-4xl mx-auto p-4">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-white/10 rounded w-1/3"></div>
@@ -121,7 +118,6 @@ export default function EditCardioPage() {
     return (
       <div className="relative min-h-screen bg-black">
         <BackgroundLogo />
-        <Nav />
         <main className="relative z-10 p-4 max-w-xl mx-auto">
           <h1 className="text-xl font-semibold mb-2">Session not found</h1>
           <p className="text-zinc-300">
@@ -175,7 +171,6 @@ export default function EditCardioPage() {
   return (
     <div className="relative min-h-screen bg-black">
       <BackgroundLogo />
-      <Nav />
       <main className="relative z-10 max-w-4xl mx-auto p-4 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Edit Cardio Session</h1>

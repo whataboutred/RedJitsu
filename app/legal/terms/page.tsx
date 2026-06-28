@@ -1,11 +1,9 @@
 'use client'
 
-import Nav from '@/components/Nav'
 
 export default function TermsPage() {
   return (
     <div>
-      <Nav />
       <main className="max-w-3xl mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Terms of Use</h1>
       <p className="text-zinc-300 text-sm">

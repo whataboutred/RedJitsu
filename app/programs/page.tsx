@@ -1,6 +1,5 @@
 'use client'
 
-import Nav from '@/components/Nav'
 import BackgroundLogo from '@/components/BackgroundLogo'
 import ProgramTemplates from '@/components/ProgramTemplates'
 import { useEffect, useMemo, useState } from 'react'
@@ -158,7 +157,6 @@ export default function ProgramsPage() {
     return (
       <div className="relative min-h-screen bg-black">
         <BackgroundLogo />
-        <Nav />
         <main className="relative z-10 p-4 max-w-xl mx-auto pt-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -191,7 +189,6 @@ export default function ProgramsPage() {
     return (
       <div className="relative min-h-screen bg-black">
         <BackgroundLogo />
-        <Nav />
         <main className="relative z-10 max-w-6xl mx-auto p-4 space-y-6">
           <div className="flex items-center justify-between">
             <div className="h-8 bg-surface-elevated rounded-lg w-48 animate-pulse"></div>
@@ -699,7 +696,6 @@ export default function ProgramsPage() {
     return (
       <div className="relative min-h-screen bg-black">
         <BackgroundLogo />
-        <Nav />
         <main className="relative z-10 max-w-6xl mx-auto p-4 space-y-6">
           {/* Header */}
           <motion.div
@@ -881,7 +877,6 @@ export default function ProgramsPage() {
     return (
       <div className="relative min-h-screen bg-black">
         <BackgroundLogo />
-        <Nav />
         <main className="relative z-10 max-w-6xl mx-auto p-4 space-y-6">
           {/* Header */}
           <motion.div
@@ -943,7 +938,6 @@ export default function ProgramsPage() {
   return (
     <div className="relative min-h-screen bg-black pb-40">
       <BackgroundLogo />
-      <Nav />
       <main className="relative z-10 max-w-6xl mx-auto p-4 space-y-6">
         {/* Header */}
         <motion.div
