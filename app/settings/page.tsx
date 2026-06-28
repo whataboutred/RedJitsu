@@ -124,7 +124,7 @@ export default function ProfileHubPage() {
             <div className="relative w-16 h-16 rounded-full bg-surface-elevated border-2 border-brand-red/50 flex items-center justify-center overflow-hidden flex-shrink-0">
               <div className="absolute inset-[3px] rounded-full border border-dashed border-white/15" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/red-jitsu-logo.png" alt="" className="w-[52px] h-[52px] object-contain" />
+              <img src="/red-jitsu-mark.png" alt="Red Jitsu" className="w-[44px] h-[44px] object-contain" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xl font-semibold text-white truncate">
