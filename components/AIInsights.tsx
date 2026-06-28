@@ -80,7 +80,7 @@ function getSectionIcon(section: string) {
     return <Zap className="w-4 h-4 text-amber-400 shrink-0" />
   }
   if (lower.includes('observation') || lower.includes('pattern')) {
-    return <Search className="w-4 h-4 text-blue-400 shrink-0" />
+    return <Search className="w-4 h-4 text-zinc-400 shrink-0" />
   }
   if (lower.includes('focus') || lower.includes('week')) {
     return <Target className="w-4 h-4 text-brand-red shrink-0" />

@@ -438,19 +438,19 @@ function ExerciseCard({
             <div className="p-4 space-y-3">
               {/* Last Workout Reference */}
               {exercise.lastWorkout && exercise.lastWorkout.sets.length > 0 ? (
-                <div className="rounded-xl p-3 bg-blue-500/[0.07] border border-blue-500/15">
-                  <div className="flex items-center gap-2 text-xs font-medium mb-2 text-blue-400">
+                <div className="rounded-xl p-3 bg-surface-elevated/40 border border-white/5">
+                  <div className="flex items-center gap-2 text-xs font-medium mb-2 text-zinc-400">
                     <TrendingUp className="w-3.5 h-3.5" />
                     Previous Workout
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {exercise.lastWorkout.sets.slice(0, 5).map((s, i) => (
-                      <span key={i} className="px-2.5 py-1 bg-blue-500/15 rounded-lg text-xs text-blue-300 font-medium">
+                      <span key={i} className="px-2.5 py-1 bg-surface-elevated rounded-lg text-xs text-zinc-200 font-medium">
                         {s.weight}{unit} x {s.reps}
                       </span>
                     ))}
                     {exercise.lastWorkout.sets.length > 5 && (
-                      <span className="px-2 py-1 text-xs text-blue-400">
+                      <span className="px-2 py-1 text-xs text-zinc-500">
                         +{exercise.lastWorkout.sets.length - 5} more
                       </span>
                     )}

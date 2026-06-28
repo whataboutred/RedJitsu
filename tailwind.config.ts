@@ -108,9 +108,9 @@ export default {
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-strength": "linear-gradient(135deg, #DC2626 0%, #F97316 100%)",
-        "gradient-bjj": "linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)",
-        "gradient-cardio": "linear-gradient(135deg, #10B981 0%, #06B6D4 100%)",
+        "gradient-strength": "linear-gradient(135deg, #DC2626 0%, #991B1B 100%)",
+        "gradient-bjj": "linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)",
+        "gradient-cardio": "linear-gradient(135deg, #10B981 0%, #047857 100%)",
         "gradient-hero": "linear-gradient(135deg, #DC2626 0%, #7F1D1D 100%)",
         "gradient-surface": "linear-gradient(180deg, rgba(220, 38, 38, 0.06) 0%, transparent 100%)",
       },

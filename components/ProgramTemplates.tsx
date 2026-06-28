@@ -186,8 +186,8 @@ const PROGRAM_TEMPLATES: ProgramTemplate[] = [
 ]
 
 const LEVEL_COLORS = {
-  'Beginner': 'bg-green-500/20 text-green-400 border-green-500/30',
-  'Intermediate': 'bg-orange-500/20 text-orange-400 border-orange-500/30', 
+  'Beginner': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  'Intermediate': 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   'Advanced': 'bg-red-500/20 text-red-400 border-red-500/30'
 } as const
 
@@ -255,7 +255,7 @@ export default function ProgramTemplates({ onSelectTemplate }: ProgramTemplatesP
                 </span>
                 <div className="flex gap-1 flex-wrap">
                   {template.focus.map(focus => (
-                    <span key={focus} className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full text-xs font-medium">
+                    <span key={focus} className="bg-surface-elevated text-zinc-300 px-2 py-1 rounded-full text-xs font-medium">
                       {focus}
                     </span>
                   ))}

@@ -80,7 +80,7 @@ export default function SyncStatus() {
     syncing: {
       icon: <RefreshCw className="w-3.5 h-3.5 animate-spin" />,
       label: 'Syncing…',
-      className: 'bg-blue-500/15 text-blue-300 border-blue-500/25',
+      className: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
     },
     synced: {
       icon: <Check className="w-3.5 h-3.5" />,
