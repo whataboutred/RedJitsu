@@ -50,8 +50,12 @@ function triggerDownload(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
-function csvEscape(value: string | null | undefined): string {
-  const str = (value ?? '').replace(/"/g, '""').replace(/[\r\n]+/g, ' ')
+function csvEscape(value: string | number | null | undefined): string {
+  let str = String(value ?? '').replace(/[\r\n]+/g, ' ')
+  // Neutralize spreadsheet formula injection: a leading = + - @ (or tab) makes
+  // Excel/Sheets evaluate the cell as a formula. Prefix with ' to defuse it.
+  if (/^[=+\-@\t]/.test(str)) str = `'${str}`
+  str = str.replace(/"/g, '""')
   return `"${str}"`
 }
 
@@ -92,9 +96,9 @@ function buildCsv(
     lines.push(
       [
         b.performed_at,
-        b.kind ?? '',
+        csvEscape(b.kind),
         b.duration_min ?? '',
-        b.intensity ?? '',
+        csvEscape(b.intensity),
         csvEscape(b.notes),
       ].join(',')
     )
@@ -109,11 +113,11 @@ function buildCsv(
     lines.push(
       [
         c.performed_at,
-        c.activity ?? '',
+        csvEscape(c.activity),
         c.duration_minutes ?? '',
         c.distance ?? '',
-        c.distance_unit ?? '',
-        c.intensity ?? '',
+        csvEscape(c.distance_unit),
+        csvEscape(c.intensity),
         c.calories ?? '',
         csvEscape(c.notes),
       ].join(',')

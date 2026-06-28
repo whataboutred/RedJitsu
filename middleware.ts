@@ -15,13 +15,21 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // Demo mode allows unauthenticated browsing; missing env vars means we
-  // can't validate sessions, so fail open and rely on the client-side guard.
-  if (
-    process.env.NEXT_PUBLIC_DEMO_MODE?.toLowerCase() === 'true' ||
-    !supabaseUrl ||
-    !supabaseAnonKey
-  ) {
+  // Demo mode allows unauthenticated browsing.
+  if (process.env.NEXT_PUBLIC_DEMO_MODE?.toLowerCase() === 'true') {
+    return response
+  }
+
+  // Missing env vars means we can't validate sessions. In development this is
+  // a local-setup convenience (fail open); in PRODUCTION a misconfig must NOT
+  // silently disable route protection — fail closed and send to login.
+  if (!supabaseUrl || !supabaseAnonKey) {
+    if (process.env.NODE_ENV === 'production' && !isPublicPath(request.nextUrl.pathname)) {
+      const loginUrl = request.nextUrl.clone()
+      loginUrl.pathname = '/login'
+      loginUrl.search = ''
+      return NextResponse.redirect(loginUrl)
+    }
     return response
   }
 
