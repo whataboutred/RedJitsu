@@ -589,7 +589,7 @@ function ExerciseSelectorSheet({
               transition-all active:scale-95
               ${category === cat.value
                 ? 'bg-brand-red text-white shadow-sm shadow-red-500/20'
-                : 'bg-surface-elevated text-zinc-400 hover:text-white'
+                : 'bg-white/[0.04] text-zinc-400 hover:bg-white/[0.08] hover:text-white'
               }
             `}
           >

@@ -922,7 +922,7 @@ export default function ProgramsPage() {
 
   // Manual/Edit Mode - Full program creation interface
   return (
-    <div className="relative min-h-screen bg-black pb-24">
+    <div className="relative min-h-screen bg-black pb-40">
       <BackgroundLogo />
       <Nav />
       <main className="relative z-10 max-w-6xl mx-auto p-4 space-y-6">
@@ -1298,24 +1298,24 @@ export default function ProgramsPage() {
           </AnimatedCard>
         </motion.div>
 
-        {/* Save Button */}
+        {/* Save Bar — floats above the bottom nav, matching BJJ/Cardio */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="fixed bottom-4 left-4 right-4 max-w-6xl mx-auto z-30"
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-brand-dark via-brand-dark/95 to-transparent p-4 pb-20"
         >
-          <div className="bg-surface/95 backdrop-blur-lg rounded-2xl p-4 border border-white/10 shadow-2xl shadow-black/50">
-            <div className="flex gap-3">
-              <button className="btn flex-1" onClick={saveProgram}>
-                <Check className="w-4 h-4" />
-                {selected ? 'Update Program' : 'Create Program'}
-              </button>
-              <button className="toggle px-6" onClick={backToList}>
-                <X className="w-4 h-4" />
-                Cancel
-              </button>
-            </div>
+          <div className="max-w-2xl mx-auto flex gap-2">
+            <button className="btn flex-1 justify-center" onClick={saveProgram}>
+              <Check className="w-4 h-4" />
+              {selected ? 'Update Program' : 'Create Program'}
+            </button>
+            <button
+              className="w-14 rounded-2xl bg-surface-elevated text-zinc-300 hover:text-white hover:bg-surface-pressed flex items-center justify-center transition-colors shrink-0"
+              onClick={backToList}
+              aria-label="Cancel"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </motion.div>
       </main>
