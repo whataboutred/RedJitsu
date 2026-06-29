@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/Card'
 import { Button, IconButton } from '@/components/ui/Button'
-import { BottomSheet, Modal } from '@/components/ui/BottomSheet'
+import { BottomSheet } from '@/components/ui/BottomSheet'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { useToast } from '@/components/Toast'
 import { supabase } from '@/lib/supabaseClient'
@@ -196,7 +196,6 @@ export default function BJJPage() {
 
   // Modal state
   const [showNotesSheet, setShowNotesSheet] = useState(false)
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
 
   // Auth check
   useEffect(() => {
@@ -368,7 +367,8 @@ export default function BJJPage() {
         await saveOnline()
       }
       hapticSuccess()
-      setShowSuccessModal(true)
+      toast.success('Session saved')
+      router.push('/dashboard')
     } catch (error) {
       console.error('Save error:', error)
       toast.error('Failed to save session. Please try again.')
@@ -409,11 +409,6 @@ export default function BJJPage() {
 
     const key = `bjj_pending_${temp}`
     localStorage.setItem(key, JSON.stringify(session))
-  }
-
-  function handleFinish() {
-    setShowSuccessModal(false)
-    router.push('/dashboard')
   }
 
   const canSave = duration > 0 && kind
@@ -912,47 +907,6 @@ export default function BJJPage() {
           ))}
         </div>
       </BottomSheet>
-
-      {/* Success Modal */}
-      <Modal
-        isOpen={showSuccessModal}
-        onClose={handleFinish}
-      >
-        <div className="text-center py-6">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', damping: 15 }}
-            className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center mx-auto mb-4"
-          >
-            <Check className="w-10 h-10 text-white" />
-          </motion.div>
-          <h2 className="text-3xl font-display uppercase text-white mb-2">Session Saved!</h2>
-          <p className="text-zinc-500 mb-6">
-            {kind} • {duration} minutes • {intensity} intensity
-          </p>
-
-          {/* Updated week stats */}
-          <div className="bg-surface-elevated rounded-xl p-4 mb-6">
-            <p className="text-sm text-zinc-500 mb-2">This week&apos;s progress</p>
-            <div className="flex items-center justify-center gap-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-purple-400">{weekStats.sessions + 1}</p>
-                <p className="text-xs text-zinc-500">Sessions</p>
-              </div>
-              <div className="w-px h-10 bg-surface-pressed" />
-              <div className="text-center">
-                <p className="text-2xl font-bold text-purple-400">{weekStats.totalMinutes + duration}</p>
-                <p className="text-xs text-zinc-500">Minutes</p>
-              </div>
-            </div>
-          </div>
-
-          <Button fullWidth onClick={handleFinish}>
-            Done
-          </Button>
-        </div>
-      </Modal>
     </div>
   )
 }

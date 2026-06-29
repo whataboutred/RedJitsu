@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/Card'
 import { Button, IconButton } from '@/components/ui/Button'
-import { BottomSheet, Modal } from '@/components/ui/BottomSheet'
+import { BottomSheet } from '@/components/ui/BottomSheet'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { useToast } from '@/components/Toast'
 import { toDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
@@ -225,9 +225,6 @@ export default function CardioPage() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [targetDuration, setTargetDuration] = useState(30) // Default target 30 mins
 
-  // Modal state
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
-
   // Auth check and load data
   useEffect(() => {
     ;(async () => {
@@ -354,18 +351,14 @@ export default function CardioPage() {
       await insertCardioSession(sessionData)
 
       hapticSuccess()
-      setShowSuccessModal(true)
+      toast.success('Cardio session saved')
+      router.push('/dashboard')
     } catch (error) {
       console.error('Save error:', error)
       toast.error('Failed to save cardio session')
     } finally {
       setSaving(false)
     }
-  }
-
-  function handleFinish() {
-    setShowSuccessModal(false)
-    router.push('/dashboard')
   }
 
   const timerProgress = targetDuration > 0 ? (elapsedSeconds / (targetDuration * 60)) * 100 : 0
@@ -870,51 +863,6 @@ export default function CardioPage() {
           )}
         </div>
       </BottomSheet>
-
-      {/* Success Modal */}
-      <Modal
-        isOpen={showSuccessModal}
-        onClose={handleFinish}
-      >
-        <div className="text-center py-6">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', damping: 15 }}
-            className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center mx-auto mb-4"
-          >
-            <Check className="w-10 h-10 text-white" />
-          </motion.div>
-          <h2 className="text-3xl font-display uppercase text-white mb-2">Workout Saved!</h2>
-          <p className="text-zinc-500 mb-6">
-            {session.activity}
-            {session.duration_minutes ? ` • ${session.duration_minutes} min` : ''}
-            {session.distance ? ` • ${session.distance} ${session.distance_unit}` : ''}
-          </p>
-
-          {/* Updated stats */}
-          <div className="bg-surface-elevated rounded-xl p-4 mb-6">
-            <p className="text-sm text-zinc-500 mb-2">This week&apos;s cardio</p>
-            <div className="flex items-center justify-center gap-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-emerald-400">{weekStats.sessions + 1}</p>
-                <p className="text-xs text-zinc-500">Sessions</p>
-              </div>
-              <div className="w-px h-10 bg-surface-pressed" />
-              <div className="text-center">
-                <p className="text-2xl font-bold text-emerald-400">
-                  {weekStats.totalMinutes + (session.duration_minutes || 0)}
-                </p>
-                <p className="text-xs text-zinc-500">Minutes</p>
-              </div>
-            </div>
-          </div>
-
-          <Button fullWidth onClick={handleFinish}>
-            Done
-          </Button>
-        </div>
-      </Modal>
     </div>
   )
 }

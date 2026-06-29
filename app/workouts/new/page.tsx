@@ -42,7 +42,7 @@ import PRCelebration from '@/components/PRCelebration'
 import { getLastWorkoutSetsForExercises, WorkoutSet as LastWorkoutSet } from '@/lib/workoutSuggestions'
 import { searchByName } from '@/lib/exerciseSearch'
 import { Button, IconButton } from '@/components/ui/Button'
-import { BottomSheet, Modal, ConfirmDialog } from '@/components/ui/BottomSheet'
+import { BottomSheet, ConfirmDialog } from '@/components/ui/BottomSheet'
 import { NumberInput, Input, Textarea, Select } from '@/components/ui/Input'
 import { AnimatedCard } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -733,63 +733,6 @@ function ExerciseSelectorSheet({
   )
 }
 
-// Workout Summary Modal
-function WorkoutSummaryModal({
-  isOpen,
-  onClose,
-  summary,
-}: {
-  isOpen: boolean
-  onClose: () => void
-  summary: {
-    title: string
-    duration: number
-    exercises: number
-    sets: number
-    volume: number
-    unit: string
-  }
-}) {
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Workout Complete!">
-      <div className="text-center space-y-6">
-        <div className="w-20 h-20 bg-emerald-500/15 rounded-2xl flex items-center justify-center mx-auto">
-          <Check className="w-10 h-10 text-emerald-400" />
-        </div>
-
-        <div className="max-w-full overflow-hidden">
-          <h3 className="text-xl font-bold text-white mb-1 break-words">{summary.title || 'Workout'}</h3>
-          <p className="text-zinc-400 text-sm">Great job! Here&apos;s your summary:</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-surface-elevated rounded-xl p-3 min-w-0">
-            <p className="text-xl sm:text-2xl font-bold text-white truncate">{summary.duration}m</p>
-            <p className="text-xs sm:text-sm text-zinc-500">Duration</p>
-          </div>
-          <div className="bg-surface-elevated rounded-xl p-3 min-w-0">
-            <p className="text-xl sm:text-2xl font-bold text-white truncate">{summary.exercises}</p>
-            <p className="text-xs sm:text-sm text-zinc-500">Exercises</p>
-          </div>
-          <div className="bg-surface-elevated rounded-xl p-3 min-w-0">
-            <p className="text-xl sm:text-2xl font-bold text-white truncate">{summary.sets}</p>
-            <p className="text-xs sm:text-sm text-zinc-500">Sets</p>
-          </div>
-          <div className="bg-surface-elevated rounded-xl p-3 min-w-0">
-            <p className="text-xl sm:text-2xl font-bold text-white truncate">{summary.volume.toLocaleString()}</p>
-            <p className="text-xs sm:text-sm text-zinc-500">Volume ({summary.unit})</p>
-          </div>
-        </div>
-
-        <button onClick={onClose} className="btn w-full">
-          View History
-        </button>
-      </div>
-    </Modal>
-  )
-}
-
-
 // Main Page
 export default function NewWorkoutPage() {
   const router = useRouter()
@@ -805,7 +748,6 @@ export default function NewWorkoutPage() {
   const [exercises, setExercises] = useState<WorkoutExercise[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showExerciseSelector, setShowExerciseSelector] = useState(false)
-  const [showSummary, setShowSummary] = useState(false)
   const [savedWorkoutId, setSavedWorkoutId] = useState<string | null>(null)
   const [newPRs, setNewPRs] = useState<NewPR[]>([])
   const [showPRCelebration, setShowPRCelebration] = useState(false)
@@ -1210,17 +1152,18 @@ export default function NewWorkoutPage() {
       } catch (e) {
         console.error('PR detection failed:', e)
       }
-      if (prs.length > 0) {
-        setNewPRs(prs)
-        setShowPRCelebration(true)
-      } else {
-        setShowSummary(true)
-      }
-
       // Notify other pages that workout data changed so they refetch
       notifyDataChanged()
 
-      toast.success(`Workout saved! (${verifyWex?.length || 0} exercises, ${verifySets?.length || 0} sets)`)
+      toast.success('Workout saved')
+
+      if (prs.length > 0) {
+        // A personal record is worth celebrating — then head to history.
+        setNewPRs(prs)
+        setShowPRCelebration(true)
+      } else {
+        router.push(w.id ? `/history?highlight=${w.id}` : '/history')
+      }
     } catch (error: any) {
       console.error('[saveWorkout] Error:', error)
       toast.error(error.message || 'Failed to save workout')
@@ -1229,7 +1172,7 @@ export default function NewWorkoutPage() {
     }
   }
 
-  // Calculate summary
+  // Calculate summary (used by the save footer + confirm dialog)
   const summary = useMemo(() => {
     const duration = Math.round((Date.now() - startTimeRef.current.getTime()) / 60000)
     let volume = 0
@@ -1474,25 +1417,15 @@ export default function NewWorkoutPage() {
         confirmText="Save"
       />
 
-      {/* PR Celebration — shown before the summary when records were hit */}
+      {/* PR Celebration — the only post-save moment we keep; records are worth it */}
       <PRCelebration
         prs={newPRs}
         unit={unit}
         isOpen={showPRCelebration}
         onClose={() => {
           setShowPRCelebration(false)
-          setShowSummary(true)
-        }}
-      />
-
-      {/* Summary Modal */}
-      <WorkoutSummaryModal
-        isOpen={showSummary}
-        onClose={() => {
-          setShowSummary(false)
           router.push(savedWorkoutId ? `/history?highlight=${savedWorkoutId}` : '/history')
         }}
-        summary={summary}
       />
 
       {/* Template Sheet - Two step: Program -> Day */}

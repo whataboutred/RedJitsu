@@ -908,10 +908,10 @@ function HistoryClient() {
 
   const getActivityColor = (type: string) => {
     switch (type) {
-      case 'strength': return { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' }
-      case 'bjj': return { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' }
-      case 'cardio': return { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30' }
-      default: return { bg: 'bg-zinc-500/20', text: 'text-zinc-500', border: 'border-zinc-500/30' }
+      case 'strength': return { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30', leftBorder: 'border-l-brand-red/70' }
+      case 'bjj': return { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30', leftBorder: 'border-l-purple-500/70' }
+      case 'cardio': return { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30', leftBorder: 'border-l-emerald-500/70' }
+      default: return { bg: 'bg-zinc-500/20', text: 'text-zinc-500', border: 'border-zinc-500/30', leftBorder: 'border-l-zinc-500/70' }
     }
   }
 
@@ -1177,15 +1177,15 @@ function HistoryClient() {
                             router.push(`/history?highlight=${activity.id}&type=cardio`)
                           }
                         }}
-                        className={`w-full p-4 rounded-xl ${colors.bg} border ${colors.border} hover:border-white/20 transition-all text-left group`}
+                        className={`w-full p-4 rounded-2xl bg-surface border border-white/[0.07] border-l-2 ${colors.leftBorder} hover:border-white/20 transition-all text-left group`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-lg ${colors.bg} flex items-center justify-center ${colors.text}`}>
+                          <div className={`w-10 h-10 rounded-lg bg-white/[0.05] flex items-center justify-center ${colors.text}`}>
                             {getActivityIcon(activity.type)}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-white truncate">{activity.title}</p>
-                            <p className="text-xs text-zinc-500">
+                            <p className={`text-xs ${colors.text}`}>
                               {activity.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                               {activity.subtitle && ` • ${activity.subtitle}`}
                             </p>
