@@ -191,9 +191,14 @@ export default function ConnectionsPage() {
                   </div>
                 </div>
               ) : (
-                <Button onClick={connect} icon={<Plug className="w-4 h-4" />} fullWidth size="lg">
-                  Connect Fitbit
-                </Button>
+                <div className="space-y-2">
+                  <Button onClick={connect} icon={<Plug className="w-4 h-4" />} fullWidth size="lg">
+                    Connect Fitbit
+                  </Button>
+                  <p className="text-[11px] text-zinc-600 text-center">
+                    Fitbit data is now served through Google Health — you&apos;ll authorize with the Google account linked to your Fitbit.
+                  </p>
+                </div>
               )}
             </AnimatedCard>
 

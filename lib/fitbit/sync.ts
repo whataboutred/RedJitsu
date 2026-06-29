@@ -1,8 +1,8 @@
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { encryptToken, decryptToken } from './crypto'
-import { refreshTokens, fetchActivitiesSince } from './client'
-import { mapActivityToCardio } from './map'
+import { refreshTokens, fetchExercisesSince } from './client'
+import { mapExerciseToCardio } from './map'
 
 export type FitbitConnectionRow = {
   user_id: string
@@ -40,13 +40,13 @@ async function ensureFreshToken(
   if (exped - Date.now() > 60_000) {
     return decryptToken(conn.access_token_enc)
   }
-  // Refresh
+  // Refresh. Google omits refresh_token on refresh, so keep the stored one.
   const fresh = await refreshTokens(decryptToken(conn.refresh_token_enc))
   await supabase
     .from('fitbit_connections')
     .update({
       access_token_enc: encryptToken(fresh.accessToken),
-      refresh_token_enc: encryptToken(fresh.refreshToken),
+      refresh_token_enc: fresh.refreshToken ? encryptToken(fresh.refreshToken) : conn.refresh_token_enc,
       expires_at: fresh.expiresAt,
       scopes: fresh.scope || conn.scopes,
       updated_at: new Date().toISOString(),
@@ -56,11 +56,12 @@ async function ensureFreshToken(
 }
 
 function afterDateFor(conn: FitbitConnectionRow): string {
-  // First sync looks back 30 days; subsequent syncs from the last sync date.
+  // First sync looks back 30 days; subsequent syncs from the last sync time.
+  // Google's civil_start_time filter wants ISO 8601 without a zone suffix.
   const base = conn.last_sync_at
     ? new Date(conn.last_sync_at)
     : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-  return base.toISOString().slice(0, 10) // YYYY-MM-DD
+  return base.toISOString().slice(0, 19) // YYYY-MM-DDTHH:MM:SS
 }
 
 export type SyncResult = { imported: number; scanned: number }
@@ -77,10 +78,10 @@ export async function runSync(
 
   try {
     const accessToken = await ensureFreshToken(supabase, conn)
-    const activities = await fetchActivitiesSince(accessToken, afterDateFor(conn))
+    const points = await fetchExercisesSince(accessToken, afterDateFor(conn))
 
-    const rows = activities
-      .map((a) => mapActivityToCardio(a, conn.allowed_activities))
+    const rows = points
+      .map((p) => mapExerciseToCardio(p, conn.allowed_activities))
       .filter((r): r is NonNullable<typeof r> => r !== null)
       .map((r) => ({ ...r, user_id: userId }))
 
@@ -99,7 +100,7 @@ export async function runSync(
       .update({ last_sync_at: new Date().toISOString(), last_error: null, updated_at: new Date().toISOString() })
       .eq('user_id', userId)
 
-    return { imported, scanned: activities.length }
+    return { imported, scanned: points.length }
   } catch (err: any) {
     await supabase
       .from('fitbit_connections')

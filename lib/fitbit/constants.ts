@@ -1,38 +1,39 @@
-// Fitbit OAuth + API endpoints and app-level constants. Safe to import anywhere
-// (no secrets here — those come from server env at call time).
+// Google Health API + OAuth endpoints and app-level constants.
+// (The provider is now the Google Health API — the Fitbit Web API successor.
+// We keep the "fitbit" file/route/table names since the device is still a Fitbit;
+// only the API behind it changed.)
 
-export const FITBIT_AUTHORIZE_URL = 'https://www.fitbit.com/oauth2/authorize'
-export const FITBIT_TOKEN_URL = 'https://api.fitbit.com/oauth2/token'
-export const FITBIT_REVOKE_URL = 'https://api.fitbit.com/oauth2/revoke'
-export const FITBIT_ACTIVITIES_URL = 'https://api.fitbit.com/1/user/-/activities/list.json'
+// Standard Google OAuth 2.0 endpoints
+export const GH_AUTHORIZE_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
+export const GH_TOKEN_URL = 'https://oauth2.googleapis.com/token'
+export const GH_REVOKE_URL = 'https://oauth2.googleapis.com/revoke'
 
-// Minimal scopes: workout logs + heart-rate (for intensity derivation).
-export const FITBIT_SCOPES = 'activity heartrate'
-
-// en_US forces miles in distance fields, matching the app's default unit.
-export const FITBIT_LOCALE = 'en_US'
+// Google Health REST API
+export const GH_API_BASE = 'https://health.googleapis.com/v4'
+// Exercise sessions bundle their own time-in-HR-zone durations, so this single
+// scope covers everything we import.
+export const GH_SCOPE = 'https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly'
 
 // Cookie that carries the PKCE verifier + CSRF state between /connect and
 // /callback. Short-lived, httpOnly.
 export const FITBIT_OAUTH_COOKIE = 'rj_fitbit_oauth'
 
 // Curated activity types the user can choose to import (matched case-insensitively
-// against Fitbit's activityName). Sensible default = the common cardio ones.
+// against the exercise displayName / exerciseType). Sensible default = common cardio.
 export const FITBIT_ACTIVITY_OPTIONS = [
-  'Run',
-  'Walk',
-  'Bike',
-  'Outdoor Bike',
+  'Running',
+  'Walking',
+  'Biking',
   'Spinning',
   'Treadmill',
   'Elliptical',
-  'Swim',
-  'Hike',
+  'Swimming',
+  'Hiking',
+  'Rowing',
   'Workout',
-  'Interval Workout',
-  'Aerobic Workout',
+  'Interval Training',
   'Sport',
   'Yoga',
 ] as const
 
-export const FITBIT_DEFAULT_ALLOWED = ['Run', 'Walk', 'Bike', 'Outdoor Bike', 'Spinning', 'Treadmill', 'Elliptical', 'Swim', 'Hike']
+export const FITBIT_DEFAULT_ALLOWED = ['Running', 'Walking', 'Biking', 'Spinning', 'Treadmill', 'Elliptical', 'Swimming', 'Hiking', 'Rowing']

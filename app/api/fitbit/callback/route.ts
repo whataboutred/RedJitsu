@@ -27,24 +27,26 @@ export async function GET(req: NextRequest) {
   }
 
   const auth = await getUserFromCookies()
-  const redirectUri = process.env.FITBIT_REDIRECT_URI
+  const redirectUri = process.env.GOOGLE_HEALTH_REDIRECT_URI
   if (!auth || !redirectUri) return done(req, 'error')
 
   try {
     const tokens = await exchangeCodeForTokens(code, stored.codeVerifier, redirectUri)
 
-    // Preserve an existing allowlist on reconnect; default it on first connect.
+    // Preserve an existing allowlist + refresh token on reconnect.
     const { data: existing } = await auth.supabase
       .from('fitbit_connections')
-      .select('user_id, allowed_activities')
+      .select('user_id, allowed_activities, refresh_token_enc')
       .eq('user_id', auth.userId)
       .maybeSingle()
 
     const row = {
       user_id: auth.userId,
-      fitbit_user_id: tokens.fitbitUserId,
+      fitbit_user_id: 'Google Health',
       access_token_enc: encryptToken(tokens.accessToken),
-      refresh_token_enc: encryptToken(tokens.refreshToken),
+      refresh_token_enc: tokens.refreshToken
+        ? encryptToken(tokens.refreshToken)
+        : (existing as any)?.refresh_token_enc ?? null,
       expires_at: tokens.expiresAt,
       scopes: tokens.scope,
       allowed_activities:
