@@ -739,6 +739,7 @@ export default function NewWorkoutPage() {
   const toast = useToast()
   const userIdRef = useRef<string | null>(null)
   const startTimeRef = useRef<Date>(new Date())
+  const appliedDayRef = useRef(false) // guards the one-time ?day= prefill
 
   // State
   const [loading, setLoading] = useState(true)
@@ -882,8 +883,13 @@ export default function NewWorkoutPage() {
       const { data: ex } = await supabase.from('exercises').select('id,name,category').order('name')
       setAllExercises((ex || []) as Exercise[])
 
-      // Load programs
-      const { data: progs } = await supabase.from('programs').select('id,name').order('created_at', { ascending: false })
+      // Load programs — must scope to this user. Without the user_id filter the
+      // demo-public read policy leaks the demo account's programs into real ones.
+      const { data: progs } = await supabase
+        .from('programs')
+        .select('id,name')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
       setPrograms((progs || []) as { id: string; name: string }[])
 
       // Load saved locations
@@ -1171,6 +1177,93 @@ export default function NewWorkoutPage() {
       setSaving(false)
     }
   }
+
+  // Load a program day's exercises into the workout. Shared by the template
+  // sheet and the dashboard "Today's session" deep-link (?day=<id>).
+  const applyProgramDay = async (dayId: string, dayTitle?: string) => {
+    setLoadingTemplate(true)
+    try {
+      const { data: templateExercises, error: exercisesError } = await supabase
+        .from('template_exercises')
+        .select('exercise_id, display_name, default_sets, default_reps')
+        .eq('program_day_id', dayId)
+        .order('order_index')
+
+      if (exercisesError) {
+        console.error('Exercises error:', exercisesError)
+        toast.error('Failed to load exercises')
+        return
+      }
+      if (!templateExercises || templateExercises.length === 0) {
+        toast.error('No exercises found in this day')
+        return
+      }
+
+      const exerciseIds = templateExercises.map((te) => te.exercise_id)
+      let lastWorkoutMap = new Map<string, { weight: number; reps: number }[]>()
+      if (userIdRef.current && exerciseIds.length > 0) {
+        try {
+          lastWorkoutMap = await getLastWorkoutSetsForExercises(userIdRef.current, exerciseIds, location)
+        } catch (e) {
+          console.error('Error fetching suggestions:', e)
+        }
+      }
+
+      const newExercises: WorkoutExercise[] = []
+      for (const te of templateExercises) {
+        if (exercises.some((e) => e.exerciseId === te.exercise_id)) continue
+        const lastSets = lastWorkoutMap.get(te.exercise_id)
+        newExercises.push({
+          id: crypto.randomUUID(),
+          exerciseId: te.exercise_id,
+          name: te.display_name,
+          sets: Array.from({ length: te.default_sets || 3 }, () => ({
+            weight: 0,
+            reps: 0,
+            isWarmup: false,
+            isCompleted: false,
+          })),
+          lastWorkout:
+            lastSets && lastSets.length > 0
+              ? { date: new Date().toISOString(), sets: lastSets.map((s) => ({ weight: s.weight, reps: s.reps })) }
+              : undefined,
+        })
+      }
+
+      if (newExercises.length === 0) {
+        toast.error('All exercises from this day are already added')
+        return
+      }
+
+      // Resolve a title: explicit (from the sheet) or the day's name (deep-link)
+      let title = dayTitle
+      if (!title) {
+        const { data: dayRow } = await supabase.from('program_days').select('name').eq('id', dayId).maybeSingle()
+        if (dayRow?.name) title = dayRow.name
+      }
+
+      setExercises((prev) => [...prev, ...newExercises])
+      if (title) setTitle(title)
+      setExpandedId(newExercises[0].id)
+      toast.success(`Loaded ${newExercises.length} exercises`)
+    } catch (error) {
+      console.error('Error loading template:', error)
+      toast.error('Failed to load template')
+    } finally {
+      setLoadingTemplate(false)
+    }
+  }
+
+  // Deep-link: dashboard "Today's session" passes ?day=<programDayId> to prefill.
+  useEffect(() => {
+    if (loading || appliedDayRef.current) return
+    const dayId = new URLSearchParams(window.location.search).get('day')
+    if (dayId) {
+      appliedDayRef.current = true
+      applyProgramDay(dayId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading])
 
   // Calculate summary (used by the save footer + confirm dialog)
   const summary = useMemo(() => {
@@ -1464,93 +1557,10 @@ export default function NewWorkoutPage() {
                 <button
                   key={day.id}
                   onClick={async () => {
-                    setLoadingTemplate(true)
-                    try {
-                      // Fetch exercises for this specific day
-                      const { data: templateExercises, error: exercisesError } = await supabase
-                        .from('template_exercises')
-                        .select('exercise_id, display_name, default_sets, default_reps')
-                        .eq('program_day_id', day.id)
-                        .order('order_index')
-
-                      if (exercisesError) {
-                        console.error('Exercises error:', exercisesError)
-                        toast.error('Failed to load exercises')
-                        return
-                      }
-
-                      if (!templateExercises || templateExercises.length === 0) {
-                        toast.error('No exercises found in this day')
-                        return
-                      }
-
-                      // Get all exercise IDs for batch fetching last workout data
-                      const exerciseIds = templateExercises.map(te => te.exercise_id)
-
-                      // Batch fetch last workout data for all exercises at once
-                      let lastWorkoutMap = new Map<string, { weight: number; reps: number }[]>()
-                      if (userIdRef.current && exerciseIds.length > 0) {
-                        try {
-                          lastWorkoutMap = await getLastWorkoutSetsForExercises(
-                            userIdRef.current,
-                            exerciseIds,
-                            location
-                          )
-                        } catch (e) {
-                          console.error('Error fetching suggestions:', e)
-                        }
-                      }
-
-                      // Convert template exercises to workout exercises (fast - no async in loop)
-                      const newExercises: WorkoutExercise[] = []
-
-                      for (const te of templateExercises) {
-                        // Skip if already in workout
-                        if (exercises.some(e => e.exerciseId === te.exercise_id)) continue
-
-                        const lastSets = lastWorkoutMap.get(te.exercise_id)
-
-                        const newExercise: WorkoutExercise = {
-                          id: crypto.randomUUID(),
-                          exerciseId: te.exercise_id,
-                          name: te.display_name,
-                          // Create empty sets - don't pre-fill weight/reps
-                          sets: Array.from({ length: te.default_sets || 3 }, () => ({
-                            weight: 0,
-                            reps: 0,
-                            isWarmup: false,
-                            isCompleted: false,
-                          })),
-                          // Store last workout data for recommendation display
-                          lastWorkout: lastSets && lastSets.length > 0 ? {
-                            date: new Date().toISOString(),
-                            sets: lastSets.map((s) => ({ weight: s.weight, reps: s.reps })),
-                          } : undefined,
-                        }
-
-                        newExercises.push(newExercise)
-                      }
-
-                      if (newExercises.length === 0) {
-                        toast.error('All exercises from this day are already added')
-                        return
-                      }
-
-                      setExercises(prev => [...prev, ...newExercises])
-                      setTitle(`${selectedProgram.name} - ${day.name}`)
-                      if (newExercises.length > 0) {
-                        setExpandedId(newExercises[0].id)
-                      }
-                      setShowTemplateSheet(false)
-                      setSelectedProgram(null)
-                      setProgramDays([])
-                      toast.success(`Loaded ${newExercises.length} exercises from ${day.name}`)
-                    } catch (error) {
-                      console.error('Error loading template:', error)
-                      toast.error('Failed to load template')
-                    } finally {
-                      setLoadingTemplate(false)
-                    }
+                    await applyProgramDay(day.id, `${selectedProgram.name} - ${day.name}`)
+                    setShowTemplateSheet(false)
+                    setSelectedProgram(null)
+                    setProgramDays([])
                   }}
                   className="w-full flex items-center gap-3 p-4 rounded-xl bg-surface-elevated/50 hover:bg-surface-elevated transition-colors text-left"
                 >

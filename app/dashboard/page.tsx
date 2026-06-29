@@ -70,6 +70,7 @@ export default function Dashboard() {
   const [bjjWeeklyGoal, setBjjWeeklyGoal] = useState<number>(2)
   const [cardioWeeklyGoal, setCardioWeeklyGoal] = useState<number>(3)
   const [todayWorkoutDay, setTodayWorkoutDay] = useState<string | null>(null)
+  const [todayWorkoutDayId, setTodayWorkoutDayId] = useState<string | null>(null)
   const [todayQuote, setTodayQuote] = useState<Quote | null>(null)
   const [isRefreshingQuote, setIsRefreshingQuote] = useState(false)
   const [onboardingUserId, setOnboardingUserId] = useState<string | null>(null)
@@ -149,8 +150,10 @@ export default function Dashboard() {
         day.dows && day.dows.includes(todayDow)
       )
       setTodayWorkoutDay(todaysDay?.name ?? null)
+      setTodayWorkoutDayId(todaysDay?.id ?? null)
     } else {
       setTodayWorkoutDay(null)
+      setTodayWorkoutDayId(null)
     }
   }, [])
 
@@ -277,7 +280,7 @@ export default function Dashboard() {
           transition={{ delay: 0.08 }}
         >
           <Link
-            href="/workouts/new"
+            href={todayWorkoutDayId ? `/workouts/new?day=${todayWorkoutDayId}` : '/workouts/new'}
             className="flex items-center justify-between gap-3 rounded-2xl bg-surface border border-white/[0.07] border-l-2 border-l-brand-red p-4 active:scale-[0.99] transition-transform"
           >
             <div className="min-w-0">
