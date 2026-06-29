@@ -29,7 +29,7 @@ export async function loadConnection(
 
 // Returns a valid access token, refreshing + persisting if the current one is
 // expired (or expires within 60s).
-async function ensureFreshToken(
+export async function ensureFreshToken(
   supabase: SupabaseClient,
   conn: FitbitConnectionRow
 ): Promise<string> {
