@@ -80,7 +80,13 @@ function prettyType(ex: GoogleExercise): string {
 function matchesAllowed(ex: GoogleExercise, allowed: string[]): boolean {
   if (allowed.length === 0) return false
   const hay = `${ex.displayName ?? ''} ${ex.exerciseType ?? ''}`.toLowerCase().replace(/_/g, ' ')
-  return allowed.some((a) => hay.includes(a.toLowerCase()))
+  const words = hay.split(/\s+/).filter(Boolean)
+  return allowed.some((a) => {
+    const al = a.toLowerCase()
+    if (hay.includes(al)) return true
+    // Stem overlap so "Biking" matches "BIKE", "Running" matches "RUN", etc.
+    return words.some((w) => w.length >= 3 && al.length >= 3 && w.slice(0, 3) === al.slice(0, 3))
+  })
 }
 
 export type MappedCardio = {

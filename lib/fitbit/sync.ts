@@ -55,30 +55,38 @@ async function ensureFreshToken(
   return fresh.accessToken
 }
 
-function afterDateFor(conn: FitbitConnectionRow): string {
-  // First sync looks back 30 days; subsequent syncs from the last sync time.
-  // Google's civil_start_time filter wants ISO 8601 without a zone suffix.
-  const base = conn.last_sync_at
-    ? new Date(conn.last_sync_at)
-    : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+// Look-back start time as ISO 8601 without a zone suffix (Google's
+// civil_start_time format). With lookbackDays, ignore last_sync (a backfill);
+// otherwise sync incrementally from the last sync (default 30-day first run).
+function afterDateFor(conn: FitbitConnectionRow, lookbackDays?: number): string {
+  let base: Date
+  if (lookbackDays) {
+    base = new Date(Date.now() - lookbackDays * 24 * 60 * 60 * 1000)
+  } else {
+    base = conn.last_sync_at
+      ? new Date(conn.last_sync_at)
+      : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  }
   return base.toISOString().slice(0, 19) // YYYY-MM-DDTHH:MM:SS
 }
 
-export type SyncResult = { imported: number; scanned: number }
+export type SyncResult = { imported: number; scanned: number; matched: number }
 
-// Pull recent Fitbit activities and import the allowlisted ones. Idempotent:
-// re-imports are skipped via the (user_id, external_id) unique index, and
-// existing rows are never overwritten (preserves any manual edits).
+// Pull Fitbit/Google-Health exercise sessions and import the allowlisted ones.
+// Idempotent: re-imports are skipped via the (user_id, external_id) unique index,
+// and existing rows are never overwritten (preserves any manual edits).
+// scanned = raw sessions Google returned; matched = passed the activity allowlist.
 export async function runSync(
   supabase: SupabaseClient,
-  userId: string
+  userId: string,
+  lookbackDays?: number
 ): Promise<SyncResult> {
   const conn = await loadConnection(supabase, userId)
   if (!conn) throw new Error('Fitbit not connected')
 
   try {
     const accessToken = await ensureFreshToken(supabase, conn)
-    const points = await fetchExercisesSince(accessToken, afterDateFor(conn))
+    const points = await fetchExercisesSince(accessToken, afterDateFor(conn, lookbackDays))
 
     const rows = points
       .map((p) => mapExerciseToCardio(p, conn.allowed_activities))
@@ -100,7 +108,7 @@ export async function runSync(
       .update({ last_sync_at: new Date().toISOString(), last_error: null, updated_at: new Date().toISOString() })
       .eq('user_id', userId)
 
-    return { imported, scanned: points.length }
+    return { imported, scanned: points.length, matched: rows.length }
   } catch (err: any) {
     await supabase
       .from('fitbit_connections')

@@ -7,7 +7,9 @@ export async function POST(req: NextRequest) {
   if (!auth) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
   try {
-    const result = await runSync(auth.supabase, auth.userId)
+    // Manual sync backfills the last 12 months (idempotent via dedupe); the cron
+    // syncs incrementally. So tapping "Sync now" catches up your whole history.
+    const result = await runSync(auth.supabase, auth.userId, 365)
     return NextResponse.json({ ok: true, ...result })
   } catch (err: any) {
     const message = String(err?.message ?? err)

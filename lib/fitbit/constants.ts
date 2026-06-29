@@ -24,6 +24,7 @@ export const FITBIT_ACTIVITY_OPTIONS = [
   'Running',
   'Walking',
   'Biking',
+  'Cycling',
   'Spinning',
   'Treadmill',
   'Elliptical',
@@ -32,8 +33,9 @@ export const FITBIT_ACTIVITY_OPTIONS = [
   'Rowing',
   'Workout',
   'Interval Training',
+  'Aerobic Workout',
   'Sport',
   'Yoga',
 ] as const
 
-export const FITBIT_DEFAULT_ALLOWED = ['Running', 'Walking', 'Biking', 'Spinning', 'Treadmill', 'Elliptical', 'Swimming', 'Hiking', 'Rowing']
+export const FITBIT_DEFAULT_ALLOWED = ['Running', 'Walking', 'Biking', 'Cycling', 'Spinning', 'Treadmill', 'Elliptical', 'Swimming', 'Hiking', 'Rowing', 'Workout', 'Sport']

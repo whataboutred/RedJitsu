@@ -105,7 +105,15 @@ export default function ConnectionsPage() {
       const res = await authedFetch('/api/fitbit/sync', { method: 'POST' })
       const data = await res.json()
       if (res.ok) {
-        toast.success(data.imported > 0 ? `Imported ${data.imported} session${data.imported === 1 ? '' : 's'}` : 'Up to date — nothing new')
+        if (data.imported > 0) {
+          toast.success(`Imported ${data.imported} session${data.imported === 1 ? '' : 's'}`)
+        } else if (data.matched > 0) {
+          toast.success('Already up to date')
+        } else if (data.scanned > 0) {
+          toast.warning(`Found ${data.scanned} Fitbit workout${data.scanned === 1 ? '' : 's'}, but none matched your selected types — add them in the list below.`)
+        } else {
+          toast.warning('No Fitbit workouts found in the last 12 months.')
+        }
         load()
       } else if (data.needsReconnect) {
         toast.error('Fitbit needs reconnecting')
