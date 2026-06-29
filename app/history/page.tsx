@@ -14,6 +14,7 @@ import {
   TrendingDown,
   Zap,
   Activity,
+  Watch,
   Filter,
   ChevronDown,
   AlertTriangle,
@@ -44,7 +45,7 @@ import BackgroundLogo from '@/components/BackgroundLogo'
 
 type Workout = { id: string; performed_at: string; title: string | null; exercise_count?: number }
 type BJJ = { id: string; performed_at: string; duration_min: number; kind: 'class' | 'drilling' | 'open_mat'; intensity: string | null; notes: string | null }
-type Cardio = { id: string; performed_at: string; activity: string; duration_minutes: number | null; distance: number | null; distance_unit: string | null; intensity: string | null; notes: string | null }
+type Cardio = { id: string; performed_at: string; activity: string; duration_minutes: number | null; distance: number | null; distance_unit: string | null; intensity: string | null; notes: string | null; source: string | null }
 
 type ProgressionData = {
   exerciseId: string
@@ -271,6 +272,7 @@ function HistoryClient() {
       date: Date
       title: string
       subtitle: string
+      fromFitbit?: boolean
       data: Workout | BJJ | Cardio
     }> = []
 
@@ -306,6 +308,7 @@ function HistoryClient() {
         date: new Date(c.performed_at),
         title: c.activity,
         subtitle: `${c.duration_minutes ? `${c.duration_minutes} min` : ''}${c.distance ? ` • ${c.distance} ${c.distance_unit}` : ''}`,
+        fromFitbit: c.source === 'fitbit',
         data: c
       })
     })
@@ -370,7 +373,7 @@ function HistoryClient() {
 
     const { data: cardioData } = await supabase
       .from('cardio_sessions')
-      .select('id,performed_at,activity,duration_minutes,distance,distance_unit,intensity,notes')
+      .select('id,performed_at,activity,duration_minutes,distance,distance_unit,intensity,notes,source')
       .eq('user_id', userId)
       .order('performed_at', { ascending: false })
       .limit(PAGE_SIZE)
@@ -1184,7 +1187,15 @@ function HistoryClient() {
                             {getActivityIcon(activity.type)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-white truncate">{activity.title}</p>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <p className="font-medium text-white truncate">{activity.title}</p>
+                              {activity.fromFitbit && (
+                                <span className="flex-shrink-0 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 text-[10px] font-medium text-emerald-300">
+                                  <Watch className="w-2.5 h-2.5" />
+                                  Fitbit
+                                </span>
+                              )}
+                            </div>
                             <p className={`text-xs ${colors.text}`}>
                               {activity.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                               {activity.subtitle && ` • ${activity.subtitle}`}
