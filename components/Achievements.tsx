@@ -37,6 +37,15 @@ const BADGE_TYPE: Record<Achievement['group'], string> = {
   Streaks: 'streak',
 }
 
+// Where the count sits inside each badge's clean area (art differs per type:
+// medallion centers high on the belts, the pulse line crosses cardio's middle).
+const NUM_POS: Record<string, string> = {
+  milestone: 'top-[53%]',
+  bjj: 'top-[46%]',
+  cardio: 'top-[44%]',
+  streak: 'top-[60%]',
+}
+
 // Rendered badge: a tier/type PNG with the count overlaid in the Anton font.
 // Falls back to the SVG patch if the image isn't there yet.
 function BadgeIcon({ a }: { a: Achievement }) {
@@ -56,7 +65,7 @@ function BadgeIcon({ a }: { a: Achievement }) {
         className={`w-full h-full object-contain transition ${a.earned ? '' : 'grayscale opacity-40'}`}
       />
       <span
-        className={`absolute left-0 right-0 -translate-y-1/2 flex items-center justify-center font-display italic text-lg leading-none ${type === 'streak' ? 'top-[60%]' : 'top-[53%]'} ${a.earned ? 'text-white' : 'text-zinc-400'}`}
+        className={`absolute left-0 right-0 -translate-y-1/2 flex items-center justify-center font-display italic text-lg leading-none ${NUM_POS[type] ?? 'top-[53%]'} ${a.earned ? 'text-white' : 'text-zinc-400'}`}
         style={{ textShadow: '0 2px 6px rgba(0,0,0,0.85), 0 0 3px rgba(0,0,0,0.95)' }}
       >
         {num}
