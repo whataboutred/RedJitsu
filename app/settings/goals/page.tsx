@@ -9,7 +9,7 @@ import { AnimatedCard } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useToast } from '@/components/Toast'
 import { ensureProfile, upsertProfile } from '@/lib/api'
-import { getActiveUserId } from '@/lib/activeUser'
+import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import BackgroundLogo from '@/components/BackgroundLogo'
 
 function GoalSlider({
@@ -83,6 +83,7 @@ export default function GoalsPage() {
   }, [])
 
   async function save() {
+    if (await isDemoVisitor()) { toast.warning('Sign in to set your goals'); return }
     const userId = await getActiveUserId()
     if (!userId) { toast.error('Please sign in again'); return }
     setSaving(true)

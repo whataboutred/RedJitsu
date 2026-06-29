@@ -46,10 +46,14 @@ export async function detectAndSaveNewPRs(
 
   if (bests.length === 0) return []
 
-  // Historical max weight / estimated 1RM per exercise, excluding this workout
+  // Historical max weight / estimated 1RM per exercise, excluding this workout.
+  // Scope to THIS user via an inner join on workouts — otherwise the demo
+  // account's public-readable workout_exercises (same global exercise_id) leak
+  // in and pollute the real user's PR baseline.
   const { data: history, error } = await supabase
     .from('workout_exercises')
-    .select('exercise_id, sets(weight, reps, set_type)')
+    .select('exercise_id, sets(weight, reps, set_type), workouts!inner(user_id)')
+    .eq('workouts.user_id', userId)
     .in('exercise_id', bests.map((b) => b.exerciseId))
     .neq('workout_id', workoutId)
   if (error) throw error

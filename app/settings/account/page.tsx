@@ -11,7 +11,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { useToast } from '@/components/Toast'
 import { supabase } from '@/lib/supabaseClient'
 import { ensureProfile, upsertProfile } from '@/lib/api'
-import { getActiveUserId } from '@/lib/activeUser'
+import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import BackgroundLogo from '@/components/BackgroundLogo'
 
 export default function AccountPage() {
@@ -52,6 +52,7 @@ export default function AccountPage() {
   }, [])
 
   async function save() {
+    if (await isDemoVisitor()) { toast.warning('Sign in to edit your account'); return }
     const userId = await getActiveUserId()
     if (!userId) { toast.error('Please sign in again'); return }
     setSaving(true)
