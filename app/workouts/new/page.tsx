@@ -36,7 +36,8 @@ import { savePendingWorkout, trySyncPending } from '@/lib/offline'
 import { toDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useDraftAutoSave, getTimeAgo } from '@/hooks/useDraftAutoSave'
 import { hapticTap, hapticSuccess } from '@/lib/haptics'
-import { detectAndSaveNewPRs } from '@/lib/api/personalRecords'
+import { detectAndSaveNewPRs, type NewPR } from '@/lib/api/personalRecords'
+import PRCelebration from '@/components/PRCelebration'
 import { notifyDataChanged } from '@/lib/dataSync'
 import { getLastWorkoutSetsForExercises, WorkoutSet as LastWorkoutSet } from '@/lib/workoutSuggestions'
 import { searchByName } from '@/lib/exerciseSearch'
@@ -749,6 +750,9 @@ export default function NewWorkoutPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showExerciseSelector, setShowExerciseSelector] = useState(false)
   const [showSaveConfirm, setShowSaveConfirm] = useState(false)
+  const [savedWorkoutId, setSavedWorkoutId] = useState<string | null>(null)
+  const [newPRs, setNewPRs] = useState<NewPR[]>([])
+  const [showPRCelebration, setShowPRCelebration] = useState(false)
 
   // Workout details
   const [title, setTitle] = useState('')
@@ -1140,12 +1144,14 @@ export default function NewWorkoutPage() {
       }
 
       clearDraft()
+      setSavedWorkoutId(w.id)
       hapticSuccess()
 
-      // Still detect + save PRs so records/achievements stay accurate — just no
-      // popup. The user prefers saving to go straight to history.
+      // Detect + save PRs. Only celebrate genuine ones (the detector gates on an
+      // established baseline so new exercises don't spam).
+      let prs: NewPR[] = []
       try {
-        await detectAndSaveNewPRs(
+        prs = await detectAndSaveNewPRs(
           userId,
           w.id,
           exercises.map((ex) => ({ exerciseId: ex.exerciseId, name: ex.name, sets: ex.sets }))
@@ -1157,7 +1163,13 @@ export default function NewWorkoutPage() {
       notifyDataChanged()
 
       toast.success('Workout saved')
-      router.push(w.id ? `/history?highlight=${w.id}` : '/history')
+
+      if (prs.length > 0) {
+        setNewPRs(prs)
+        setShowPRCelebration(true) // a focused PR popup; closing it goes to history
+      } else {
+        router.push(w.id ? `/history?highlight=${w.id}` : '/history')
+      }
     } catch (error: any) {
       console.error('[saveWorkout] Error:', error)
       toast.error(error.message || 'Failed to save workout')
@@ -1496,6 +1508,17 @@ export default function NewWorkoutPage() {
         title="Save Workout?"
         message={`Save ${summary.exercises} exercise${summary.exercises !== 1 ? 's' : ''} · ${summary.sets} set${summary.sets !== 1 ? 's' : ''} · ${summary.volume.toLocaleString()} ${summary.unit}?`}
         confirmText="Save"
+      />
+
+      {/* PR Celebration — focused popup: which exercise + the record set */}
+      <PRCelebration
+        prs={newPRs}
+        unit={unit}
+        isOpen={showPRCelebration}
+        onClose={() => {
+          setShowPRCelebration(false)
+          router.push(savedWorkoutId ? `/history?highlight=${savedWorkoutId}` : '/history')
+        }}
       />
 
       {/* Template Sheet - Two step: Program -> Day */}

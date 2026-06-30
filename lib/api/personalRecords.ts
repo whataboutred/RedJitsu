@@ -58,10 +58,17 @@ export async function detectAndSaveNewPRs(
     .neq('workout_id', workoutId)
   if (error) throw error
 
+  // Minimum prior completed working sets before an exercise can earn a PR, so a
+  // brand-new exercise doesn't spam a "record" every session while you find your
+  // baseline.
+  const MIN_PRIOR_SETS = 5
+
   const historicalMax = new Map<string, { weight: number; reps: number; estimated1rm: number }>()
+  const priorSetCount = new Map<string, number>()
   for (const row of history ?? []) {
     for (const s of row.sets ?? []) {
       if (s.set_type === 'warmup' || s.weight <= 0 || s.reps <= 0) continue
+      priorSetCount.set(row.exercise_id, (priorSetCount.get(row.exercise_id) ?? 0) + 1)
       const e1rm = estimated1RM(s.weight, s.reps)
       const prev = historicalMax.get(row.exercise_id)
       historicalMax.set(row.exercise_id, {
@@ -74,6 +81,8 @@ export async function detectAndSaveNewPRs(
 
   const newPRs: NewPR[] = []
   for (const best of bests) {
+    // Need an established baseline (>= MIN_PRIOR_SETS) before celebrating a PR.
+    if ((priorSetCount.get(best.exerciseId) ?? 0) < MIN_PRIOR_SETS) continue
     const prior = historicalMax.get(best.exerciseId) ?? null
     if (detectPR(best.weight, best.reps, prior)) {
       newPRs.push({
