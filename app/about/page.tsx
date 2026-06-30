@@ -2,8 +2,26 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Wrench, Sparkles, ShieldCheck, Database } from 'lucide-react'
+import { ArrowLeft, Wrench, Sparkles, ShieldCheck, Database, Watch, Brain, Quote } from 'lucide-react'
 import BackgroundLogo from '@/components/BackgroundLogo'
+
+const INTEGRATIONS = [
+  {
+    icon: Watch,
+    name: 'Fitbit, via the Google Health API',
+    body: 'OAuth 2.0 with PKCE, access tokens encrypted at rest, and a daily background sync that turns heart-rate zones into intensity. Cardio logs itself.',
+  },
+  {
+    icon: Brain,
+    name: 'AI coaching, via Anthropic Claude',
+    body: 'Server-side only, rate limited and cost capped, with every model response treated as untrusted input.',
+  },
+  {
+    icon: Quote,
+    name: 'Daily quote, via a public API',
+    body: 'A small third-party integration with a cached fallback, so it never blocks the page.',
+  },
+]
 
 const SECTIONS = [
   {
@@ -90,6 +108,35 @@ export default function AboutPage() {
             )
           })}
         </div>
+
+        {/* Under the hood — live integrations */}
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="border-t border-white/[0.06] mt-10 pt-8"
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="font-display uppercase text-lg text-white">Under the hood</h2>
+          </div>
+          <p className="text-sm text-zinc-500 mb-5">Three live integrations, each handled the way I&rsquo;d expect at work.</p>
+          <div className="space-y-4">
+            {INTEGRATIONS.map((it) => {
+              const Icon = it.icon
+              return (
+                <div key={it.name} className="flex gap-3 rounded-2xl bg-surface border border-white/[0.07] p-4">
+                  <div className="w-9 h-9 rounded-lg bg-brand-red/10 flex items-center justify-center flex-shrink-0 text-brand-red">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-white text-[15px] leading-snug">{it.name}</p>
+                    <p className="text-zinc-400 leading-relaxed text-[13px] mt-1">{it.body}</p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </motion.section>
 
         {/* Closing */}
         <motion.p

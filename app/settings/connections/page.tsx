@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Watch, RefreshCw, Check, Plug, Unplug } from 'lucide-react'
+import { ArrowLeft, Watch, RefreshCw, Check, Plug, Unplug, KeyRound, ShieldCheck, Activity } from 'lucide-react'
 import { motion } from 'framer-motion'
 import BackgroundLogo from '@/components/BackgroundLogo'
 import { AnimatedCard } from '@/components/ui/Card'
@@ -210,6 +210,49 @@ export default function ConnectionsPage() {
                 </div>
               )}
             </AnimatedCard>
+
+            {/* Demo-only: show off how the secure sync works */}
+            {demo && (
+              <AnimatedCard delay={0.04}>
+                <h3 className="font-display uppercase text-lg text-white mb-1">How the secure sync works</h3>
+                <p className="text-xs text-zinc-500 mb-4">A live OAuth integration — here&apos;s what happens behind this card.</p>
+
+                <div className="grid grid-cols-3 gap-2 mb-5">
+                  {[
+                    { k: 'Device', v: 'Charge 6' },
+                    { k: 'Synced', v: 'just now' },
+                    { k: 'This year', v: '250' },
+                  ].map((s) => (
+                    <div key={s.k} className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-2 py-2 text-center">
+                      <div className="text-sm font-display text-emerald-300 leading-none">{s.v}</div>
+                      <div className="mt-1 text-[10px] uppercase tracking-wide text-zinc-500">{s.k}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-3">
+                  {[
+                    { icon: KeyRound, t: 'Authorize once', d: 'OAuth 2.0 with PKCE — no password ever touches the app.' },
+                    { icon: ShieldCheck, t: 'Encrypt the token', d: 'Stored AES-256 encrypted at rest and kept server-side.' },
+                    { icon: RefreshCw, t: 'Sync daily', d: 'New workouts pull automatically, plus a manual sync.' },
+                    { icon: Activity, t: 'Map intensity', d: 'Heart-rate zones become Low / Medium / High.' },
+                  ].map((step) => {
+                    const Icon = step.icon
+                    return (
+                      <div key={step.t} className="flex gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0 text-emerald-400">
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-white leading-snug">{step.t}</p>
+                          <p className="text-xs text-zinc-500 mt-0.5">{step.d}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </AnimatedCard>
+            )}
 
             {/* Activity allowlist */}
             {status.connected && (
