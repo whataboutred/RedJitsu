@@ -27,7 +27,7 @@ const SECTIONS = [
   {
     icon: Wrench,
     title: 'Why I built it',
-    body: 'Moving into leadership isn’t a reason to stop building. I made Red Jitsu, a real app I actually use, to keep my hands dirty and stay at the level I hold my teams to.',
+    body: 'Moving into leadership isn’t a reason to stop building. I made Red Jitsu, a real app I actually use, to keep my hands dirty and stay sharp. If you’ve stepped up too, take it as a nudge to keep practicing the craft. The reps still matter.',
   },
   {
     icon: Sparkles,
