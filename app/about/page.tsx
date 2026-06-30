@@ -138,17 +138,6 @@ export default function AboutPage() {
           </div>
         </motion.section>
 
-        {/* Closing */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-zinc-400 leading-relaxed text-[15px] border-t border-white/[0.06] mt-10 pt-8"
-        >
-          On the surface it&rsquo;s a workout tracker. Underneath, it&rsquo;s how I stay current:
-          building real software, working with AI, and securing it the way I&rsquo;d expect at work.
-        </motion.p>
-
         {/* Footer */}
         <div className="flex flex-col items-center gap-3 pt-12">
           <div className="flex items-center gap-2 opacity-50">
