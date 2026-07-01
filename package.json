@@ -1,12 +1,13 @@
 {
-  "name": "ironlog",
+  "name": "red-jitsu-training",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.82.0",
@@ -19,9 +20,7 @@
     "lucide-react": "^0.453.0",
     "next": "^14.2.35",
     "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "splunk-logging": "^0.11.1",
-    "zustand": "^5.0.9"
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
     "@types/node": "^22.19.21",
@@ -32,6 +31,7 @@
     "eslint-config-next": "^14.2.35",
     "postcss": "^8.4.41",
     "tailwindcss": "^3.4.9",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^4.1.9"
   }
 }
