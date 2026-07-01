@@ -27,48 +27,21 @@ import ActivityHeatmap from '@/components/ActivityHeatmap'
 import BackgroundLogo from '@/components/BackgroundLogo'
 import OnboardingWizard from '@/components/OnboardingWizard'
 import { useDataRefresh } from '@/hooks/useDataRefresh'
+import { startOfLocalWeek } from '@/lib/dateUtils'
 
-type Workout = { id: string; performed_at: string; title: string | null }
-type BJJ = {
-  id: string
-  performed_at: string
-  duration_min: number
-  kind: 'class' | 'drilling' | 'open_mat'
-}
-type Cardio = {
-  id: string
-  performed_at: string
-  activity: string
-  duration_minutes: number | null
-}
 type ProgramDay = {
   id: string
   name: string
   dows: number[] | null
 }
 
-function startOfWeekSunday(d: Date) {
-  const x = new Date(d)
-  x.setHours(0, 0, 0, 0)
-  const day = x.getDay()
-  x.setDate(x.getDate() - day)
-  return x
-}
-
-function weekKey(d: Date) {
-  return startOfWeekSunday(d).toISOString().slice(0, 10)
-}
-
 export default function Dashboard() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [workouts, setWorkouts] = useState<Workout[]>([])
-  const [bjj, setBjj] = useState<BJJ[]>([])
-  const [cardio, setCardio] = useState<Cardio[]>([])
+  const [thisWeekCount, setThisWeekCount] = useState(0)
+  const [totalWorkouts, setTotalWorkouts] = useState(0)
   const [displayName, setDisplayName] = useState<string>('')
   const [weeklyGoal, setWeeklyGoal] = useState<number>(4)
-  const [bjjWeeklyGoal, setBjjWeeklyGoal] = useState<number>(2)
-  const [cardioWeeklyGoal, setCardioWeeklyGoal] = useState<number>(3)
   const [todayWorkoutDay, setTodayWorkoutDay] = useState<string | null>(null)
   const [todayWorkoutDayId, setTodayWorkoutDayId] = useState<string | null>(null)
   const [todayQuote, setTodayQuote] = useState<Quote | null>(null)
@@ -91,30 +64,23 @@ export default function Dashboard() {
     const userId = await getActiveUserId()
     if (!userId) return
 
-    const [profRes, workoutsRes, bjjRes, cardioRes, activeProgramRes] = await Promise.all([
+    // Head-count queries: the dashboard only needs two numbers, not rows
+    const weekStartISO = startOfLocalWeek().toISOString()
+    const [profRes, weekCountRes, totalCountRes, activeProgramRes] = await Promise.all([
       supabase
         .from('profiles')
-        .select('display_name,weekly_goal,bjj_weekly_goal,cardio_weekly_goal')
+        .select('display_name,weekly_goal')
         .eq('id', userId)
         .maybeSingle(),
       supabase
         .from('workouts')
-        .select('id,performed_at,title')
+        .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
-        .order('performed_at', { ascending: false })
-        .limit(1000),
+        .gte('performed_at', weekStartISO),
       supabase
-        .from('bjj_sessions')
-        .select('id,performed_at,duration_min,kind')
-        .eq('user_id', userId)
-        .order('performed_at', { ascending: false })
-        .limit(1000),
-      supabase
-        .from('cardio_sessions')
-        .select('id,performed_at,activity,duration_minutes')
-        .eq('user_id', userId)
-        .order('performed_at', { ascending: false })
-        .limit(1000),
+        .from('workouts')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId),
       supabase
         .from('programs')
         .select('id')
@@ -127,16 +93,13 @@ export default function Dashboard() {
     if (prof) {
       setDisplayName(prof.display_name ?? '')
       setWeeklyGoal(prof.weekly_goal ?? 4)
-      setBjjWeeklyGoal(prof.bjj_weekly_goal ?? 2)
-      setCardioWeeklyGoal(prof.cardio_weekly_goal ?? 3)
     } else if (!DEMO) {
       // No profile yet — brand-new account, run first-time setup
       setOnboardingUserId(userId)
     }
 
-    setWorkouts((workoutsRes.data || []) as Workout[])
-    setBjj((bjjRes.data || []) as BJJ[])
-    setCardio((cardioRes.data || []) as Cardio[])
+    setThisWeekCount(weekCountRes.count ?? 0)
+    setTotalWorkouts(totalCountRes.count ?? 0)
 
     const activeProgram = activeProgramRes.data
     if (activeProgram) {
@@ -181,22 +144,6 @@ export default function Dashboard() {
 
   // Refetch when data changes anywhere or the tab regains focus
   useDataRefresh(loadDashboardData)
-
-  const now = new Date()
-  const thisWeekKey = weekKey(now)
-  const dayIndex = now.getDay()
-
-  // Calculate weekly stats
-  const wkCounts = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const w of workouts) {
-      const k = weekKey(new Date(w.performed_at))
-      map.set(k, (map.get(k) || 0) + 1)
-    }
-    return map
-  }, [workouts])
-
-  const thisWeekCount = wkCounts.get(thisWeekKey) || 0
 
   // Greeting based on time
   const greeting = useMemo(() => {
@@ -267,7 +214,7 @@ export default function Dashboard() {
           <p className="text-sm text-zinc-500 mt-2 uppercase tracking-wide">Workouts this week</p>
         </Link>
         <Link href="/history" className="block active:scale-[0.98] transition-transform">
-          <p className="text-6xl font-display text-brand-red leading-none"><CountUp value={workouts.length} /></p>
+          <p className="text-6xl font-display text-brand-red leading-none"><CountUp value={totalWorkouts} /></p>
           <p className="text-sm text-zinc-500 mt-2 uppercase tracking-wide">Total workouts</p>
         </Link>
       </motion.div>
@@ -309,6 +256,7 @@ export default function Dashboard() {
               disabled={isRefreshingQuote}
               className="absolute top-3 right-3 p-1.5 text-zinc-600 hover:text-zinc-400 transition-colors disabled:opacity-50"
               title="Get new quote"
+              aria-label="Get new quote"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingQuote ? 'animate-spin' : ''}`} />
             </button>

@@ -153,7 +153,10 @@ export default function AIInsights() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ forceRefresh }),
+        body: JSON.stringify({
+          forceRefresh,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }),
       })
 
       if (!res.ok) {
@@ -206,6 +209,7 @@ export default function AIInsights() {
               disabled={loading}
               className="p-1.5 rounded-lg text-zinc-400 hover:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
               title="Refresh insights"
+              aria-label="Refresh insights"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { localDateKey, localDayOfWeek, localWeekStartKey, weeksBetweenKeys, shiftDateKey } from '@/lib/dateUtils'
 
 export type AnalyticsDigest = {
   period: string
@@ -46,9 +47,12 @@ export type AnalyticsDigest = {
 /**
  * Builds a compact analytics digest from the user's training data.
  * Uses the access token for RLS — only the authenticated user's data is returned.
+ * timeZone is the athlete's IANA zone: days, weeks, and streaks are bucketed on
+ * their calendar so the digest agrees with what the dashboard shows them.
  */
 export async function buildAnalyticsDigest(
-  accessToken: string
+  accessToken: string,
+  timeZone?: string
 ): Promise<AnalyticsDigest> {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -116,22 +120,22 @@ export async function buildAnalyticsDigest(
 
   const avgPerWeek = Math.round((workouts.length / weeksTracked) * 10) / 10
 
-  // Count goal-hit weeks
+  // Count goal-hit weeks (Sunday-start calendar weeks in the athlete's timezone)
   const weekBuckets = new Map<string, number>()
   workouts.forEach(w => {
-    const d = new Date(w.performed_at)
-    const weekStart = new Date(d)
-    weekStart.setDate(d.getDate() - d.getDay())
-    const key = weekStart.toISOString().split('T')[0]
+    const key = localWeekStartKey(w.performed_at, timeZone)
     weekBuckets.set(key, (weekBuckets.get(key) || 0) + 1)
   })
   const goalHitWeeks = Array.from(weekBuckets.values()).filter(c => c >= weeklyGoal).length
 
-  // Volume trend last 4 weeks
+  // Volume trend, last 4 calendar weeks (same week definition as goal-hit
+  // weeks, so the two can't contradict each other). The last bucket is the
+  // current, possibly partial, week.
+  const currentWeekKey = localWeekStartKey(now, timeZone)
   const volumeByWeek: number[] = [0, 0, 0, 0]
   workouts.forEach((w: any) => {
-    const weeksAgo = Math.floor((now.getTime() - new Date(w.performed_at).getTime()) / (7 * 24 * 60 * 60 * 1000))
-    if (weeksAgo < 4) {
+    const weeksAgo = weeksBetweenKeys(currentWeekKey, localWeekStartKey(w.performed_at, timeZone))
+    if (weeksAgo >= 0 && weeksAgo < 4) {
       const weekIdx = 3 - weeksAgo
       w.workout_exercises?.forEach((ex: any) => {
         ex.sets?.forEach((s: any) => {
@@ -191,7 +195,7 @@ export async function buildAnalyticsDigest(
   // Most frequent training day
   const dayCounts = [0, 0, 0, 0, 0, 0, 0]
   workouts.forEach(w => {
-    dayCounts[new Date(w.performed_at).getDay()]++
+    dayCounts[localDayOfWeek(w.performed_at, timeZone)]++
   })
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
   const maxDayCount = Math.max(...dayCounts)
@@ -230,31 +234,27 @@ export async function buildAnalyticsDigest(
     if (s.intensity) cardioIntensity[s.intensity] = (cardioIntensity[s.intensity] || 0) + 1
   })
 
-  // --- Consistency ---
+  // --- Consistency --- (all day keys on the athlete's calendar)
   const allDates = new Set<string>()
-  workouts.forEach(w => allDates.add(new Date(w.performed_at).toISOString().split('T')[0]))
-  bjjSessions.forEach(s => allDates.add(new Date(s.performed_at).toISOString().split('T')[0]))
-  cardioSessions.forEach(s => allDates.add(new Date(s.performed_at).toISOString().split('T')[0]))
+  workouts.forEach(w => allDates.add(localDateKey(w.performed_at, timeZone)))
+  bjjSessions.forEach(s => allDates.add(localDateKey(s.performed_at, timeZone)))
+  cardioSessions.forEach(s => allDates.add(localDateKey(s.performed_at, timeZone)))
 
   // Active days in last 30
-  const thirtyDaysAgoDate = new Date(thirtyDaysAgo)
-  const activeDaysLast30 = Array.from(allDates).filter(
-    d => new Date(d) >= thirtyDaysAgoDate
-  ).length
+  const thirtyDaysAgoKey = localDateKey(new Date(thirtyDaysAgo), timeZone)
+  const activeDaysLast30 = Array.from(allDates).filter(d => d >= thirtyDaysAgoKey).length
 
-  // Current streak (consecutive days from today backward)
+  // Current streak (consecutive days from the athlete's today, backward;
+  // a rest day today doesn't break yesterday's streak)
   let currentStreakDays = 0
-  const today = now.toISOString().split('T')[0]
-  const checkDate = new Date(today)
-
+  let checkKey = localDateKey(now, timeZone)
   for (let i = 0; i < 90; i++) {
-    const dateStr = checkDate.toISOString().split('T')[0]
-    if (allDates.has(dateStr)) {
+    if (allDates.has(checkKey)) {
       currentStreakDays++
     } else if (i > 0) {
       break
     }
-    checkDate.setDate(checkDate.getDate() - 1)
+    checkKey = shiftDateKey(checkKey, -1)
   }
 
   // Longest gap
@@ -262,7 +262,7 @@ export async function buildAnalyticsDigest(
   const sortedAsc = Array.from(allDates).sort()
   for (let i = 1; i < sortedAsc.length; i++) {
     const gap = Math.round(
-      (new Date(sortedAsc[i]).getTime() - new Date(sortedAsc[i - 1]).getTime()) /
+      (new Date(`${sortedAsc[i]}T12:00:00Z`).getTime() - new Date(`${sortedAsc[i - 1]}T12:00:00Z`).getTime()) /
       (24 * 60 * 60 * 1000)
     )
     longestGapDays = Math.max(longestGapDays, gap)

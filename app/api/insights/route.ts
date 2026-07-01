@@ -74,6 +74,18 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
 
+    // The athlete's IANA timezone, so streaks/weeks are computed on their
+    // calendar. Validated by Intl; falls back to UTC when absent or bogus.
+    let timeZone: string | undefined
+    if (typeof body.timeZone === 'string' && body.timeZone.length <= 64) {
+      try {
+        new Intl.DateTimeFormat('en-US', { timeZone: body.timeZone })
+        timeZone = body.timeZone
+      } catch {
+        timeZone = undefined
+      }
+    }
+
     // Token comes from the Authorization header so it never appears in
     // request bodies, logs, or proxies that capture payloads.
     const authHeader = req.headers.get('authorization')
@@ -149,7 +161,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Build the analytics digest (RLS ensures only this user's data is returned)
-    const digest = await buildAnalyticsDigest(accessToken)
+    const digest = await buildAnalyticsDigest(accessToken, timeZone)
 
     // Check if there's enough data to analyze
     const totalActivity = digest.strength.totalWorkouts + digest.bjj.totalSessions + digest.cardio.totalSessions
