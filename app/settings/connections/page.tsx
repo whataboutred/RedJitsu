@@ -47,7 +47,6 @@ export default function ConnectionsPage() {
   const [status, setStatus] = useState<Status>({ connected: false })
   const [syncing, setSyncing] = useState(false)
   const [allowed, setAllowed] = useState<string[]>([])
-  const [diag, setDiag] = useState<string>('')
 
   const load = useCallback(async () => {
     const isDemo = await isDemoVisitor()
@@ -284,32 +283,6 @@ export default function ConnectionsPage() {
             <p className="text-center text-xs text-zinc-600 px-6">
               Imported sessions appear in your cardio history and count toward your stats. You can edit or delete any of them.
             </p>
-
-            {/* Temporary diagnostic — screenshot the output for debugging mapping */}
-            {status.connected && !demo && (
-              <div className="pt-2">
-                <button
-                  onClick={async () => {
-                    setDiag('Loading…')
-                    try {
-                      const res = await authedFetch('/api/fitbit/debug')
-                      const data = await res.json()
-                      setDiag(JSON.stringify(data, null, 2))
-                    } catch (e) {
-                      setDiag('Error: ' + String(e))
-                    }
-                  }}
-                  className="text-xs text-zinc-500 underline"
-                >
-                  Run import diagnostic
-                </button>
-                {diag && (
-                  <pre className="mt-2 max-h-80 overflow-auto rounded-lg bg-black/40 border border-white/10 p-3 text-[10px] leading-snug text-zinc-300 whitespace-pre-wrap break-all">
-                    {diag}
-                  </pre>
-                )}
-              </div>
-            )}
           </>
         )}
       </div>

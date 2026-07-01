@@ -5,6 +5,7 @@ import { ToastProvider } from '@/components/Toast'
 import Navigation from '@/components/Navigation'
 import { AuthProvider } from '@/components/AuthProvider'
 import { MotionProvider } from '@/components/MotionProvider'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -122,13 +123,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`dark ${inter.variable} ${anton.variable}`}>
       <body className="bg-brand-dark text-white antialiased font-sans">
-        <AuthProvider>
-          <MotionProvider>
-            <ToastProvider>
-              <Navigation>{children}</Navigation>
-            </ToastProvider>
-          </MotionProvider>
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <MotionProvider>
+              <ToastProvider>
+                <Navigation>{children}</Navigation>
+              </ToastProvider>
+            </MotionProvider>
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

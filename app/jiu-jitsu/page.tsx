@@ -358,14 +358,15 @@ export default function BJJPage() {
   // Use datetimeLocalToISO from lib/dateUtils for timezone-safe conversion
 
   async function saveSession() {
+    if (demo) {
+      toast.warning('Sign in to log jiu-jitsu sessions')
+      return
+    }
+
     setIsLoading(true)
 
     try {
-      if (demo) {
-        await saveOffline()
-      } else {
-        await saveOnline()
-      }
+      await saveOnline()
       hapticSuccess()
       toast.success('Session saved')
       router.push('/dashboard')
@@ -393,22 +394,6 @@ export default function BJJPage() {
       intensity,
       notes: notes || null
     })
-  }
-
-  async function saveOffline() {
-    const minutes = Math.min(600, Math.max(5, Number(duration || 60)))
-    const temp = Math.random().toString(36).slice(2)
-    const session = {
-      tempId: temp,
-      performed_at: datetimeLocalToISO(performedAt),
-      kind: kind === 'Open Mat' ? 'open_mat' : (kind.toLowerCase()),
-      duration_min: minutes,
-      intensity,
-      notes: notes || null
-    }
-
-    const key = `bjj_pending_${temp}`
-    localStorage.setItem(key, JSON.stringify(session))
   }
 
   const canSave = duration > 0 && kind
@@ -518,7 +503,7 @@ export default function BJJPage() {
               <AnimatedCard className="bg-gradient-to-br from-purple-500/15 to-purple-700/5 border-purple-500/30">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
                       <Timer className="w-6 h-6 text-purple-400" />
                     </div>
                     <div>
@@ -533,6 +518,7 @@ export default function BJJPage() {
                       icon={timerRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
                       variant="ghost"
                       onClick={() => setTimerRunning(!timerRunning)}
+                      label={timerRunning ? 'Pause timer' : 'Start timer'}
                     />
                     <Button
                       size="sm"
@@ -880,6 +866,7 @@ export default function BJJPage() {
                 variant="default"
                 className="!rounded-2xl !w-14 !h-14"
                 onClick={() => router.push('/dashboard')}
+                label="Cancel"
               />
             </div>
           </motion.div>

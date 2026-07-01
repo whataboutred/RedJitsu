@@ -31,15 +31,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.props.onError) {
       this.props.onError(error, errorInfo)
     }
-
-    // Log to Splunk if available
-    if (typeof window !== 'undefined' && (window as any).SplunkRum) {
-      ;(window as any).SplunkRum.error('React Error Boundary', {
-        error: error.toString(),
-        stack: error.stack,
-        componentStack: errorInfo.componentStack,
-      })
-    }
   }
 
   render() {
@@ -51,23 +42,19 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       // Default error UI
       return (
-        <div className="min-h-[200px] flex items-center justify-center p-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-red-900 mb-2">Something went wrong</h3>
-                <p className="text-sm text-red-700 mb-4">
-                  An error occurred while rendering this component. Your data is safe.
-                </p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="text-sm bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
-                >
-                  Reload Page
-                </button>
-              </div>
-            </div>
+        <div className="min-h-[60vh] flex items-center justify-center p-6">
+          <div className="max-w-sm text-center space-y-4">
+            <AlertTriangle className="w-8 h-8 text-brand-red mx-auto" aria-hidden="true" />
+            <h3 className="text-2xl font-display uppercase text-white">Something went wrong</h3>
+            <p className="text-sm text-zinc-400">
+              This screen hit an error. Your data is safe — reload to keep going.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="text-sm bg-brand-red text-white px-5 py-2.5 rounded-xl font-medium active:scale-[0.98] transition-transform"
+            >
+              Reload
+            </button>
           </div>
         </div>
       )
@@ -84,8 +71,8 @@ export function SoftErrorBoundary({ children }: { children: ReactNode }) {
   return (
     <ErrorBoundary
       fallback={
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">This section failed to load. Try refreshing.</p>
+        <div className="p-4 bg-surface border border-white/[0.07] rounded-2xl">
+          <p className="text-sm text-zinc-400">This section failed to load. Try refreshing.</p>
         </div>
       }
     >

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Logger } from 'splunk-logging'
 import { createClient } from '@supabase/supabase-js'
 
 // Only disable SSL verification in local development for self-signed Splunk certs.
@@ -29,25 +28,15 @@ function isRateLimited(ip: string): boolean {
   return bucket.count > RATE_LIMIT_MAX_EVENTS
 }
 
-// Lazy so a bad Splunk config surfaces per-request instead of crashing the
-// module at cold start.
-let splunkLogger: Logger | null | undefined
-function getSplunkLogger(): Logger | null {
-  if (splunkLogger !== undefined) return splunkLogger
+// Splunk HTTP Event Collector via plain fetch — one endpoint, no client lib.
+function getHecEndpoint(): { endpoint: string; token: string } | null {
   const token = process.env.SPLUNK_HEC_TOKEN || ''
-  const url = process.env.SPLUNK_URL || ''
-  splunkLogger = token && url
-    ? new Logger({
-        token,
-        url,
-        source: 'ironlog-app',
-        sourcetype: '_json',
-        index: 'main',
-        maxBatchCount: 1,
-        maxBatchSize: 0,
-      })
-    : null
-  return splunkLogger
+  const base = (process.env.SPLUNK_URL || '').replace(/\/+$/, '')
+  if (!token || !base) return null
+  const endpoint = base.includes('/services/collector')
+    ? base
+    : `${base}/services/collector/event/1.0`
+  return { endpoint, token }
 }
 
 const VALID_LEVELS = ['INFO', 'WARN', 'ERROR', 'DEBUG']
@@ -124,35 +113,44 @@ export async function POST(request: NextRequest) {
     sanitized.verified = verified
 
     // If Splunk is not configured, log to console in development only
-    const logger = getSplunkLogger()
-    if (!logger) {
+    const hec = getHecEndpoint()
+    if (!hec) {
       if (process.env.NODE_ENV === 'development') {
         console.log(`[${sanitized.level}] ${sanitized.event_type}: ${sanitized.message}`)
       }
       return NextResponse.json({ success: true })
     }
 
-    // Send to Splunk
-    return new Promise<NextResponse>((resolve) => {
-      const logData = {
-        time: Date.now(),
-        event: {
-          ...sanitized,
-          app: 'ironlog-workout-tracker',
-          environment: process.env.NODE_ENV || 'development'
+    // Send to Splunk (HEC expects epoch seconds)
+    try {
+      const res = await fetch(hec.endpoint, {
+        method: 'POST',
+        headers: {
+          Authorization: `Splunk ${hec.token}`,
+          'Content-Type': 'application/json',
         },
-        message: sanitized.message
-      }
-
-      logger.send(logData, (err: any) => {
-        if (err) {
-          console.error('Splunk send failed:', err.message)
-          resolve(NextResponse.json({ success: false }, { status: 500 }))
-        } else {
-          resolve(NextResponse.json({ success: true }))
-        }
+        body: JSON.stringify({
+          time: Date.now() / 1000,
+          source: 'red-jitsu-app',
+          sourcetype: '_json',
+          index: 'main',
+          event: {
+            ...sanitized,
+            app: 'red-jitsu-training',
+            environment: process.env.NODE_ENV || 'development',
+          },
+        }),
+        signal: AbortSignal.timeout(5000),
       })
-    })
+      if (!res.ok) {
+        console.error('Splunk send failed:', res.status)
+        return NextResponse.json({ success: false }, { status: 500 })
+      }
+      return NextResponse.json({ success: true })
+    } catch (err: any) {
+      console.error('Splunk send failed:', err?.message || err)
+      return NextResponse.json({ success: false }, { status: 500 })
+    }
   } catch {
     return NextResponse.json({ success: false, error: 'Invalid log data' }, { status: 400 })
   }
