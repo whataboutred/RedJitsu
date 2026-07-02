@@ -16,6 +16,11 @@ type BJJSession = {
   duration_min: number
   intensity: string | null
   notes: string | null
+  rounds: number | null
+  subs_for: number | null
+  subs_against: number | null
+  techniques: string[] | null
+  partners: string[] | null
 }
 
 export default function BJJDetail({ sessionId, onClose }: { sessionId: string; onClose: () => void }) {
@@ -153,6 +158,35 @@ export default function BJJDetail({ sessionId, onClose }: { sessionId: string; o
               </div>
             )}
             
+            {typeof session.rounds === 'number' && session.rounds > 0 && (
+              <div>
+                <div className="text-sm text-zinc-300 mb-1">Rolls</div>
+                <div className="flex items-center gap-4 text-white">
+                  <span className="font-medium">{session.rounds} round{session.rounds === 1 ? '' : 's'}</span>
+                  {(session.subs_for ?? 0) > 0 && <span className="text-emerald-400">{session.subs_for} sub{session.subs_for === 1 ? '' : 's'} for</span>}
+                  {(session.subs_against ?? 0) > 0 && <span className="text-red-400">{session.subs_against} against</span>}
+                </div>
+              </div>
+            )}
+
+            {session.techniques && session.techniques.length > 0 && (
+              <div>
+                <div className="text-sm text-zinc-300 mb-1.5">Techniques</div>
+                <div className="flex flex-wrap gap-2">
+                  {session.techniques.map((t) => (
+                    <span key={t} className="px-2.5 py-1 rounded-lg bg-purple-500/15 border border-purple-500/25 text-xs text-purple-300">{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {session.partners && session.partners.length > 0 && (
+              <div>
+                <div className="text-sm text-zinc-300 mb-1">Partners</div>
+                <div className="text-white">{session.partners.join(', ')}</div>
+              </div>
+            )}
+
             {session.notes && (
               <div>
                 <div className="text-sm text-zinc-300 mb-1">Notes</div>
