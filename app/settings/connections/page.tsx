@@ -11,13 +11,13 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { useToast } from '@/components/Toast'
 import { supabase } from '@/lib/supabaseClient'
 import { isDemoVisitor } from '@/lib/activeUser'
-import { FITBIT_ACTIVITY_OPTIONS, FITBIT_DEFAULT_ALLOWED } from '@/lib/fitbit/constants'
+import { FITBIT_ACTIVITY_OPTIONS, WALK_MIN_MODERATE_MINUTES } from '@/lib/fitbit/constants'
 
 type Status = {
   connected: boolean
   fitbitUserId?: string | null
   lastSyncAt?: string | null
-  allowedActivities?: string[]
+  excludedActivities?: string[]
 }
 
 async function authedFetch(path: string, init?: RequestInit) {
@@ -46,7 +46,7 @@ export default function ConnectionsPage() {
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState<Status>({ connected: false })
   const [syncing, setSyncing] = useState(false)
-  const [allowed, setAllowed] = useState<string[]>([])
+  const [excluded, setExcluded] = useState<string[]>([])
 
   const load = useCallback(async () => {
     const isDemo = await isDemoVisitor()
@@ -56,9 +56,9 @@ export default function ConnectionsPage() {
         connected: true,
         fitbitUserId: 'Charge 6 (sample)',
         lastSyncAt: new Date().toISOString(),
-        allowedActivities: FITBIT_DEFAULT_ALLOWED,
+        excludedActivities: ['Yoga'],
       })
-      setAllowed([...FITBIT_DEFAULT_ALLOWED])
+      setExcluded(['Yoga'])
       setLoading(false)
       return
     }
@@ -66,7 +66,7 @@ export default function ConnectionsPage() {
       const res = await authedFetch('/api/fitbit/status')
       const data: Status = await res.json()
       setStatus(data)
-      setAllowed(data.allowedActivities ?? [])
+      setExcluded(data.excludedActivities ?? [])
     } catch {
       setStatus({ connected: false })
     }
@@ -105,12 +105,15 @@ export default function ConnectionsPage() {
       const res = await authedFetch('/api/fitbit/sync', { method: 'POST' })
       const data = await res.json()
       if (res.ok) {
-        if (data.imported > 0) {
-          toast.success(`Imported ${data.imported} session${data.imported === 1 ? '' : 's'}`)
+        const parts: string[] = []
+        if (data.imported > 0) parts.push(`imported ${data.imported} cardio session${data.imported === 1 ? '' : 's'}`)
+        if (data.linked > 0) parts.push(`linked ${data.linked} to your workouts`)
+        if (parts.length > 0) {
+          toast.success(parts.join(', ').replace(/^./, (c: string) => c.toUpperCase()))
         } else if (data.matched > 0) {
           toast.success('Already up to date')
         } else if (data.scanned > 0) {
-          toast.warning(`Found ${data.scanned} Fitbit workout${data.scanned === 1 ? '' : 's'}, but none matched your selected types — add them in the list below.`)
+          toast.success(`Checked ${data.scanned} Fitbit session${data.scanned === 1 ? '' : 's'} — all filtered by your rules or already imported`)
         } else {
           toast.warning('No Fitbit workouts found in the last 12 months.')
         }
@@ -130,10 +133,10 @@ export default function ConnectionsPage() {
 
   async function toggleActivity(name: string) {
     if (demo) { toast.warning('Sign in to customize imports'); return }
-    const next = allowed.includes(name) ? allowed.filter((a) => a !== name) : [...allowed, name]
-    setAllowed(next)
+    const next = excluded.includes(name) ? excluded.filter((a) => a !== name) : [...excluded, name]
+    setExcluded(next)
     try {
-      await authedFetch('/api/fitbit/settings', { method: 'POST', body: JSON.stringify({ allowed_activities: next }) })
+      await authedFetch('/api/fitbit/settings', { method: 'POST', body: JSON.stringify({ excluded_activities: next }) })
     } catch {
       toast.error('Failed to save')
     }
@@ -253,29 +256,42 @@ export default function ConnectionsPage() {
               </AnimatedCard>
             )}
 
-            {/* Activity allowlist */}
+            {/* Import rules: everything comes in unless excluded here */}
             {status.connected && (
               <AnimatedCard delay={0.05}>
-                <h3 className="font-display uppercase text-lg text-white mb-1">Import these activities</h3>
-                <p className="text-xs text-zinc-500 mb-4">Only the types you pick become cardio sessions.</p>
+                <h3 className="font-display uppercase text-lg text-white mb-1">Skip these activities</h3>
+                <p className="text-xs text-zinc-500 mb-4">
+                  Everything imports as cardio unless you skip it here.
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {FITBIT_ACTIVITY_OPTIONS.map((name) => {
-                    const on = allowed.includes(name)
+                    const off = excluded.includes(name)
                     return (
                       <motion.button
                         key={name}
                         whileTap={{ scale: 0.96 }}
                         onClick={() => toggleActivity(name)}
+                        aria-pressed={off}
                         className={`px-3 py-2 rounded-full text-sm font-medium border transition-all ${
-                          on
-                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                            : 'bg-surface border-white/[0.07] text-zinc-500 hover:text-white'
+                          off
+                            ? 'bg-brand-red/15 text-red-300 border-red-500/40 line-through'
+                            : 'bg-surface border-white/[0.07] text-zinc-400 hover:text-white'
                         }`}
                       >
                         {name}
                       </motion.button>
                     )
                   })}
+                </div>
+                <div className="mt-4 space-y-1.5 text-xs text-zinc-500">
+                  <p>
+                    <span className="text-zinc-300">Built-in rules:</span> weightlifting sessions never import as
+                    cardio — they attach heart rate, calories, and active minutes to the workout you logged here.
+                  </p>
+                  <p>
+                    Walks only count when they earn it: at least {WALK_MIN_MODERATE_MINUTES} minutes in the
+                    moderate heart-rate zone or higher.
+                  </p>
                 </div>
               </AnimatedCard>
             )}

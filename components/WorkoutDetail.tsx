@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { deleteWorkout } from '@/lib/api'
 import { getActiveUserId } from '@/lib/activeUser'
-import { X, Edit3, Trash2, Copy, Trophy } from 'lucide-react'
+import { X, Edit3, Trash2, Copy, Trophy, Watch } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/Toast'
 import { ConfirmDialog } from '@/components/ui/BottomSheet'
@@ -30,6 +30,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
   const [sets, setSets] = useState<WorkoutSet[]>([])
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [workout, setWorkout] = useState<{ performed_at: string; title: string | null } | null>(null)
+  const [metrics, setMetrics] = useState<{ avg_hr: number | null; calories: number | null; active_minutes: number | null } | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const router = useRouter()
@@ -42,10 +43,10 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
         return
       }
 
-      // Step 1: Query workout basic info
+      // Step 1: Query workout basic info (+ any watch metadata from Fitbit)
       const { data: workoutResults, error: workoutError } = await supabase
         .from('workouts')
-        .select('id, performed_at, title')
+        .select('id, performed_at, title, workout_metrics(avg_hr, calories, active_minutes)')
         .eq('id', workoutId)
         .eq('user_id', userId)
         .limit(1)
@@ -57,6 +58,7 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
       }
 
       setWorkout({ performed_at: workoutData.performed_at, title: workoutData.title })
+      setMetrics(workoutData.workout_metrics?.[0] ?? null)
 
       // Step 2: Query workout_exercises (without nested sets to avoid 400 error)
       const { data: exerciseData, error: exerciseError } = await supabase
@@ -192,6 +194,18 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
           <div>
             <div className="font-medium">{workout.title || 'Untitled workout'}</div>
             <div className="text-sm text-zinc-300">{new Date(workout.performed_at).toLocaleString()}</div>
+            {metrics && (
+              <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-medium text-emerald-300">
+                <Watch className="w-3 h-3" />
+                {[
+                  metrics.avg_hr && `avg HR ${metrics.avg_hr}`,
+                  metrics.calories && `${metrics.calories} cal`,
+                  metrics.active_minutes && `${metrics.active_minutes} min active`,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button

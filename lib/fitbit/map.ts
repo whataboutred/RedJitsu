@@ -86,16 +86,38 @@ function prettyType(ex: GoogleExercise): string {
   return 'Workout'
 }
 
-function matchesAllowed(ex: GoogleExercise, allowed: string[]): boolean {
-  if (allowed.length === 0) return false
+function matchesActivity(ex: GoogleExercise, list: string[]): boolean {
+  if (list.length === 0) return false
   const hay = `${ex.displayName ?? ''} ${ex.exerciseType ?? ''}`.toLowerCase().replace(/_/g, ' ')
   const words = hay.split(/\s+/).filter(Boolean)
-  return allowed.some((a) => {
+  return list.some((a) => {
     const al = a.toLowerCase()
     if (hay.includes(al)) return true
     // Stem overlap so "Biking" matches "BIKE", "Running" matches "RUN", etc.
     return words.some((w) => w.length >= 3 && al.length >= 3 && w.slice(0, 3) === al.slice(0, 3))
   })
+}
+
+// Strength sessions never import as cardio — they correlate to logged
+// workouts instead (mapExerciseToMetrics).
+export function isStrengthSession(ex: GoogleExercise): boolean {
+  const hay = `${ex.displayName ?? ''} ${ex.exerciseType ?? ''}`.toLowerCase().replace(/_/g, ' ')
+  return /weight|strength|lift/.test(hay)
+}
+
+export function isWalk(ex: GoogleExercise): boolean {
+  const hay = `${ex.displayName ?? ''} ${ex.exerciseType ?? ''}`.toLowerCase().replace(/_/g, ' ')
+  return /\bwalk/.test(hay)
+}
+
+/** Total minutes at moderate intensity or higher (moderate + vigorous + peak). */
+export function moderatePlusMinutes(zones: HeartRateZoneDurations | undefined): number {
+  if (!zones) return 0
+  const secs =
+    durationSeconds(zones.moderateTime) +
+    durationSeconds(zones.vigorousTime) +
+    durationSeconds(zones.peakTime)
+  return Math.round(secs / 60)
 }
 
 export type MappedCardio = {
@@ -111,14 +133,22 @@ export type MappedCardio = {
   performed_at: string
 }
 
+// Exclusion model: everything imports as cardio unless it matches the user's
+// excluded activities, is a strength session (correlated to workouts instead),
+// or is a walk that never spent enough time in the moderate HR zone.
 export function mapExerciseToCardio(
   dp: GoogleExerciseDataPoint,
-  allowed: string[]
+  excluded: string[],
+  walkMinModerateMinutes = 15
 ): MappedCardio | null {
   const ex: GoogleExercise = dp.exercise ?? (dp as GoogleExercise)
   const start = ex.interval?.startTime
   if (!start) return null
-  if (!matchesAllowed(ex, allowed)) return null
+  if (isStrengthSession(ex)) return null
+  if (matchesActivity(ex, excluded)) return null
+  if (isWalk(ex) && moderatePlusMinutes(ex.metricsSummary?.heartRateZoneDurations) < walkMinModerateMinutes) {
+    return null // just steps — the walk never earned moderate-zone time
+  }
 
   const minutes = exerciseMinutes(ex)
   if (minutes < 1) return null
@@ -142,5 +172,42 @@ export function mapExerciseToCardio(
     calories: typeof cal === 'number' && cal > 0 ? Math.round(cal) : null,
     notes: buildNote(ex, intensity),
     performed_at: new Date(start).toISOString(),
+  }
+}
+
+export type MappedWorkoutMetrics = {
+  external_id: string
+  avg_hr: number | null
+  calories: number | null
+  active_minutes: number | null
+  start_ms: number
+  end_ms: number
+}
+
+// Strength session -> watch metadata for correlating with a logged workout.
+// Returns null for anything that isn't strength or has no usable interval.
+export function mapExerciseToMetrics(dp: GoogleExerciseDataPoint): MappedWorkoutMetrics | null {
+  const ex: GoogleExercise = dp.exercise ?? (dp as GoogleExercise)
+  if (!isStrengthSession(ex)) return null
+  const start = ex.interval?.startTime
+  if (!start) return null
+
+  const startMs = new Date(start).getTime()
+  const minutes = exerciseMinutes(ex)
+  const endMs = ex.interval?.endTime
+    ? new Date(ex.interval.endTime).getTime()
+    : startMs + minutes * 60_000
+
+  const avg = Number(ex.metricsSummary?.averageHeartRateBeatsPerMinute)
+  const cal = ex.metricsSummary?.caloriesKcal
+  const externalId = dp.name || dp.dataPointId || `${start}|${ex.exerciseType ?? ex.displayName ?? 'ex'}`
+
+  return {
+    external_id: String(externalId),
+    avg_hr: avg > 0 ? Math.round(avg) : null,
+    calories: typeof cal === 'number' && cal > 0 ? Math.round(cal) : null,
+    active_minutes: minutes > 0 ? minutes : null,
+    start_ms: startMs,
+    end_ms: endMs,
   }
 }

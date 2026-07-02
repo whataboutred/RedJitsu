@@ -43,7 +43,14 @@ import CardioDetail from '@/components/CardioDetail'
 import AIInsights from '@/components/AIInsights'
 import BackgroundLogo from '@/components/BackgroundLogo'
 
-type Workout = { id: string; performed_at: string; title: string | null; exercise_count?: number }
+type WorkoutMetrics = { avg_hr: number | null; calories: number | null; active_minutes: number | null }
+type Workout = {
+  id: string
+  performed_at: string
+  title: string | null
+  exercise_count?: number
+  workout_metrics?: WorkoutMetrics[]
+}
 type BJJ = { id: string; performed_at: string; duration_min: number; kind: 'class' | 'drilling' | 'open_mat'; intensity: string | null; notes: string | null }
 type Cardio = { id: string; performed_at: string; activity: string; duration_minutes: number | null; distance: number | null; distance_unit: string | null; intensity: string | null; notes: string | null; source: string | null }
 
@@ -278,14 +285,20 @@ function HistoryClient() {
 
     workouts.forEach(w => {
       const hasData = (w.exercise_count || 0) > 0
+      const m = w.workout_metrics?.[0]
+      const watchBits = m
+        ? [m.avg_hr && `${m.avg_hr} bpm`, m.calories && `${m.calories} cal`].filter(Boolean).join(' • ')
+        : ''
       activities.push({
         id: w.id,
         type: 'strength',
         date: new Date(w.performed_at),
         title: w.title || 'Strength Training',
-        subtitle: hasData
+        subtitle: (hasData
           ? `${w.exercise_count} exercise${w.exercise_count !== 1 ? 's' : ''} • ${new Date(w.performed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-          : `No data • ${new Date(w.performed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+          : `No data • ${new Date(w.performed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`) +
+          (watchBits ? ` • ${watchBits}` : ''),
+        fromFitbit: !!m,
         data: w
       })
     })
@@ -337,7 +350,7 @@ function HistoryClient() {
 
     const { data: w } = await supabase
       .from('workouts')
-      .select('id,performed_at,title')
+      .select('id,performed_at,title,workout_metrics(avg_hr,calories,active_minutes)')
       .eq('user_id', userId)
       .order('performed_at', { ascending: false })
       .limit(PAGE_SIZE)
@@ -409,7 +422,7 @@ function HistoryClient() {
 
       const { data: w } = await supabase
         .from('workouts')
-        .select('id,performed_at,title')
+        .select('id,performed_at,title,workout_metrics(avg_hr,calories,active_minutes)')
         .eq('user_id', userId)
         .order('performed_at', { ascending: false })
         .range(offset, offset + PAGE_SIZE - 1)

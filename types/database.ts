@@ -181,6 +181,7 @@ export type Database = {
           access_token_enc: string | null
           allowed_activities: string[]
           created_at: string
+          excluded_activities: string[]
           expires_at: string | null
           fitbit_user_id: string | null
           last_error: string | null
@@ -194,6 +195,7 @@ export type Database = {
           access_token_enc?: string | null
           allowed_activities?: string[]
           created_at?: string
+          excluded_activities?: string[]
           expires_at?: string | null
           fitbit_user_id?: string | null
           last_error?: string | null
@@ -207,6 +209,7 @@ export type Database = {
           access_token_enc?: string | null
           allowed_activities?: string[]
           created_at?: string
+          excluded_activities?: string[]
           expires_at?: string | null
           fitbit_user_id?: string | null
           last_error?: string | null
@@ -469,6 +472,53 @@ export type Database = {
           },
           {
             foreignKeyName: "workout_exercises_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_metrics: {
+        Row: {
+          active_minutes: number | null
+          avg_hr: number | null
+          calories: number | null
+          created_at: string | null
+          external_id: string
+          id: string
+          source: string
+          updated_at: string | null
+          user_id: string
+          workout_id: string
+        }
+        Insert: {
+          active_minutes?: number | null
+          avg_hr?: number | null
+          calories?: number | null
+          created_at?: string | null
+          external_id: string
+          id?: string
+          source?: string
+          updated_at?: string | null
+          user_id: string
+          workout_id: string
+        }
+        Update: {
+          active_minutes?: number | null
+          avg_hr?: number | null
+          calories?: number | null
+          created_at?: string | null
+          external_id?: string
+          id?: string
+          source?: string
+          updated_at?: string | null
+          user_id?: string
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_metrics_workout_id_fkey"
             columns: ["workout_id"]
             isOneToOne: false
             referencedRelation: "workouts"

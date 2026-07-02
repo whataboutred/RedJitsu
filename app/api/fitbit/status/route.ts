@@ -14,6 +14,6 @@ export async function GET(req: NextRequest) {
     connected: true,
     fitbitUserId: conn.fitbit_user_id,
     lastSyncAt: conn.last_sync_at,
-    allowedActivities: conn.allowed_activities ?? [],
+    excludedActivities: conn.excluded_activities ?? [],
   })
 }

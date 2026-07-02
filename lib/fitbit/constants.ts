@@ -18,8 +18,12 @@ export const GH_SCOPE = 'https://www.googleapis.com/auth/googlehealth.activity_a
 // /callback. Short-lived, httpOnly.
 export const FITBIT_OAUTH_COOKIE = 'rj_fitbit_oauth'
 
-// Curated activity types the user can choose to import (matched case-insensitively
-// against the exercise displayName / exerciseType). Sensible default = common cardio.
+// Everything imports as cardio EXCEPT what the user excludes (chips below),
+// plus two built-in rules:
+// - Strength sessions never import as cardio — they correlate to logged
+//   workouts as metadata instead (workout_metrics).
+// - Walks only import when they earned it: at least
+//   WALK_MIN_MODERATE_MINUTES of total time in the moderate-or-higher HR zone.
 export const FITBIT_ACTIVITY_OPTIONS = [
   'Running',
   'Walking',
@@ -38,4 +42,11 @@ export const FITBIT_ACTIVITY_OPTIONS = [
   'Yoga',
 ] as const
 
-export const FITBIT_DEFAULT_ALLOWED = ['Running', 'Walking', 'Biking', 'Cycling', 'Spinning', 'Treadmill', 'Elliptical', 'Swimming', 'Hiking', 'Rowing', 'Workout', 'Sport']
+// Total moderate+vigorous+peak zone minutes a walk needs to count as cardio.
+// (Google reports total zone time, not contiguous stretches — same basis as
+// Fitbit's own Active Zone Minutes.)
+export const WALK_MIN_MODERATE_MINUTES = 15
+
+// How far a workout's logged time may sit outside the Fitbit session interval
+// and still be considered the same training session.
+export const METRICS_MATCH_TOLERANCE_MS = 30 * 60 * 1000
