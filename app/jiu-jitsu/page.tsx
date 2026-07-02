@@ -491,30 +491,27 @@ export default function BJJPage() {
       <BackgroundLogo />
       {/* Header */}
       <div className="border-b border-red-500/10">
-        <div className="px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-display uppercase" style={{ color: bs.hex }}>
-                Jiu Jitsu Training
-              </h1>
-              <p className="text-sm text-zinc-500 mt-0.5">Log your mat time</p>
-            </div>
-            <div className="flex gap-5">
-              {(['quick', 'manual'] as const).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setMode(m)}
-                  className={`relative pb-1.5 text-sm font-semibold tracking-wide capitalize transition-colors ${
-                    mode === m ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
-                  }`}
-                >
-                  {m}
-                  {mode === m && (
-                    <span className="absolute left-0 right-0 -bottom-px h-0.5 rounded-full" style={{ backgroundColor: bs.hex }} />
-                  )}
-                </button>
-              ))}
-            </div>
+        <div className="px-4 pt-4">
+          <h1 className="text-4xl font-display uppercase" style={{ color: bs.hex }}>
+            Jiu Jitsu Training
+          </h1>
+          <p className="text-sm text-zinc-500 mt-0.5">Log your mat time</p>
+          {/* Inline tabs below the title */}
+          <div className="flex gap-6 mt-4">
+            {(['quick', 'manual'] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={`relative pb-3 -mb-px text-sm font-semibold tracking-wide capitalize transition-colors ${
+                  mode === m ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                {m}
+                {mode === m && (
+                  <span className="absolute left-0 right-0 -bottom-px h-0.5 rounded-full" style={{ backgroundColor: bs.hex }} />
+                )}
+              </button>
+            ))}
           </div>
         </div>
       </div>

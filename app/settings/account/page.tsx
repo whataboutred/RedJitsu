@@ -13,6 +13,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { ensureProfile, upsertProfile } from '@/lib/api'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import BackgroundLogo from '@/components/BackgroundLogo'
+import { BeltEditor } from '@/components/BeltEditor'
 
 export default function AccountPage() {
   const router = useRouter()
@@ -184,6 +185,9 @@ export default function AccountPage() {
               </div>
             </div>
           </AnimatedCard>
+
+          {/* BJJ belt rank */}
+          <BeltEditor delay={0.12} />
 
           {/* Change password */}
           <AnimatedCard delay={0.15}>
