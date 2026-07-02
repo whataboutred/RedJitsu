@@ -154,6 +154,12 @@ function HistoryClient() {
   const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress[]>([])
   const [detailExerciseId, setDetailExerciseId] = useState<string | null>(null)
   const [belt, setBelt] = useState<string>('purple')
+  // Dedicated 8-week dataset for Training Load (independent of list pagination).
+  const [trendInputs, setTrendInputs] = useState<{
+    workouts: { performed_at: string }[]
+    bjj: { performed_at: string; duration_min: number; intensity: string | null }[]
+    cardio: { performed_at: string; duration_minutes: number | null; intensity: string | null }[]
+  }>({ workouts: [], bjj: [], cardio: [] })
   const [streakData, setStreakData] = useState<StreakData | null>(null)
   const [activeProgramExercises, setActiveProgramExercises] = useState<Set<string>>(new Set())
   const [hasActiveProgram, setHasActiveProgram] = useState(false)
@@ -356,6 +362,15 @@ function HistoryClient() {
     // Belt drives the BJJ accent throughout history
     const { data: prof } = await supabase.from('profiles').select('bjj_belt').eq('id', userId).maybeSingle()
     if (prof?.bjj_belt) setBelt(prof.bjj_belt)
+
+    // Accurate 8-week window for Training Load, regardless of list pagination.
+    const since = new Date(Date.now() - 63 * 24 * 60 * 60 * 1000).toISOString()
+    const [twk, tbjj, tcar] = await Promise.all([
+      supabase.from('workouts').select('performed_at').eq('user_id', userId).gte('performed_at', since),
+      supabase.from('bjj_sessions').select('performed_at,duration_min,intensity').eq('user_id', userId).gte('performed_at', since),
+      supabase.from('cardio_sessions').select('performed_at,duration_minutes,intensity').eq('user_id', userId).gte('performed_at', since),
+    ])
+    setTrendInputs({ workouts: twk.data ?? [], bjj: tbjj.data ?? [], cardio: tcar.data ?? [] })
 
     const { data: w } = await supabase
       .from('workouts')
@@ -1005,7 +1020,7 @@ function HistoryClient() {
             {/* Training Load — the cross-training readiness view */}
             {!loading && (workouts.length > 0 || bjj.length > 0 || cardio.length > 0) && (
               <TrainingLoadCard
-                inputs={{ workouts, bjj, cardio }}
+                inputs={trendInputs}
                 bjjHex={beltStyle(belt).hex}
               />
             )}
