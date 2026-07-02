@@ -17,7 +17,9 @@ import {
   X,
   Timer,
   FileText,
-  TrendingUp
+  TrendingUp,
+  Users,
+  Award,
 } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/Card'
 import { Button, IconButton } from '@/components/ui/Button'
@@ -126,6 +128,25 @@ const INTENSITY_OPTIONS = [
 
 const DURATION_PRESETS = [30, 45, 60, 75, 90, 120]
 
+function Counter({ label, value, onChange, accent = 'text-white' }: { label: string; value: number; onChange: (n: number) => void; accent?: string }) {
+  return (
+    <div className="rounded-xl bg-surface border border-white/[0.07] p-2.5 text-center">
+      <p className="text-[10px] uppercase tracking-wide text-zinc-500 mb-1.5">{label}</p>
+      <div className="flex items-center justify-between gap-1">
+        <button onClick={() => onChange(Math.max(0, value - 1))} className="w-7 h-7 rounded-lg bg-surface-elevated text-white hover:bg-surface-pressed">−</button>
+        <span className={`font-display text-xl leading-none ${accent}`}>{value}</span>
+        <button onClick={() => onChange(value + 1)} className="w-7 h-7 rounded-lg bg-surface-elevated text-white hover:bg-surface-pressed">+</button>
+      </div>
+    </div>
+  )
+}
+
+const TECHNIQUE_TAGS = [
+  'Guard Passing', 'Guard Retention', 'Sweeps', 'Takedowns', 'Back Takes',
+  'Submissions', 'Escapes', 'Pressure Passing', 'Leg Locks', 'Wrestling',
+  'Half Guard', 'Mount', 'Side Control', 'Open Guard', 'Closed Guard',
+]
+
 const NOTE_TEMPLATES = [
   'Worked on guard passes and escapes',
   'Drilled submissions from guard',
@@ -201,6 +222,16 @@ export default function BJJPage() {
   const [stripes, setStripes] = useState<number>(0)
   const [showBeltEdit, setShowBeltEdit] = useState(false)
 
+  // Roll depth
+  const [rounds, setRounds] = useState<number>(0)
+  const [subsFor, setSubsFor] = useState<number>(0)
+  const [subsAgainst, setSubsAgainst] = useState<number>(0)
+  const [techniques, setTechniques] = useState<string[]>([])
+  const [partners, setPartners] = useState<string[]>([])
+  const [partnerInput, setPartnerInput] = useState('')
+  const [knownPartners, setKnownPartners] = useState<string[]>([])
+  const [promotions, setPromotions] = useState<{ belt: string; stripes: number; promoted_at: string }[]>([])
+
   // Modal state
   const [showNotesSheet, setShowNotesSheet] = useState(false)
 
@@ -250,6 +281,24 @@ export default function BJJPage() {
         .eq('user_id', userId)
         .gte('performed_at', new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString())
         .order('performed_at', { ascending: false })
+
+      // Promotion timeline (newest first) + known partners for autocomplete
+      const { data: proms } = await supabase
+        .from('bjj_promotions')
+        .select('belt, stripes, promoted_at')
+        .eq('user_id', userId)
+        .order('promoted_at', { ascending: false })
+      setPromotions(proms ?? [])
+
+      const { data: partnerRows } = await supabase
+        .from('bjj_sessions')
+        .select('partners')
+        .eq('user_id', userId)
+        .not('partners', 'is', null)
+        .limit(200)
+      const names = new Set<string>()
+      for (const r of partnerRows ?? []) for (const n of (r.partners ?? [])) names.add(n)
+      setKnownPartners([...names].sort())
 
       // Get current week stats
       const weekStart = new Date()
@@ -402,8 +451,22 @@ export default function BJJPage() {
       kind: kind === 'Open Mat' ? ('open_mat' as const) : (kind.toLowerCase() as 'class' | 'drilling'),
       duration_min: minutes,
       intensity,
-      notes: notes || null
+      notes: notes || null,
+      rounds: rounds > 0 ? rounds : null,
+      subs_for: rounds > 0 ? subsFor : null,
+      subs_against: rounds > 0 ? subsAgainst : null,
+      techniques: techniques.length ? techniques : null,
+      partners: partners.length ? partners : null,
     })
+  }
+
+  function toggleTechnique(t: string) {
+    setTechniques((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]))
+  }
+  function addPartner(name: string) {
+    const n = name.trim()
+    if (n && !partners.includes(n)) setPartners((prev) => [...prev, n])
+    setPartnerInput('')
   }
 
   const canSave = duration > 0 && kind
@@ -493,6 +556,33 @@ export default function BJJPage() {
             </button>
           </div>
         </AnimatedCard>
+
+        {/* Belt journey — promotion timeline */}
+        {promotions.length > 0 && (
+          <AnimatedCard delay={0.03}>
+            <div className="flex items-center gap-2 mb-4">
+              <Award className="w-5 h-5" style={{ color: bs.hex }} />
+              <h3 className="font-display uppercase text-lg text-white">Belt Journey</h3>
+            </div>
+            <div className="space-y-3">
+              {promotions.map((p, i) => {
+                const ps = beltStyle(p.belt)
+                return (
+                  <div key={i} className="flex items-center gap-3">
+                    <BeltBar belt={p.belt} stripes={p.stripes} className="w-20 flex-shrink-0" height={20} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium" style={{ color: ps.hex }}>{beltLabel(p.belt, p.stripes)}</p>
+                      <p className="text-xs text-zinc-500">
+                        {new Date(p.promoted_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+                    {i === 0 && <span className="text-[10px] uppercase tracking-wide text-zinc-600">Current</span>}
+                  </div>
+                )
+              })}
+            </div>
+          </AnimatedCard>
+        )}
 
         {/* Week Progress Card */}
         <AnimatedCard delay={0.05} className="overflow-hidden">
@@ -814,6 +904,75 @@ export default function BJJPage() {
                   </button>
                 ))}
               </div>
+            </AnimatedCard>
+
+            {/* Rolls — rounds + submissions */}
+            <AnimatedCard delay={0.21}>
+              <div className="flex items-center gap-2 mb-4">
+                <Zap className="w-5 h-5" style={{ color: bs.hex }} />
+                <h3 className="font-display uppercase text-lg text-white">Rolls</h3>
+                <span className="text-xs text-zinc-500 ml-auto">Optional</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2.5">
+                <Counter label="Rounds" value={rounds} onChange={setRounds} />
+                <Counter label="Subs for" value={subsFor} onChange={setSubsFor} accent="text-emerald-400" />
+                <Counter label="Subs against" value={subsAgainst} onChange={setSubsAgainst} accent="text-red-400" />
+              </div>
+            </AnimatedCard>
+
+            {/* Techniques */}
+            <AnimatedCard delay={0.23}>
+              <div className="flex items-center gap-2 mb-3">
+                <Target className="w-5 h-5" style={{ color: bs.hex }} />
+                <h3 className="font-display uppercase text-lg text-white">Techniques</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {TECHNIQUE_TAGS.map((t) => {
+                  const on = techniques.includes(t)
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => toggleTechnique(t)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${on ? 'text-white border-transparent' : 'bg-surface border-white/[0.07] text-zinc-400 hover:text-white'}`}
+                      style={on ? { backgroundColor: bs.hex } : undefined}
+                    >
+                      {t}
+                    </button>
+                  )
+                })}
+              </div>
+            </AnimatedCard>
+
+            {/* Training partners */}
+            <AnimatedCard delay={0.24}>
+              <div className="flex items-center gap-2 mb-3">
+                <Users className="w-5 h-5" style={{ color: bs.hex }} />
+                <h3 className="font-display uppercase text-lg text-white">Training Partners</h3>
+              </div>
+              {partners.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {partners.map((p) => (
+                    <span key={p} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface border border-white/[0.07] text-sm text-white">
+                      {p}
+                      <button onClick={() => setPartners((prev) => prev.filter((x) => x !== p))} aria-label={`Remove ${p}`}>
+                        <X className="w-3 h-3 text-zinc-500 hover:text-white" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <input
+                list="rj-partners"
+                value={partnerInput}
+                onChange={(e) => setPartnerInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addPartner(partnerInput) } }}
+                onBlur={() => partnerInput && addPartner(partnerInput)}
+                placeholder="Add a partner and press enter..."
+                className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none transition-colors"
+              />
+              <datalist id="rj-partners">
+                {knownPartners.map((n) => <option key={n} value={n} />)}
+              </datalist>
             </AnimatedCard>
 
             {/* Notes */}
