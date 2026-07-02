@@ -247,11 +247,10 @@ export default function EditJiuJitsuPage() {
               <button
                 key={preset}
                 onClick={() => setDuration(preset)}
-                className={`py-3 rounded-lg text-center transition-all ${
-                  duration === preset
-                    ? 'bg-purple-500 text-white font-medium'
-                    : 'bg-surface/50 text-zinc-500 hover:bg-surface-elevated hover:text-white'
+                className={`py-3 rounded-lg text-center transition-all font-medium ${
+                  duration === preset ? '' : 'bg-surface/50 text-zinc-500 hover:bg-surface-elevated hover:text-white'
                 }`}
+                style={duration === preset ? { backgroundColor: bs.hex, color: bs.onAccent } : undefined}
               >
                 {preset}
               </button>
@@ -340,8 +339,8 @@ export default function EditJiuJitsuPage() {
                 <button
                   key={t}
                   onClick={() => toggleTechnique(t)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${on ? 'text-white border-transparent' : 'bg-surface border-white/[0.07] text-zinc-400 hover:text-white'}`}
-                  style={on ? { backgroundColor: bs.hex } : undefined}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${on ? 'border-transparent' : 'bg-surface border-white/[0.07] text-zinc-400 hover:text-white'}`}
+                  style={on ? { backgroundColor: bs.hex, color: bs.onAccent } : undefined}
                 >
                   {t}
                 </button>
@@ -370,6 +369,7 @@ export default function EditJiuJitsuPage() {
           )}
           <input
             list="rj-partners-edit"
+            aria-label="Add a training partner"
             value={partnerInput}
             onChange={(e) => setPartnerInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addPartner(partnerInput) } }}
@@ -411,8 +411,8 @@ export default function EditJiuJitsuPage() {
             size="lg"
             loading={saving}
             onClick={handleSave}
-            className="shadow-lg shadow-purple-500/30"
-            style={{ backgroundColor: bs.hex }}
+            className="shadow-lg shadow-black/30"
+            style={{ backgroundColor: bs.hex, color: bs.onAccent }}
           >
             Update {kind} ({duration} min)
           </Button>

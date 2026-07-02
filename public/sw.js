@@ -60,7 +60,13 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const target = (event.notification.data && event.notification.data.url) || '/dashboard';
+  // Only ever navigate to a same-origin path (defense against a crafted payload).
+  let target = '/dashboard';
+  try {
+    const raw = (event.notification.data && event.notification.data.url) || '/dashboard';
+    const u = new URL(raw, self.location.origin);
+    if (u.origin === self.location.origin) target = u.pathname + u.search;
+  } catch (e) { target = '/dashboard'; }
   event.waitUntil((async () => {
     const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const client of clients) {

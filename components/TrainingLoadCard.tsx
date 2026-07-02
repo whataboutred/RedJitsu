@@ -37,7 +37,7 @@ export function TrainingLoadCard({ inputs, bjjHex = '#8B5CF6' }: { inputs: LoadI
               <div className="font-display text-3xl text-white leading-none">{current.total.toLocaleString()}</div>
               <div className="text-[11px] uppercase tracking-wide text-zinc-500 mt-1">This week&apos;s load</div>
             </div>
-            <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${STATUS_STYLE[r.status]}`}>{r.label}</span>
+            <span className={`px-2.5 py-1 rounded-md text-xs font-medium border ${STATUS_STYLE[r.status]}`}>{r.label}</span>
           </div>
 
           {/* Stacked weekly bars */}

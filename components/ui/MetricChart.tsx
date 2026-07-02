@@ -23,11 +23,13 @@ export function MetricChart({
   const pad = 10
   const min = Math.min(...data)
   const max = Math.max(...data)
+  const flat = max === min
   const range = max - min || 1
 
   const pts = data.map((v, i) => {
     const x = pad + (i / (data.length - 1)) * (W - 2 * pad)
-    const y = pad + (1 - (v - min) / range) * (H - 2 * pad)
+    // A flat series (steady weight) sits centered, not pinned to the baseline.
+    const y = flat ? H / 2 : pad + (1 - (v - min) / range) * (H - 2 * pad)
     return [x, y] as const
   })
   const line = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`).join(' ')

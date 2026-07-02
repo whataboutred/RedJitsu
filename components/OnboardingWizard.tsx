@@ -74,7 +74,7 @@ export default function OnboardingWizard({
         <div className="flex items-center gap-3">
           <button
             onClick={() => onChange(Math.max(0, value - 1))}
-            className="h-8 w-8 rounded-lg bg-surface-elevated text-lg text-zinc-300 hover:bg-surface-pressed"
+            className="h-11 w-11 rounded-lg bg-surface-elevated text-lg text-zinc-300 hover:bg-surface-pressed"
             aria-label={`Decrease ${label}`}
           >
             −
@@ -82,7 +82,7 @@ export default function OnboardingWizard({
           <span className={`w-8 text-center text-lg font-bold ${accent}`}>{value}</span>
           <button
             onClick={() => onChange(Math.min(14, value + 1))}
-            className="h-8 w-8 rounded-lg bg-surface-elevated text-lg text-zinc-300 hover:bg-surface-pressed"
+            className="h-11 w-11 rounded-lg bg-surface-elevated text-lg text-zinc-300 hover:bg-surface-pressed"
             aria-label={`Increase ${label}`}
           >
             +
@@ -168,8 +168,9 @@ export default function OnboardingWizard({
                 <button
                   key={s}
                   onClick={() => setStripes(s)}
-                  className={`h-8 w-8 rounded-lg text-sm font-semibold transition-all ${stripes === s ? 'text-white' : 'bg-surface-elevated text-zinc-500 hover:text-white'}`}
-                  style={stripes === s ? { backgroundColor: beltStyle(belt).hex } : undefined}
+                  aria-label={`${s} stripes`}
+                  className={`h-11 w-11 rounded-lg text-sm font-semibold transition-all ${stripes === s ? '' : 'bg-surface-elevated text-zinc-500 hover:text-white'}`}
+                  style={stripes === s ? { backgroundColor: beltStyle(belt).hex, color: beltStyle(belt).onAccent } : undefined}
                 >
                   {s}
                 </button>

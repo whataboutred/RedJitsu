@@ -40,8 +40,9 @@ function ExerciseBody({ exercise }: { exercise: ExerciseDetail }) {
   const first = oneRMs[0]
   const pct = first > 0 ? Math.round(((current - first) / first) * 100) : 0
 
-  // Plateau: the best e1RM was set 3+ sessions ago (and we have enough history).
-  const bestIdx = oneRMs.lastIndexOf(best)
+  // Plateau: no strictly-new all-time best in the last 3 sessions (using the
+  // FIRST time the max was reached, so a run of equal maxima counts as stalled).
+  const bestIdx = oneRMs.indexOf(best)
   const plateau = points.length >= 4 && bestIdx <= points.length - 4
 
   const trendUp = pct > 0
@@ -72,7 +73,7 @@ function ExerciseBody({ exercise }: { exercise: ExerciseDetail }) {
           <h4 className="text-xs font-display uppercase tracking-wider text-zinc-400">Estimated 1RM</h4>
           <span className="text-[11px] text-zinc-600">{points.length} sessions</span>
         </div>
-        <MetricChart data={oneRMs} stroke={trendUp ? '#34D399' : trendFlat ? '#DC2626' : '#F87171'} />
+        <MetricChart data={oneRMs} stroke={trendUp ? '#34D399' : trendFlat ? '#A1A1AA' : '#F87171'} />
       </div>
 
       {plateau && (

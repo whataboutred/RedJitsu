@@ -28,12 +28,14 @@ export async function isPushEnabled(): Promise<boolean> {
 
 async function postSub(path: string, sub: PushSubscription) {
   const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) throw new Error('Not signed in')
   const json = sub.toJSON() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } }
-  await fetch(path, {
+  const res = await fetch(path, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
   })
+  if (!res.ok) throw new Error('Subscription save failed')
 }
 
 export async function enablePush(): Promise<'enabled' | 'denied' | 'unsupported'> {

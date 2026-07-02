@@ -74,16 +74,21 @@ export type Readiness = {
   note: string
 }
 
-// Compare this week's load against the trailing average (acute:chronic-ish).
+// Compare this week's PROJECTED load against the trailing average. The current
+// week is in progress, so we project it to a full week by the fraction elapsed —
+// otherwise early in the week it always looks "light".
 export function readiness(weeks: WeekLoad[]): Readiness {
   if (weeks.length < 2) return { status: 'building', label: 'Building baseline', note: 'Log a few weeks to see your load trend.' }
   const current = weeks[weeks.length - 1].total
   const prior = weeks.slice(-5, -1).map((w) => w.total).filter((t) => t > 0)
   if (prior.length === 0) return { status: 'building', label: 'Building baseline', note: 'Keep logging to establish your normal load.' }
   const avg = prior.reduce((a, b) => a + b, 0) / prior.length
-  const ratio = avg > 0 ? current / avg : 1
 
-  if (ratio >= 1.5) return { status: 'ramping', label: 'Ramping hard', note: 'Load is well above your recent norm. Prioritize sleep and food, and watch for niggles.' }
-  if (ratio <= 0.6) return { status: 'light', label: 'Light week', note: 'A step down from your norm. Good if it is a planned deload; otherwise there is room to push.' }
-  return { status: 'steady', label: 'Steady', note: 'Load is in line with your recent weeks. Sustainable training.' }
+  const daysElapsed = new Date().getDay() + 1 // Sun=1 … Sat=7
+  const projected = current / (daysElapsed / 7)
+  const ratio = avg > 0 ? projected / avg : 1
+
+  if (ratio >= 1.5) return { status: 'ramping', label: 'Ramping hard', note: 'On pace well above your recent norm. Prioritize sleep and food, and watch for niggles.' }
+  if (ratio <= 0.6) return { status: 'light', label: 'Light week', note: 'On pace below your norm. Good if it is a planned deload; otherwise there is room to push.' }
+  return { status: 'steady', label: 'Steady', note: 'On pace with your recent weeks. Sustainable training.' }
 }

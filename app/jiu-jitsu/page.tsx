@@ -588,7 +588,7 @@ export default function BJJPage() {
                 <Trophy className={`w-4 h-4 ${goalProgress >= 100 ? 'text-emerald-400' : 'text-purple-400'}`} />
                 <span className="text-sm font-medium text-white">This Week</span>
                 {goalProgress >= 100 && (
-                  <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-full">
+                  <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-md">
                     Goal Met!
                   </span>
                 )}
@@ -814,11 +814,10 @@ export default function BJJPage() {
                 {DURATION_PRESETS.map((preset) => (
                   <button
                     key={preset}
-                    className={`py-3 rounded-lg text-center transition-all ${
-                      duration === preset
-                        ? 'bg-purple-500 text-white font-medium'
-                        : 'bg-surface/50 text-zinc-500 hover:bg-surface-elevated hover:text-white'
+                    className={`py-3 rounded-lg text-center transition-all font-medium ${
+                      duration === preset ? '' : 'bg-surface/50 text-zinc-500 hover:bg-surface-elevated hover:text-white'
                     }`}
+                    style={duration === preset ? { backgroundColor: bs.hex, color: bs.onAccent } : undefined}
                     onClick={() => setDuration(preset)}
                   >
                     {preset}
@@ -916,8 +915,8 @@ export default function BJJPage() {
                     <button
                       key={t}
                       onClick={() => toggleTechnique(t)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${on ? 'text-white border-transparent' : 'bg-surface border-white/[0.07] text-zinc-400 hover:text-white'}`}
-                      style={on ? { backgroundColor: bs.hex } : undefined}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${on ? 'border-transparent' : 'bg-surface border-white/[0.07] text-zinc-400 hover:text-white'}`}
+                      style={on ? { backgroundColor: bs.hex, color: bs.onAccent } : undefined}
                     >
                       {t}
                     </button>
@@ -946,6 +945,7 @@ export default function BJJPage() {
               )}
               <input
                 list="rj-partners"
+                aria-label="Add a training partner"
                 value={partnerInput}
                 onChange={(e) => setPartnerInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addPartner(partnerInput) } }}
@@ -1041,10 +1041,10 @@ export default function BJJPage() {
                 size="lg"
                 loading={isLoading}
                 onClick={saveSession}
-                className="shadow-lg shadow-purple-500/30"
-                style={{ backgroundColor: bs.hex }}
+                className="shadow-lg shadow-black/30"
+                style={{ backgroundColor: bs.hex, color: bs.onAccent }}
               >
-                Save {kind} ({duration} min{demo ? ' • Offline' : ''})
+                {demo ? 'Sign in to save' : `Save ${kind} (${duration} min)`}
               </Button>
               <IconButton
                 icon={<X className="w-5 h-5" />}
@@ -1110,8 +1110,8 @@ export default function BJJPage() {
                 <button
                   key={s}
                   onClick={() => saveBelt(belt, s)}
-                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${stripes === s ? 'text-white' : 'bg-surface border border-white/[0.07] text-zinc-500 hover:text-white'}`}
-                  style={stripes === s ? { backgroundColor: bs.hex } : undefined}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${stripes === s ? '' : 'bg-surface border border-white/[0.07] text-zinc-500 hover:text-white'}`}
+                  style={stripes === s ? { backgroundColor: bs.hex, color: bs.onAccent } : undefined}
                 >
                   {s}
                 </button>
