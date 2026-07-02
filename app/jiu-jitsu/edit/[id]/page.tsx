@@ -16,7 +16,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { isoToDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useToast } from '@/components/Toast'
 import { isUuid } from '@/lib/validation'
-import { beltStyle } from '@/lib/belt'
+import { beltStyle, beltVars } from '@/lib/belt'
 import { TECHNIQUE_TAGS } from '@/lib/bjjConstants'
 
 type Kind = 'Class' | 'Drilling' | 'Open Mat'
@@ -24,9 +24,9 @@ type Intensity = 'low' | 'medium' | 'high'
 
 // Same building blocks as the create page so edit looks identical.
 const SESSION_TYPES = [
-  { value: 'Class' as Kind, icon: <Target className="w-6 h-6" />, label: 'Class', iconBg: 'bg-purple-500/20', iconColor: 'text-purple-300', activeGradient: 'from-purple-500/40 to-purple-700/20', borderColor: 'border-purple-500/50' },
-  { value: 'Drilling' as Kind, icon: <Flame className="w-6 h-6" />, label: 'Drilling', iconBg: 'bg-purple-500/20', iconColor: 'text-purple-300', activeGradient: 'from-purple-500/40 to-purple-700/20', borderColor: 'border-purple-500/50' },
-  { value: 'Open Mat' as Kind, icon: <Zap className="w-6 h-6" />, label: 'Open Mat', iconBg: 'bg-purple-500/20', iconColor: 'text-purple-300', activeGradient: 'from-purple-500/40 to-purple-700/20', borderColor: 'border-purple-500/50' },
+  { value: 'Class' as Kind, icon: <Target className="w-6 h-6" />, label: 'Class', iconBg: 'bg-[var(--belt-20)]', iconColor: 'text-[var(--belt)]', activeGradient: 'bg-[var(--belt-30)]', borderColor: 'border-[var(--belt-40)]' },
+  { value: 'Drilling' as Kind, icon: <Flame className="w-6 h-6" />, label: 'Drilling', iconBg: 'bg-[var(--belt-20)]', iconColor: 'text-[var(--belt)]', activeGradient: 'bg-[var(--belt-30)]', borderColor: 'border-[var(--belt-40)]' },
+  { value: 'Open Mat' as Kind, icon: <Zap className="w-6 h-6" />, label: 'Open Mat', iconBg: 'bg-[var(--belt-20)]', iconColor: 'text-[var(--belt)]', activeGradient: 'bg-[var(--belt-30)]', borderColor: 'border-[var(--belt-40)]' },
 ]
 const INTENSITY_OPTIONS = [
   { value: 'low' as Intensity, label: 'Low', description: 'Easy flow, technique focus', color: 'bg-emerald-500/10', activeColor: 'bg-emerald-500/20', textColor: 'text-emerald-400', borderColor: 'border-emerald-500/60' },
@@ -155,7 +155,7 @@ export default function EditJiuJitsuPage() {
 
   if (demo || notFound) {
     return (
-      <div className="relative min-h-screen bg-brand-dark">
+      <div className="relative min-h-screen bg-brand-dark" style={beltVars(belt) as any}>
         <BackgroundLogo />
         <main className="relative z-10 p-4 max-w-xl mx-auto pt-10">
           <h1 className="text-2xl font-display uppercase text-white mb-2">
@@ -163,9 +163,9 @@ export default function EditJiuJitsuPage() {
           </h1>
           <p className="text-zinc-400">
             {demo ? (
-              <>This is a read-only demo. <Link href="/login" className="text-purple-400 underline">Sign in</Link> to edit sessions.</>
+              <>This is a read-only demo. <Link href="/login" className="text-[var(--belt)] underline">Sign in</Link> to edit sessions.</>
             ) : (
-              <>That session doesn&apos;t exist. <Link href="/history" className="text-purple-400 underline">Back to history</Link></>
+              <>That session doesn&apos;t exist. <Link href="/history" className="text-[var(--belt)] underline">Back to history</Link></>
             )}
           </p>
         </main>
@@ -174,7 +174,7 @@ export default function EditJiuJitsuPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-brand-dark pb-32">
+    <div className="relative min-h-screen bg-brand-dark pb-32" style={beltVars(belt) as any}>
       <BackgroundLogo />
       {/* Header */}
       <div className="border-b border-red-500/10">
@@ -199,12 +199,12 @@ export default function EditJiuJitsuPage() {
         {/* When */}
         <AnimatedCard delay={0}>
           <div className="flex items-center gap-2 mb-3">
-            <Calendar className="w-5 h-5 text-purple-400" />
+            <Calendar className="w-5 h-5 text-[var(--belt)]" />
             <h3 className="font-display uppercase text-lg text-white">When did you train?</h3>
           </div>
           <input
             type="datetime-local"
-            className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-purple-500 focus:outline-none transition-colors"
+            className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-[var(--belt)] focus:outline-none transition-colors"
             value={performedAt}
             onChange={(e) => setPerformedAt(e.target.value)}
           />
@@ -213,7 +213,7 @@ export default function EditJiuJitsuPage() {
         {/* Training Type */}
         <AnimatedCard delay={0.05}>
           <div className="flex items-center gap-2 mb-4">
-            <Target className="w-5 h-5 text-purple-400" />
+            <Target className="w-5 h-5 text-[var(--belt)]" />
             <h3 className="font-display uppercase text-lg text-white">Training Type</h3>
           </div>
           <div className="grid grid-cols-3 gap-2">
@@ -239,7 +239,7 @@ export default function EditJiuJitsuPage() {
         {/* Duration */}
         <AnimatedCard delay={0.1}>
           <div className="flex items-center gap-2 mb-4">
-            <Clock className="w-5 h-5 text-purple-400" />
+            <Clock className="w-5 h-5 text-[var(--belt)]" />
             <h3 className="font-display uppercase text-lg text-white">Duration</h3>
           </div>
           <div className="grid grid-cols-6 gap-2 mb-4">
@@ -286,7 +286,7 @@ export default function EditJiuJitsuPage() {
         {/* Intensity */}
         <AnimatedCard delay={0.15}>
           <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-purple-400" />
+            <TrendingUp className="w-5 h-5 text-[var(--belt)]" />
             <h3 className="font-display uppercase text-lg text-white">Intensity</h3>
           </div>
           <div className="space-y-2">
@@ -375,7 +375,7 @@ export default function EditJiuJitsuPage() {
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addPartner(partnerInput) } }}
             onBlur={() => partnerInput && addPartner(partnerInput)}
             placeholder="Add a partner and press enter..."
-            className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none transition-colors"
+            className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white placeholder-zinc-500 focus:border-[var(--belt)] focus:outline-none transition-colors"
           />
           <datalist id="rj-partners-edit">
             {knownPartners.map((n) => <option key={n} value={n} />)}
@@ -389,7 +389,7 @@ export default function EditJiuJitsuPage() {
             <h3 className="font-display uppercase text-lg text-white">Notes</h3>
           </div>
           <textarea
-            className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none transition-colors resize-none"
+            className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white placeholder-zinc-500 focus:border-[var(--belt)] focus:outline-none transition-colors resize-none"
             placeholder="Techniques practiced, key insights..."
             rows={3}
             value={notes}

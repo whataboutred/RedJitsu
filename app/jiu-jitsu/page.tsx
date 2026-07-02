@@ -34,7 +34,7 @@ import { useDataRefresh } from '@/hooks/useDataRefresh'
 import { toDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useRouter } from 'next/navigation'
 import BackgroundLogo from '@/components/BackgroundLogo'
-import { beltStyle, beltLabel, BELT_ORDER, BELTS } from '@/lib/belt'
+import { beltStyle, beltLabel, beltVars, BELT_ORDER, BELTS } from '@/lib/belt'
 import { BeltBar } from '@/components/BeltBar'
 import { Counter } from '@/components/ui/Counter'
 import { TECHNIQUE_TAGS } from '@/lib/bjjConstants'
@@ -64,11 +64,11 @@ const SESSION_TYPES = [
     description: 'Structured instruction',
     suggestedDuration: 60,
     suggestedIntensity: 'medium' as Intensity,
-    gradient: 'from-purple-500/20 to-purple-700/10',
-    iconBg: 'bg-purple-500/20',
-    iconColor: 'text-purple-300',
-    activeGradient: 'from-purple-500/40 to-purple-700/20',
-    borderColor: 'border-purple-500/50'
+    gradient: 'bg-[var(--belt-15)]',
+    iconBg: 'bg-[var(--belt-20)]',
+    iconColor: 'text-[var(--belt)]',
+    activeGradient: 'bg-[var(--belt-30)]',
+    borderColor: 'border-[var(--belt-40)]'
   },
   {
     value: 'Drilling' as Kind,
@@ -77,11 +77,11 @@ const SESSION_TYPES = [
     description: 'Focused technique',
     suggestedDuration: 45,
     suggestedIntensity: 'high' as Intensity,
-    gradient: 'from-purple-500/20 to-purple-700/10',
-    iconBg: 'bg-purple-500/20',
-    iconColor: 'text-purple-300',
-    activeGradient: 'from-purple-500/40 to-purple-700/20',
-    borderColor: 'border-purple-500/50'
+    gradient: 'bg-[var(--belt-15)]',
+    iconBg: 'bg-[var(--belt-20)]',
+    iconColor: 'text-[var(--belt)]',
+    activeGradient: 'bg-[var(--belt-30)]',
+    borderColor: 'border-[var(--belt-40)]'
   },
   {
     value: 'Open Mat' as Kind,
@@ -90,11 +90,11 @@ const SESSION_TYPES = [
     description: 'Free rolling',
     suggestedDuration: 90,
     suggestedIntensity: 'medium' as Intensity,
-    gradient: 'from-purple-500/20 to-purple-700/10',
-    iconBg: 'bg-purple-500/20',
-    iconColor: 'text-purple-300',
-    activeGradient: 'from-purple-500/40 to-purple-700/20',
-    borderColor: 'border-purple-500/50'
+    gradient: 'bg-[var(--belt-15)]',
+    iconBg: 'bg-[var(--belt-20)]',
+    iconColor: 'text-[var(--belt)]',
+    activeGradient: 'bg-[var(--belt-30)]',
+    borderColor: 'border-[var(--belt-40)]'
   }
 ]
 
@@ -487,7 +487,7 @@ export default function BJJPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-brand-dark pb-32">
+    <div className="relative min-h-screen bg-brand-dark pb-32" style={beltVars(belt) as any}>
       <BackgroundLogo />
       {/* Header */}
       <div className="border-b border-red-500/10">
@@ -585,7 +585,7 @@ export default function BJJPage() {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <Trophy className={`w-4 h-4 ${goalProgress >= 100 ? 'text-emerald-400' : 'text-purple-400'}`} />
+                <Trophy className={`w-4 h-4 ${goalProgress >= 100 ? 'text-emerald-400' : 'text-[var(--belt)]'}`} />
                 <span className="text-sm font-medium text-white">This Week</span>
                 {goalProgress >= 100 && (
                   <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-md">
@@ -599,7 +599,7 @@ export default function BJJPage() {
                   <p className="text-xs text-zinc-500">Sessions</p>
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-purple-400">{weekStats.totalMinutes}</p>
+                  <p className="text-xl font-bold text-[var(--belt)]">{weekStats.totalMinutes}</p>
                   <p className="text-xs text-zinc-500">Mat Minutes</p>
                 </div>
               </div>
@@ -615,14 +615,14 @@ export default function BJJPage() {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
             >
-              <AnimatedCard className="bg-gradient-to-br from-purple-500/15 to-purple-700/5 border-purple-500/30">
+              <AnimatedCard className="bg-[var(--belt-15)] border-[var(--belt-30)]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                      <Timer className="w-6 h-6 text-purple-400" />
+                    <div className="w-12 h-12 rounded-xl bg-[var(--belt-20)] flex items-center justify-center">
+                      <Timer className="w-6 h-6 text-[var(--belt)]" />
                     </div>
                     <div>
-                      <p className="text-3xl font-bold text-purple-400 font-mono">
+                      <p className="text-3xl font-bold text-[var(--belt)] font-mono">
                         {formatTimer(sessionTimer)}
                       </p>
                       <p className="text-xs text-zinc-500">Session Timer</p>
@@ -660,7 +660,7 @@ export default function BJJPage() {
             {patterns.length > 0 ? (
               <AnimatedCard delay={0.1}>
                 <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="w-5 h-5 text-purple-400" />
+                  <Sparkles className="w-5 h-5 text-[var(--belt)]" />
                   <h3 className="font-display uppercase text-lg text-white">Your Training Patterns</h3>
                 </div>
                 <div className="grid grid-cols-1 gap-3">
@@ -705,7 +705,7 @@ export default function BJJPage() {
             ) : (
               <AnimatedCard delay={0.1}>
                 <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="w-5 h-5 text-purple-400" />
+                  <Sparkles className="w-5 h-5 text-[var(--belt)]" />
                   <h3 className="font-display uppercase text-lg text-white">Quick Start</h3>
                 </div>
                 <p className="text-sm text-zinc-500 mb-4">
@@ -754,12 +754,12 @@ export default function BJJPage() {
             {/* Date/Time */}
             <AnimatedCard delay={0.05}>
               <div className="flex items-center gap-2 mb-3">
-                <Calendar className="w-5 h-5 text-purple-400" />
+                <Calendar className="w-5 h-5 text-[var(--belt)]" />
                 <h3 className="font-display uppercase text-lg text-white">When did you train?</h3>
               </div>
               <input
                 type="datetime-local"
-                className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-purple-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white focus:border-[var(--belt)] focus:outline-none transition-colors"
                 value={performedAt}
                 onChange={(e) => setPerformedAt(e.target.value)}
               />
@@ -768,7 +768,7 @@ export default function BJJPage() {
             {/* Session Type */}
             <AnimatedCard delay={0.1}>
               <div className="flex items-center gap-2 mb-4">
-                <Target className="w-5 h-5 text-purple-400" />
+                <Target className="w-5 h-5 text-[var(--belt)]" />
                 <h3 className="font-display uppercase text-lg text-white">Training Type</h3>
               </div>
               <div className="grid grid-cols-3 gap-2">
@@ -795,12 +795,12 @@ export default function BJJPage() {
             <AnimatedCard delay={0.15}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-purple-400" />
+                  <Clock className="w-5 h-5 text-[var(--belt)]" />
                   <h3 className="font-display uppercase text-lg text-white">Duration</h3>
                 </div>
                 {!timerRunning && sessionTimer === 0 && (
                   <button
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 text-purple-400 rounded-lg text-xs font-medium hover:bg-purple-500/30 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--belt-20)] text-[var(--belt)] rounded-lg text-xs font-medium hover:bg-[var(--belt-30)] transition-colors"
                     onClick={() => setTimerRunning(true)}
                   >
                     <Timer className="w-3.5 h-3.5" />
@@ -856,7 +856,7 @@ export default function BJJPage() {
             {/* Intensity */}
             <AnimatedCard delay={0.2}>
               <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="w-5 h-5 text-purple-400" />
+                <TrendingUp className="w-5 h-5 text-[var(--belt)]" />
                 <h3 className="font-display uppercase text-lg text-white">Intensity</h3>
               </div>
               <div className="space-y-2">
@@ -951,7 +951,7 @@ export default function BJJPage() {
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addPartner(partnerInput) } }}
                 onBlur={() => partnerInput && addPartner(partnerInput)}
                 placeholder="Add a partner and press enter..."
-                className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white placeholder-zinc-500 focus:border-[var(--belt)] focus:outline-none transition-colors"
               />
               <datalist id="rj-partners">
                 {knownPartners.map((n) => <option key={n} value={n} />)}
@@ -962,18 +962,18 @@ export default function BJJPage() {
             <AnimatedCard delay={0.25}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-purple-400" />
+                  <FileText className="w-5 h-5 text-[var(--belt)]" />
                   <h3 className="font-display uppercase text-lg text-white">Notes</h3>
                 </div>
                 <button
-                  className="text-xs text-purple-400 hover:text-purple-300"
+                  className="text-xs text-[var(--belt)] hover:text-[var(--belt)]"
                   onClick={() => setShowNotesSheet(true)}
                 >
                   Templates
                 </button>
               </div>
               <textarea
-                className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none transition-colors resize-none"
+                className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white placeholder-zinc-500 focus:border-[var(--belt)] focus:outline-none transition-colors resize-none"
                 placeholder="Techniques practiced, key insights..."
                 rows={3}
                 value={notes}
@@ -987,7 +987,7 @@ export default function BJJPage() {
         {mode === 'quick' && kind && (
           <AnimatedCard delay={0.2} className={`bg-gradient-to-br ${selectedSessionType?.gradient} border-l-4 ${selectedSessionType?.borderColor}`}>
             <div className="flex items-center gap-2 mb-3">
-              <Check className="w-5 h-5 text-purple-400" />
+              <Check className="w-5 h-5 text-[var(--belt)]" />
               <h3 className="font-display uppercase text-lg text-white">Session Ready</h3>
             </div>
             <div className="grid grid-cols-3 gap-4 text-center">
@@ -998,7 +998,7 @@ export default function BJJPage() {
                 <p className="text-xs text-zinc-500">{kind}</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-purple-400">{duration}</p>
+                <p className="text-2xl font-bold text-[var(--belt)]">{duration}</p>
                 <p className="text-xs text-zinc-500">Minutes</p>
               </div>
               <div>
@@ -1016,7 +1016,7 @@ export default function BJJPage() {
               </div>
             )}
             <button
-              className="mt-3 text-xs text-purple-400 hover:text-purple-300"
+              className="mt-3 text-xs text-[var(--belt)] hover:text-[var(--belt)]"
               onClick={() => setMode('manual')}
             >
               Edit Details

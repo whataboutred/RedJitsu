@@ -48,6 +48,24 @@ export function beltStyle(belt?: string | null): BeltStyle {
   return BELTS[(belt as Belt)] ?? BELTS.purple
 }
 
+// CSS custom properties for belt theming. Set on a page wrapper; child elements
+// use `text-[var(--belt)]`, `bg-[var(--belt-15)]`, `border-[var(--belt-40)]`, etc.
+export function beltVars(belt?: string | null): Record<string, string> {
+  const hex = beltStyle(belt).hex
+  const h = hex.replace('#', '')
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  const a = (alpha: number) => `rgba(${r},${g},${b},${alpha})`
+  return {
+    '--belt': hex,
+    '--belt-15': a(0.15),
+    '--belt-20': a(0.2),
+    '--belt-30': a(0.3),
+    '--belt-40': a(0.4),
+  }
+}
+
 export function beltLabel(belt: string, stripes: number): string {
   const s = Math.max(0, Math.min(4, stripes || 0))
   const label = BELTS[(belt as Belt)]?.label ?? BELTS.purple.label
