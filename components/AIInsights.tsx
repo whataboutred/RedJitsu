@@ -182,7 +182,7 @@ export default function AIInsights() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className="backdrop-blur-sm rounded-2xl border border-white/[0.07] bg-gradient-to-br from-violet-500/10 via-surface/80 to-surface/80 overflow-hidden"
+      className="backdrop-blur-sm rounded-2xl border border-white/[0.07] bg-surface overflow-hidden"
     >
       {/* Header */}
       <button

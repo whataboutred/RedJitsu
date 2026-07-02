@@ -291,7 +291,7 @@ export default function ConnectionsPage() {
                         whileTap={{ scale: 0.96 }}
                         onClick={() => toggleActivity(name)}
                         aria-pressed={off}
-                        className={`px-3 py-2 rounded-full text-sm font-medium border transition-all ${
+                        className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all ${
                           off
                             ? 'bg-brand-red/15 text-red-300 border-red-500/40 line-through'
                             : 'bg-surface border-white/[0.07] text-zinc-400 hover:text-white'

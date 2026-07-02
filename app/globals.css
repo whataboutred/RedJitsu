@@ -146,7 +146,7 @@ h1, h2, h3, h4, h5, h6 {
 .btn {
   @apply inline-flex items-center justify-center gap-2;
   @apply rounded-xl px-5 py-3 font-semibold text-white;
-  @apply bg-gradient-to-r from-red-600 to-brand-red hover:from-red-500 hover:to-red-600 active:from-red-700 active:to-red-800;
+  @apply bg-brand-red hover:bg-red-600 active:bg-red-700;
   @apply transition-all duration-200 ease-out;
   @apply active:scale-[0.98];
   @apply shadow-lg shadow-red-500/25;
@@ -237,7 +237,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Toggle/Chip buttons */
 .toggle {
   @apply inline-flex items-center justify-center gap-2;
-  @apply px-4 py-2 rounded-full;
+  @apply px-4 py-2 rounded-xl;
   @apply bg-surface-elevated/50 text-zinc-400 border border-white/[0.07];
   @apply transition-all duration-200;
   @apply hover:bg-surface-pressed/50 hover:text-zinc-300;

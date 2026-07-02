@@ -7,7 +7,7 @@ export const ProgressRing = memo(function ProgressRing({
   progress,
   size = 48,
   strokeWidth = 4,
-  color = '#ef4444',
+  color = '#DC2626',
   showLabel = false,
 }: {
   progress: number

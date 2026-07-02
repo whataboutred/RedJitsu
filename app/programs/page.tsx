@@ -723,10 +723,8 @@ export default function ProgramsPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.05 * idx }}
-                      className={`relative rounded-2xl p-5 border transition-all duration-300 group hover:shadow-lg ${
-                        p.is_active
-                          ? 'bg-brand-red/[0.07] border-brand-red/30 hover:border-brand-red/50'
-                          : 'bg-surface border-white/10 hover:border-white/20'
+                      className={`relative rounded-2xl p-5 bg-surface border border-white/[0.07] hover:border-white/10 border-l-2 transition-all duration-300 group hover:shadow-lg ${
+                        p.is_active ? 'border-l-brand-red bg-brand-red/[0.04]' : 'border-l-transparent'
                       }`}
                     >
                       <div className="flex items-start justify-between mb-4">
@@ -862,7 +860,7 @@ export default function ProgramsPage() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-red/20 to-red-700/20 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-brand-red/15 flex items-center justify-center">
                 <Zap className="w-5 h-5 text-brand-red" />
               </div>
               <div>
@@ -885,8 +883,8 @@ export default function ProgramsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <AnimatedCard className="text-center py-10 bg-gradient-to-br from-zinc-800/50 to-zinc-900/50">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-red/20 to-red-700/20 flex items-center justify-center mx-auto mb-4">
+            <AnimatedCard className="text-center py-10">
+              <div className="w-14 h-14 rounded-2xl bg-brand-red/15 flex items-center justify-center mx-auto mb-4">
                 <Target className="w-7 h-7 text-brand-red" />
               </div>
               <h3 className="font-display uppercase text-lg text-white mb-2">Need Something Different?</h3>
@@ -923,11 +921,7 @@ export default function ProgramsPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-              selected
-                ? 'bg-gradient-to-br from-brand-red/20 to-red-700/20'
-                : 'bg-gradient-to-br from-brand-red/20 to-red-700/20'
-            }`}>
+            <div className="w-10 h-10 rounded-xl bg-brand-red/15 flex items-center justify-center">
               {selected ? (
                 <Edit3 className="w-5 h-5 text-brand-red" />
               ) : (

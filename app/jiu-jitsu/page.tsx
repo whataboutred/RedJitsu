@@ -420,32 +420,26 @@ export default function BJJPage() {
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-display uppercase bg-gradient-to-r from-purple-300 to-purple-500 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-display uppercase text-purple-400">
                 Jiu Jitsu Training
               </h1>
               <p className="text-sm text-zinc-500 mt-0.5">Log your mat time</p>
             </div>
-            <div className="flex gap-2">
-              <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  mode === 'quick'
-                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                    : 'text-zinc-500 hover:text-white'
-                }`}
-                onClick={() => setMode('quick')}
-              >
-                Quick
-              </button>
-              <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  mode === 'manual'
-                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                    : 'text-zinc-500 hover:text-white'
-                }`}
-                onClick={() => setMode('manual')}
-              >
-                Manual
-              </button>
+            <div className="flex gap-5">
+              {(['quick', 'manual'] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  className={`relative pb-1.5 text-sm font-semibold tracking-wide capitalize transition-colors ${
+                    mode === m ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  {m}
+                  {mode === m && (
+                    <span className="absolute left-0 right-0 -bottom-px h-0.5 rounded-full bg-purple-500" />
+                  )}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -685,7 +679,7 @@ export default function BJJPage() {
                 </div>
                 {!timerRunning && sessionTimer === 0 && (
                   <button
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium hover:bg-purple-500/30 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 text-purple-400 rounded-lg text-xs font-medium hover:bg-purple-500/30 transition-colors"
                     onClick={() => setTimerRunning(true)}
                   >
                     <Timer className="w-3.5 h-3.5" />
@@ -857,7 +851,7 @@ export default function BJJPage() {
                 size="lg"
                 loading={isLoading}
                 onClick={saveSession}
-                className="bg-gradient-to-r from-red-500 to-purple-600 hover:from-red-600 hover:to-purple-700 shadow-lg shadow-purple-500/30"
+                className="bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/30"
               >
                 Save {kind} ({duration} min{demo ? ' • Offline' : ''})
               </Button>

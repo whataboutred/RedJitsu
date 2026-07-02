@@ -281,7 +281,7 @@ export const ToggleGroup = ({ options, value, onChange, variant = 'default' }: T
           type="button"
           onClick={() => onChange(opt.value)}
           className={`
-            inline-flex items-center gap-2 px-4 py-2 rounded-full
+            inline-flex items-center gap-2 px-4 py-2 rounded-lg
             border transition-all duration-200 text-sm font-medium
             ${
               value === opt.value
