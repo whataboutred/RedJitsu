@@ -43,6 +43,33 @@ self.addEventListener('activate', (event) => {
   })());
 });
 
+// Push notifications (reminders)
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try { payload = event.data ? event.data.json() : {}; } catch (e) { payload = {}; }
+  const title = payload.title || 'Red Jitsu';
+  const options = {
+    body: payload.body || '',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    tag: payload.tag || 'rj-reminder',
+    data: { url: payload.url || '/dashboard' },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || '/dashboard';
+  event.waitUntil((async () => {
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of clients) {
+      if ('focus' in client) { client.navigate(target); return client.focus(); }
+    }
+    if (self.clients.openWindow) return self.clients.openWindow(target);
+  })());
+});
+
 // Network-first for HTML, don't hijack Next.js chunks, cache-first for other files
 self.addEventListener('fetch', (event) => {
   const req = event.request;

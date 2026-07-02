@@ -3,6 +3,10 @@
     {
       "path": "/api/fitbit/cron",
       "schedule": "0 17 * * *"
+    },
+    {
+      "path": "/api/push/cron",
+      "schedule": "0 23 * * *"
     }
   ]
 }

@@ -11,6 +11,7 @@ import { useToast } from '@/components/Toast'
 import { ensureProfile, upsertProfile } from '@/lib/api'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import BackgroundLogo from '@/components/BackgroundLogo'
+import { ReminderToggle } from '@/components/ReminderToggle'
 
 function GoalSlider({
   icon,
@@ -172,6 +173,9 @@ export default function GoalsPage() {
             />
             <p className="mt-1.5 text-xs text-zinc-600 text-right">{coachContext.length}/1000</p>
           </AnimatedCard>
+
+          {/* Reminders (web push) */}
+          <ReminderToggle />
         </div>
       )}
 
