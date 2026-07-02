@@ -32,6 +32,8 @@ import { useDataRefresh } from '@/hooks/useDataRefresh'
 import { toDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useRouter } from 'next/navigation'
 import BackgroundLogo from '@/components/BackgroundLogo'
+import { beltStyle, beltLabel, BELT_ORDER, BELTS } from '@/lib/belt'
+import { BeltBar } from '@/components/BeltBar'
 
 type Kind = 'Class' | 'Drilling' | 'Open Mat'
 type Intensity = 'low' | 'medium' | 'high'
@@ -194,6 +196,11 @@ export default function BJJPage() {
   const [sessionTimer, setSessionTimer] = useState(0)
   const [timerRunning, setTimerRunning] = useState(false)
 
+  // Belt rank (drives the BJJ accent color)
+  const [belt, setBelt] = useState<string>('purple')
+  const [stripes, setStripes] = useState<number>(0)
+  const [showBeltEdit, setShowBeltEdit] = useState(false)
+
   // Modal state
   const [showNotesSheet, setShowNotesSheet] = useState(false)
 
@@ -257,9 +264,12 @@ export default function BJJPage() {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('bjj_weekly_goal')
+        .select('bjj_weekly_goal, bjj_belt, bjj_stripes')
         .eq('id', userId)
         .single()
+
+      if (profile?.bjj_belt) setBelt(profile.bjj_belt)
+      if (typeof profile?.bjj_stripes === 'number') setStripes(profile.bjj_stripes)
 
       if (sessions && sessions.length > 0) {
         const typeGroups = sessions.reduce((acc, session) => {
@@ -399,6 +409,24 @@ export default function BJJPage() {
   const canSave = duration > 0 && kind
   const goalProgress = (weekStats.sessions / weekStats.weeklyGoal) * 100
   const selectedSessionType = SESSION_TYPES.find(s => s.value === kind)
+  const bs = beltStyle(belt) // belt-driven accent
+
+  async function saveBelt(newBelt: string, newStripes: number) {
+    if (demo) { toast.warning('Sign in to set your belt'); return }
+    const userId = await getActiveUserId()
+    if (!userId) return
+    const promoted = newBelt !== belt || newStripes !== stripes
+    setBelt(newBelt); setStripes(newStripes); setShowBeltEdit(false)
+    try {
+      await supabase.from('profiles').update({ bjj_belt: newBelt, bjj_stripes: newStripes }).eq('id', userId)
+      if (promoted) {
+        await supabase.from('bjj_promotions').insert({ user_id: userId, belt: newBelt, stripes: newStripes })
+        toast.success(`Set to ${beltLabel(newBelt, newStripes)}`)
+      }
+    } catch {
+      toast.error('Failed to save belt')
+    }
+  }
 
   if (loading) {
     return (
@@ -420,7 +448,7 @@ export default function BJJPage() {
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-display uppercase text-purple-400">
+              <h1 className="text-4xl font-display uppercase" style={{ color: bs.hex }}>
                 Jiu Jitsu Training
               </h1>
               <p className="text-sm text-zinc-500 mt-0.5">Log your mat time</p>
@@ -436,7 +464,7 @@ export default function BJJPage() {
                 >
                   {m}
                   {mode === m && (
-                    <span className="absolute left-0 right-0 -bottom-px h-0.5 rounded-full bg-purple-500" />
+                    <span className="absolute left-0 right-0 -bottom-px h-0.5 rounded-full" style={{ backgroundColor: bs.hex }} />
                   )}
                 </button>
               ))}
@@ -446,18 +474,38 @@ export default function BJJPage() {
       </div>
 
       <div className="p-4 space-y-4">
+        {/* Belt rank — drives the BJJ accent color */}
+        <AnimatedCard delay={0}>
+          <div className="flex items-center gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs uppercase tracking-wide text-zinc-500">Your rank</span>
+                <span className="font-display uppercase text-sm" style={{ color: bs.hex }}>{beltLabel(belt, stripes)}</span>
+              </div>
+              <BeltBar belt={belt} stripes={stripes} />
+            </div>
+            <button
+              onClick={() => setShowBeltEdit(true)}
+              className="text-sm font-medium flex-shrink-0"
+              style={{ color: bs.hex }}
+            >
+              Change
+            </button>
+          </div>
+        </AnimatedCard>
+
         {/* Week Progress Card */}
-        <AnimatedCard delay={0} className="overflow-hidden">
+        <AnimatedCard delay={0.05} className="overflow-hidden">
           <div className="flex items-center gap-4">
             <div className="relative">
               <ProgressRing
                 progress={goalProgress}
                 size={72}
                 strokeWidth={6}
-                color={goalProgress >= 100 ? '#10b981' : '#a855f7'}
+                color={goalProgress >= 100 ? '#10b981' : bs.hex}
               />
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className={`text-lg font-bold ${goalProgress >= 100 ? 'text-emerald-400' : 'text-purple-400'}`}>
+                <span className="text-lg font-bold" style={{ color: goalProgress >= 100 ? '#34D399' : bs.hex }}>
                   {weekStats.sessions}
                 </span>
               </div>
@@ -851,7 +899,8 @@ export default function BJJPage() {
                 size="lg"
                 loading={isLoading}
                 onClick={saveSession}
-                className="bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/30"
+                className="shadow-lg shadow-purple-500/30"
+                style={{ backgroundColor: bs.hex }}
               >
                 Save {kind} ({duration} min{demo ? ' • Offline' : ''})
               </Button>
@@ -886,6 +935,47 @@ export default function BJJPage() {
               <p className="text-white">{template}</p>
             </button>
           ))}
+        </div>
+      </BottomSheet>
+
+      {/* Belt / rank editor */}
+      <BottomSheet isOpen={showBeltEdit} onClose={() => setShowBeltEdit(false)} title="Your belt">
+        <div className="space-y-5 py-2 pb-4">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-zinc-500 mb-2">Belt</p>
+            <div className="space-y-2">
+              {BELT_ORDER.map((b) => {
+                const st = BELTS[b]
+                const active = belt === b
+                return (
+                  <button
+                    key={b}
+                    onClick={() => saveBelt(b, stripes)}
+                    className={`w-full flex items-center gap-3 p-2.5 rounded-xl border transition-all ${active ? 'border-white/20 bg-white/[0.04]' : 'border-white/[0.06] hover:border-white/15'}`}
+                  >
+                    <BeltBar belt={b} stripes={active ? stripes : 0} className="w-24" />
+                    <span className="text-sm font-medium" style={{ color: st.hex }}>{st.label}</span>
+                    {active && <Check className="w-4 h-4 text-white ml-auto" />}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-zinc-500 mb-2">Stripes</p>
+            <div className="flex gap-2">
+              {[0, 1, 2, 3, 4].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => saveBelt(belt, s)}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${stripes === s ? 'text-white' : 'bg-surface border border-white/[0.07] text-zinc-500 hover:text-white'}`}
+                  style={stripes === s ? { backgroundColor: bs.hex } : undefined}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </BottomSheet>
     </div>

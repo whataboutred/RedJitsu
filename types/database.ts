@@ -65,6 +65,36 @@ export type Database = {
         }
         Relationships: []
       }
+      bjj_promotions: {
+        Row: {
+          belt: string
+          created_at: string
+          id: string
+          notes: string | null
+          promoted_at: string
+          stripes: number
+          user_id: string
+        }
+        Insert: {
+          belt: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          promoted_at?: string
+          stripes?: number
+          user_id: string
+        }
+        Update: {
+          belt?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          promoted_at?: string
+          stripes?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       bjj_sessions: {
         Row: {
           created_at: string
@@ -73,7 +103,12 @@ export type Database = {
           intensity: string | null
           kind: string
           notes: string | null
+          partners: string[] | null
           performed_at: string
+          rounds: number | null
+          subs_against: number | null
+          subs_for: number | null
+          techniques: string[] | null
           user_id: string
         }
         Insert: {
@@ -83,7 +118,12 @@ export type Database = {
           intensity?: string | null
           kind: string
           notes?: string | null
+          partners?: string[] | null
           performed_at?: string
+          rounds?: number | null
+          subs_against?: number | null
+          subs_for?: number | null
+          techniques?: string[] | null
           user_id: string
         }
         Update: {
@@ -93,7 +133,12 @@ export type Database = {
           intensity?: string | null
           kind?: string
           notes?: string | null
+          partners?: string[] | null
           performed_at?: string
+          rounds?: number | null
+          subs_against?: number | null
+          subs_for?: number | null
+          techniques?: string[] | null
           user_id?: string
         }
         Relationships: []
@@ -180,12 +225,14 @@ export type Database = {
         Row: {
           access_token_enc: string | null
           allowed_activities: string[]
+          connected_at: string | null
           created_at: string
           excluded_activities: string[]
           expires_at: string | null
           fitbit_user_id: string | null
           last_error: string | null
           last_sync_at: string | null
+          needs_reconnect: boolean
           refresh_token_enc: string | null
           scopes: string | null
           updated_at: string
@@ -194,12 +241,14 @@ export type Database = {
         Insert: {
           access_token_enc?: string | null
           allowed_activities?: string[]
+          connected_at?: string | null
           created_at?: string
           excluded_activities?: string[]
           expires_at?: string | null
           fitbit_user_id?: string | null
           last_error?: string | null
           last_sync_at?: string | null
+          needs_reconnect?: boolean
           refresh_token_enc?: string | null
           scopes?: string | null
           updated_at?: string
@@ -208,12 +257,14 @@ export type Database = {
         Update: {
           access_token_enc?: string | null
           allowed_activities?: string[]
+          connected_at?: string | null
           created_at?: string
           excluded_activities?: string[]
           expires_at?: string | null
           fitbit_user_id?: string | null
           last_error?: string | null
           last_sync_at?: string | null
+          needs_reconnect?: boolean
           refresh_token_enc?: string | null
           scopes?: string | null
           updated_at?: string
@@ -264,6 +315,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          bjj_belt: string
+          bjj_stripes: number
           bjj_weekly_goal: number
           cardio_weekly_goal: number | null
           coach_context: string | null
@@ -274,6 +327,8 @@ export type Database = {
           weekly_goal: number
         }
         Insert: {
+          bjj_belt?: string
+          bjj_stripes?: number
           bjj_weekly_goal?: number
           cardio_weekly_goal?: number | null
           coach_context?: string | null
@@ -284,6 +339,8 @@ export type Database = {
           weekly_goal?: number
         }
         Update: {
+          bjj_belt?: string
+          bjj_stripes?: number
           bjj_weekly_goal?: number
           cardio_weekly_goal?: number | null
           coach_context?: string | null
