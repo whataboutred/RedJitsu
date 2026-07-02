@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/Button'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { Sparkline } from '@/components/ui/Sparkline'
 import ExerciseProgressSheet from '@/components/ExerciseProgressSheet'
+import { beltStyle } from '@/lib/belt'
 import { SwipeableRow } from '@/components/ui/SwipeableRow'
 import { ConfirmDialog } from '@/components/ui/BottomSheet'
 import { useToast } from '@/components/Toast'
@@ -151,6 +152,7 @@ function HistoryClient() {
   const [progressionData, setProgressionData] = useState<ProgressionData[]>([])
   const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress[]>([])
   const [detailExerciseId, setDetailExerciseId] = useState<string | null>(null)
+  const [belt, setBelt] = useState<string>('purple')
   const [streakData, setStreakData] = useState<StreakData | null>(null)
   const [activeProgramExercises, setActiveProgramExercises] = useState<Set<string>>(new Set())
   const [hasActiveProgram, setHasActiveProgram] = useState(false)
@@ -349,6 +351,10 @@ function HistoryClient() {
       bjj: bjjHead.count ?? 0,
       cardio: cardioHead.count ?? 0,
     })
+
+    // Belt drives the BJJ accent throughout history
+    const { data: prof } = await supabase.from('profiles').select('bjj_belt').eq('id', userId).maybeSingle()
+    if (prof?.bjj_belt) setBelt(prof.bjj_belt)
 
     const { data: w } = await supabase
       .from('workouts')
@@ -939,7 +945,11 @@ function HistoryClient() {
   const getActivityColor = (type: string) => {
     switch (type) {
       case 'strength': return { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30', leftBorder: 'border-l-brand-red/70' }
-      case 'bjj': return { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30', leftBorder: 'border-l-purple-500/70' }
+      case 'bjj': {
+        // Belt-driven accent
+        const b = beltStyle(belt)
+        return { bg: b.bg, text: b.text, border: b.border, leftBorder: b.leftBorder }
+      }
       case 'cardio': return { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30', leftBorder: 'border-l-emerald-500/70' }
       default: return { bg: 'bg-zinc-500/20', text: 'text-zinc-500', border: 'border-zinc-500/30', leftBorder: 'border-l-zinc-500/70' }
     }

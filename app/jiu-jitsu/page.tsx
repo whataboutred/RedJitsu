@@ -36,6 +36,8 @@ import { useRouter } from 'next/navigation'
 import BackgroundLogo from '@/components/BackgroundLogo'
 import { beltStyle, beltLabel, BELT_ORDER, BELTS } from '@/lib/belt'
 import { BeltBar } from '@/components/BeltBar'
+import { Counter } from '@/components/ui/Counter'
+import { TECHNIQUE_TAGS } from '@/lib/bjjConstants'
 
 type Kind = 'Class' | 'Drilling' | 'Open Mat'
 type Intensity = 'low' | 'medium' | 'high'
@@ -127,25 +129,6 @@ const INTENSITY_OPTIONS = [
 ]
 
 const DURATION_PRESETS = [30, 45, 60, 75, 90, 120]
-
-function Counter({ label, value, onChange, accent = 'text-white' }: { label: string; value: number; onChange: (n: number) => void; accent?: string }) {
-  return (
-    <div className="rounded-xl bg-surface border border-white/[0.07] p-2.5 text-center">
-      <p className="text-[10px] uppercase tracking-wide text-zinc-500 mb-1.5">{label}</p>
-      <div className="flex items-center justify-between gap-1">
-        <button onClick={() => onChange(Math.max(0, value - 1))} className="w-7 h-7 rounded-lg bg-surface-elevated text-white hover:bg-surface-pressed">−</button>
-        <span className={`font-display text-xl leading-none ${accent}`}>{value}</span>
-        <button onClick={() => onChange(value + 1)} className="w-7 h-7 rounded-lg bg-surface-elevated text-white hover:bg-surface-pressed">+</button>
-      </div>
-    </div>
-  )
-}
-
-const TECHNIQUE_TAGS = [
-  'Guard Passing', 'Guard Retention', 'Sweeps', 'Takedowns', 'Back Takes',
-  'Submissions', 'Escapes', 'Pressure Passing', 'Leg Locks', 'Wrestling',
-  'Half Guard', 'Mount', 'Side Control', 'Open Guard', 'Closed Guard',
-]
 
 const NOTE_TEMPLATES = [
   'Worked on guard passes and escapes',

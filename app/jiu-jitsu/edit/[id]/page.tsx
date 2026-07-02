@@ -2,18 +2,22 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Calendar, Clock, Target, Flame, Zap, TrendingUp, FileText, Check, X } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, Target, Flame, Zap, TrendingUp, FileText, Check, X, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import BackgroundLogo from '@/components/BackgroundLogo'
 import { AnimatedCard } from '@/components/ui/Card'
 import { Button, IconButton } from '@/components/ui/Button'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
+import { Counter } from '@/components/ui/Counter'
 import { getBjjSession, updateBjjSession } from '@/lib/api'
 import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
+import { supabase } from '@/lib/supabaseClient'
 import { isoToDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useToast } from '@/components/Toast'
 import { isUuid } from '@/lib/validation'
+import { beltStyle } from '@/lib/belt'
+import { TECHNIQUE_TAGS } from '@/lib/bjjConstants'
 
 type Kind = 'Class' | 'Drilling' | 'Open Mat'
 type Intensity = 'low' | 'medium' | 'high'
@@ -48,6 +52,16 @@ export default function EditJiuJitsuPage() {
   const [intensity, setIntensity] = useState<Intensity>('medium')
   const [notes, setNotes] = useState<string>('')
 
+  const [rounds, setRounds] = useState<number>(0)
+  const [subsFor, setSubsFor] = useState<number>(0)
+  const [subsAgainst, setSubsAgainst] = useState<number>(0)
+  const [techniques, setTechniques] = useState<string[]>([])
+  const [partners, setPartners] = useState<string[]>([])
+  const [partnerInput, setPartnerInput] = useState('')
+  const [knownPartners, setKnownPartners] = useState<string[]>([])
+  const [belt, setBelt] = useState<string>('purple')
+  const bs = beltStyle(belt)
+
   useEffect(() => {
     ;(async () => {
       const isDemo = await isDemoVisitor()
@@ -69,7 +83,21 @@ export default function EditJiuJitsuPage() {
         setDuration(session.duration_min)
         setIntensity((session.intensity as Intensity) || 'medium')
         setNotes(session.notes || '')
+        setRounds(session.rounds ?? 0)
+        setSubsFor(session.subs_for ?? 0)
+        setSubsAgainst(session.subs_against ?? 0)
+        setTechniques(session.techniques ?? [])
+        setPartners(session.partners ?? [])
       }
+
+      // Belt (theming) + known partners (autocomplete)
+      const { data: prof } = await supabase.from('profiles').select('bjj_belt').eq('id', userId).maybeSingle()
+      if (prof?.bjj_belt) setBelt(prof.bjj_belt)
+      const { data: partnerRows } = await supabase.from('bjj_sessions').select('partners').eq('user_id', userId).not('partners', 'is', null).limit(200)
+      const names = new Set<string>()
+      for (const r of partnerRows ?? []) for (const n of (r.partners ?? [])) names.add(n)
+      setKnownPartners([...names].sort())
+
       setLoading(false)
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,6 +117,11 @@ export default function EditJiuJitsuPage() {
         duration_min: minutes,
         intensity,
         notes: notes || null,
+        rounds: rounds > 0 ? rounds : null,
+        subs_for: rounds > 0 ? subsFor : null,
+        subs_against: rounds > 0 ? subsAgainst : null,
+        techniques: techniques.length ? techniques : null,
+        partners: partners.length ? partners : null,
       })
       toast.success('Session updated')
       router.push(`/history?highlight=${sessionId}&type=bjj`)
@@ -98,6 +131,15 @@ export default function EditJiuJitsuPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  function toggleTechnique(t: string) {
+    setTechniques((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]))
+  }
+  function addPartner(name: string) {
+    const n = name.trim()
+    if (n && !partners.includes(n)) setPartners((prev) => [...prev, n])
+    setPartnerInput('')
   }
 
   if (loading) {
@@ -145,7 +187,7 @@ export default function EditJiuJitsuPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-4xl font-display uppercase text-purple-400">
+            <h1 className="text-4xl font-display uppercase" style={{ color: bs.hex }}>
               Edit Session
             </h1>
             <p className="text-sm text-zinc-500 mt-0.5">Update your mat time</p>
@@ -271,10 +313,79 @@ export default function EditJiuJitsuPage() {
           </div>
         </AnimatedCard>
 
-        {/* Notes */}
+        {/* Rolls */}
+        <AnimatedCard delay={0.18}>
+          <div className="flex items-center gap-2 mb-4">
+            <Zap className="w-5 h-5" style={{ color: bs.hex }} />
+            <h3 className="font-display uppercase text-lg text-white">Rolls</h3>
+            <span className="text-xs text-zinc-500 ml-auto">Optional</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2.5">
+            <Counter label="Rounds" value={rounds} onChange={setRounds} />
+            <Counter label="Subs for" value={subsFor} onChange={setSubsFor} accent="text-emerald-400" />
+            <Counter label="Subs against" value={subsAgainst} onChange={setSubsAgainst} accent="text-red-400" />
+          </div>
+        </AnimatedCard>
+
+        {/* Techniques */}
         <AnimatedCard delay={0.2}>
           <div className="flex items-center gap-2 mb-3">
-            <FileText className="w-5 h-5 text-purple-400" />
+            <Target className="w-5 h-5" style={{ color: bs.hex }} />
+            <h3 className="font-display uppercase text-lg text-white">Techniques</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {TECHNIQUE_TAGS.map((t) => {
+              const on = techniques.includes(t)
+              return (
+                <button
+                  key={t}
+                  onClick={() => toggleTechnique(t)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${on ? 'text-white border-transparent' : 'bg-surface border-white/[0.07] text-zinc-400 hover:text-white'}`}
+                  style={on ? { backgroundColor: bs.hex } : undefined}
+                >
+                  {t}
+                </button>
+              )
+            })}
+          </div>
+        </AnimatedCard>
+
+        {/* Training partners */}
+        <AnimatedCard delay={0.22}>
+          <div className="flex items-center gap-2 mb-3">
+            <Users className="w-5 h-5" style={{ color: bs.hex }} />
+            <h3 className="font-display uppercase text-lg text-white">Training Partners</h3>
+          </div>
+          {partners.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {partners.map((p) => (
+                <span key={p} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface border border-white/[0.07] text-sm text-white">
+                  {p}
+                  <button onClick={() => setPartners((prev) => prev.filter((x) => x !== p))} aria-label={`Remove ${p}`}>
+                    <X className="w-3 h-3 text-zinc-500 hover:text-white" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <input
+            list="rj-partners-edit"
+            value={partnerInput}
+            onChange={(e) => setPartnerInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addPartner(partnerInput) } }}
+            onBlur={() => partnerInput && addPartner(partnerInput)}
+            placeholder="Add a partner and press enter..."
+            className="w-full px-4 py-3 bg-surface border border-white/[0.07] rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none transition-colors"
+          />
+          <datalist id="rj-partners-edit">
+            {knownPartners.map((n) => <option key={n} value={n} />)}
+          </datalist>
+        </AnimatedCard>
+
+        {/* Notes */}
+        <AnimatedCard delay={0.24}>
+          <div className="flex items-center gap-2 mb-3">
+            <FileText className="w-5 h-5" style={{ color: bs.hex }} />
             <h3 className="font-display uppercase text-lg text-white">Notes</h3>
           </div>
           <textarea
@@ -300,7 +411,8 @@ export default function EditJiuJitsuPage() {
             size="lg"
             loading={saving}
             onClick={handleSave}
-            className="bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/30"
+            className="shadow-lg shadow-purple-500/30"
+            style={{ backgroundColor: bs.hex }}
           >
             Update {kind} ({duration} min)
           </Button>
