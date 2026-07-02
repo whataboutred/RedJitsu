@@ -29,6 +29,7 @@ import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { Sparkline } from '@/components/ui/Sparkline'
 import ExerciseProgressSheet from '@/components/ExerciseProgressSheet'
 import { beltStyle } from '@/lib/belt'
+import { TrainingLoadCard } from '@/components/TrainingLoadCard'
 import { SwipeableRow } from '@/components/ui/SwipeableRow'
 import { ConfirmDialog } from '@/components/ui/BottomSheet'
 import { useToast } from '@/components/Toast'
@@ -1000,6 +1001,14 @@ function HistoryClient() {
           <>
             {/* AI Coach Insights */}
             {!loading && <AIInsights />}
+
+            {/* Training Load — the cross-training readiness view */}
+            {!loading && (workouts.length > 0 || bjj.length > 0 || cardio.length > 0) && (
+              <TrainingLoadCard
+                inputs={{ workouts, bjj, cardio }}
+                bjjHex={beltStyle(belt).hex}
+              />
+            )}
 
             {/* Empty state when no data */}
             {!loading && workouts.length === 0 && bjj.length === 0 && cardio.length === 0 && (
