@@ -667,7 +667,7 @@ function ExerciseSelectorSheet({
             key={cat.value}
             onClick={() => setCategory(cat.value)}
             className={`
-              px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
+              px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap
               transition-all active:scale-95
               ${category === cat.value
                 ? 'bg-brand-red text-white shadow-sm shadow-red-500/20'

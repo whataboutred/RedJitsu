@@ -145,7 +145,7 @@ export default function EditJiuJitsuPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-4xl font-display uppercase bg-gradient-to-r from-purple-300 to-purple-500 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-display uppercase text-purple-400">
               Edit Session
             </h1>
             <p className="text-sm text-zinc-500 mt-0.5">Update your mat time</p>
@@ -300,7 +300,7 @@ export default function EditJiuJitsuPage() {
             size="lg"
             loading={saving}
             onClick={handleSave}
-            className="bg-gradient-to-r from-red-500 to-purple-600 hover:from-red-600 hover:to-purple-700 shadow-lg shadow-purple-500/30"
+            className="bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/30"
           >
             Update {kind} ({duration} min)
           </Button>

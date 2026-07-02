@@ -168,12 +168,12 @@ export default function AccountPage() {
                 <Scale className="w-4 h-4 text-zinc-500" />
                 <span className="text-sm text-zinc-300">Weight unit</span>
               </div>
-              <div className="flex items-center gap-1 p-1 rounded-full bg-surface-elevated/60">
+              <div className="flex items-center gap-1 p-1 rounded-xl bg-surface border border-white/[0.07]">
                 {(['lb', 'kg'] as const).map((u) => (
                   <button
                     key={u}
                     onClick={() => setUnit(u)}
-                    className={`px-3.5 py-1 rounded-full text-sm font-semibold transition-all ${unit === u
+                    className={`px-3.5 py-1 rounded-lg text-sm font-semibold transition-all ${unit === u
                       ? 'bg-brand-red text-white'
                       : 'text-zinc-400 hover:text-white'
                       }`}

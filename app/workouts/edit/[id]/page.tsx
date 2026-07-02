@@ -591,7 +591,7 @@ function ExerciseSelectorSheet({
             key={cat.value}
             onClick={() => setCategory(cat.value)}
             className={`
-              px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
+              px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap
               transition-all active:scale-95
               ${category === cat.value
                 ? 'bg-brand-red text-white shadow-sm shadow-red-500/20'
@@ -1103,7 +1103,7 @@ export default function EditWorkoutPage() {
               <p className="text-sm text-zinc-500">
                 {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
                 {lastSaved && (
-                  <span className="text-green-500 ml-2">
+                  <span className="text-emerald-400 ml-2">
                     Draft saved {getTimeAgo(lastSaved)}
                   </span>
                 )}
@@ -1202,7 +1202,7 @@ export default function EditWorkoutPage() {
             <div className="w-20 h-20 rounded-2xl bg-brand-red/10 flex items-center justify-center mx-auto mb-5">
               <Dumbbell className="w-10 h-10 text-brand-red/50" />
             </div>
-            <h3 className="text-lg font-semibold text-zinc-300 mb-2">No exercises yet</h3>
+            <h3 className="text-2xl font-display uppercase text-white mb-2">No exercises yet</h3>
             <p className="text-zinc-500 mb-6 text-sm">Tap below to start building your workout</p>
             <button onClick={() => setShowExerciseSelector(true)} className="btn px-8">
               Add First Exercise

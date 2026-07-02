@@ -167,7 +167,7 @@ export default function EditCardioPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-4xl font-display uppercase bg-gradient-to-r from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-display uppercase text-emerald-400">
               Edit Cardio
             </h1>
             <p className="text-sm text-zinc-500 mt-0.5">Update your session</p>
@@ -343,7 +343,7 @@ export default function EditCardioPage() {
             loading={saving}
             disabled={!canSave}
             onClick={handleSave}
-            className="bg-gradient-to-r from-red-500 via-emerald-500 to-emerald-600 hover:from-red-600 hover:via-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/30"
+            className="bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/30"
           >
             Update Session
           </Button>

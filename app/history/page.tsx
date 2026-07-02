@@ -1095,31 +1095,39 @@ function HistoryClient() {
         {selectedView === 'history' && (
           /* Workout History View */
           <>
-            {/* Filter Pills */}
-            <div className="flex gap-2 flex-wrap">
-              {(['all', 'strength', 'bjj', 'cardio'] as const).map(filter => (
-                <button
-                  key={filter}
-                  onClick={() => setActivityFilter(filter)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${activityFilter === filter
-                    ? `${getActivityColor(filter === 'all' ? 'strength' : filter).bg} ${getActivityColor(filter === 'all' ? 'strength' : filter).text} ${getActivityColor(filter === 'all' ? 'strength' : filter).border}`
-                    : 'bg-surface border-transparent text-zinc-500 hover:text-white'
-                    }`}
-                >
-                  {filter === 'all' && 'All'}
-                  {filter === 'strength' && 'Strength'}
-                  {filter === 'bjj' && 'BJJ'}
-                  {filter === 'cardio' && 'Cardio'}
-                </button>
-              ))}
+            {/* Filters — segmented controls (match the surface-card vibe) */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Activity */}
+              <div className="inline-flex rounded-xl bg-surface border border-white/[0.07] p-1 gap-1">
+                {(['all', 'strength', 'bjj', 'cardio'] as const).map(filter => {
+                  const active = activityFilter === filter
+                  const c = getActivityColor(filter === 'all' ? 'strength' : filter)
+                  return (
+                    <button
+                      key={filter}
+                      onClick={() => setActivityFilter(filter)}
+                      className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${active
+                        ? `bg-white/[0.06] ${filter === 'all' ? 'text-white' : c.text}`
+                        : 'text-zinc-500 hover:text-white'
+                        }`}
+                    >
+                      {filter === 'all' && 'All'}
+                      {filter === 'strength' && 'Strength'}
+                      {filter === 'bjj' && 'BJJ'}
+                      {filter === 'cardio' && 'Cardio'}
+                    </button>
+                  )
+                })}
+              </div>
 
-              <div className="ml-auto flex gap-2 flex-wrap">
+              {/* Time range */}
+              <div className="ml-auto inline-flex rounded-xl bg-surface border border-white/[0.07] p-1 gap-1">
                 {(['week', 'month', 'all', 'custom'] as const).map(filter => (
                   <button
                     key={filter}
                     onClick={() => setWorkoutFilter(filter)}
-                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${workoutFilter === filter
-                      ? 'bg-surface-pressed text-white'
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${workoutFilter === filter
+                      ? 'bg-white/[0.06] text-white'
                       : 'text-zinc-500 hover:text-white'
                       }`}
                   >
@@ -1131,7 +1139,7 @@ function HistoryClient() {
                 ))}
               </div>
               {workoutFilter === 'custom' && (
-                <div className="flex items-center gap-2 mt-2">
+                <div className="basis-full flex items-center gap-2 mt-1">
                   <input
                     type="date"
                     value={customDateFrom}

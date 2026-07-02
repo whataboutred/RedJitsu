@@ -398,7 +398,7 @@ export default function CardioPage() {
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-display uppercase bg-gradient-to-r from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-display uppercase text-emerald-400">
                 Cardio Session
               </h1>
               <p className="text-sm text-zinc-500 mt-0.5">Track your cardio workout</p>
@@ -809,7 +809,7 @@ export default function CardioPage() {
             loading={saving}
             disabled={!canSave}
             onClick={handleSave}
-            className="bg-gradient-to-r from-red-500 via-emerald-500 to-emerald-600 hover:from-red-600 hover:via-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/30"
+            className="bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/30"
           >
             {canSave
               ? `Save ${session.activity}${session.duration_minutes ? ` (${session.duration_minutes} min)` : ''}`
