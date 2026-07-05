@@ -301,7 +301,7 @@ export default function Dashboard() {
           transition={{ delay: 0.1 }}
           className="relative py-4 px-4"
         >
-          <div className="border-l-2 border-l-red-500/30 pl-4">
+          <div className="border-l-2 border-l-red-500/30 pl-4 pr-9">
             <button
               onClick={handleRefreshQuote}
               disabled={isRefreshingQuote}
