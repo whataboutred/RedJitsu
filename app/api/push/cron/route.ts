@@ -55,22 +55,40 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ ok: true, sent })
 }
 
-// Day boundaries + day-of-week in America/Chicago, robust across DST. The cron
-// runs in the evening CT, so "today" means the user's local calendar day.
-function ctDay(now: Date) {
+// CT offset from UTC (ms) at a specific instant — DST-aware.
+function ctOffsetAt(at: Date): { y: number; m: number; d: number; offset: number } {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/Chicago', hour12: false,
     year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
-  }).formatToParts(now)
+  }).formatToParts(at)
   const p = Object.fromEntries(parts.map((x) => [x.type, x.value])) as Record<string, string>
   const y = +p.year, m = +p.month, d = +p.day
   const wallAsUtc = Date.UTC(y, m - 1, d, +p.hour, +p.minute, +p.second)
-  const offset = wallAsUtc - now.getTime() // CT offset from UTC (ms)
-  const startTodayUtc = Date.UTC(y, m - 1, d, 0, 0, 0) - offset
+  return { y, m, d, offset: wallAsUtc - at.getTime() }
+}
+
+// Resolve a CT calendar midnight to a UTC instant. The offset is sampled at
+// a first-guess instant, then re-sampled AT that guess — one extra pass is
+// what keeps DST-change days correct (evening offset ≠ midnight offset).
+function ctMidnightUtc(y: number, m: number, d: number, guessOffset: number): number {
+  const guess = Date.UTC(y, m - 1, d) - guessOffset
+  const { offset } = ctOffsetAt(new Date(guess))
+  return Date.UTC(y, m - 1, d) - offset
+}
+
+// Day boundaries + day-of-week in America/Chicago, robust across DST. The cron
+// runs in the evening CT, so "today" means the user's local calendar day.
+function ctDay(now: Date) {
+  const { y, m, d, offset } = ctOffsetAt(now)
+  const startTodayUtc = ctMidnightUtc(y, m, d, offset)
+  // Yesterday's midnight gets its own pass — on the fall-back Monday it is a
+  // 25-hour day away, not 24.
+  const yd = new Date(Date.UTC(y, m - 1, d - 1))
+  const startYesterdayUtc = ctMidnightUtc(yd.getUTCFullYear(), yd.getUTCMonth() + 1, yd.getUTCDate(), offset)
   return {
     dow: new Date(Date.UTC(y, m - 1, d)).getUTCDay(),
     startOfToday: new Date(startTodayUtc).toISOString(),
-    startOfYesterday: new Date(startTodayUtc - 24 * 3600 * 1000).toISOString(),
+    startOfYesterday: new Date(startYesterdayUtc).toISOString(),
   }
 }
 

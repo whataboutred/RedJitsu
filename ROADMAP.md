@@ -10,29 +10,15 @@ made. Ordered roughly by value.
 all-time progression toggle, overload coach v2, offline-queue hygiene,
 PR pipeline polish) shipped 2026-07-07.*
 
-## 1. Push cron DST edge
+*Items 1–6 shipped 2026-07-07; the DST cron fix, heavy-logger query
+hardening, and heatmap streak label shipped 2026-07-07 as well.*
 
-`ctDay()` in `app/api/push/cron/route.ts` samples the UTC offset at cron time
-and applies it to midnight — off by 1h on the two US DST-change days (clips the
-Monday "trained yesterday" window). Recompute the offset at the candidate
-midnight with a second `formatToParts` pass. Also `vercel.json` fixed UTC hour
-means the send time shifts 5pm/6pm CT across DST — acceptable, or split
-schedules seasonally.
+## 1. Google Health production OAuth (external)
 
-## 2. Heavy-logger query hardening
-
-- Progression's `workout_exercises .in('workout_id', ids)` fetch can hit
-  PostgREST's 1000-row default cap (>1000 exercises in 90 days) — chunk the id
-  list and page.
-- `loadStreakData` uses `.limit(500)` rows for a 120-week window — replace with
-  a `gte(performed_at, 120 weeks ago)` bound.
-
-## 3. Misc UI
-
-- History's heatmap flame shows the strength-only streak beside an
-  all-activity heatmap — either label it "lift streak" or compute all-activity.
-- Google Health connector: production OAuth verification (CASA) to lift the
-  7-day refresh-token expiry; revisit if the weekly reconnect nudge gets old.
+The only remaining item, and it's a Google-side process, not code:
+complete OAuth verification (CASA security assessment) to move the app
+out of "Testing" mode and lift the 7-day refresh-token expiry. Revisit
+if the weekly reconnect nudge gets old.
 
 ---
 
