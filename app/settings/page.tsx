@@ -54,6 +54,9 @@ export default function ProfileHubPage() {
   }, [])
 
   async function handleLogout() {
+    // This device should hold no queued data for the next account
+    const { clearOfflineQueues } = await import('@/lib/offline')
+    await clearOfflineQueues().catch(() => {})
     await supabase.auth.signOut()
     router.push('/login')
   }
