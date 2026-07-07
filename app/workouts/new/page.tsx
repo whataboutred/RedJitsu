@@ -28,6 +28,7 @@ import {
   Calendar,
   Minus,
   MoreHorizontal,
+  Target,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { DEMO, getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
@@ -39,6 +40,7 @@ import { useDraftAutoSave, getTimeAgo } from '@/hooks/useDraftAutoSave'
 import { hapticTap, hapticSuccess } from '@/lib/haptics'
 import { detectAndSaveNewPRs } from '@/lib/api/personalRecords'
 import { getLastWorkoutSetsForExercises, WorkoutSet as LastWorkoutSet } from '@/lib/workoutSuggestions'
+import { suggestOverload, parseRepRange } from '@/lib/overload'
 import { searchByName } from '@/lib/exerciseSearch'
 import { Button, IconButton } from '@/components/ui/Button'
 import { BottomSheet, ConfirmDialog } from '@/components/ui/BottomSheet'
@@ -54,6 +56,8 @@ type WorkoutExercise = {
   name: string
   sets: SetData[]
   lastWorkout?: { date: string; sets: { weight: number; reps: number }[] }
+  category?: string // equipment type, drives the overload weight increment
+  repRange?: { min: number; max: number } | null // from the program template, if any
 }
 
 // Rest Timer Component
@@ -447,6 +451,35 @@ function ExerciseCard({
     onUpdate({ ...exercise, sets: newSets })
   }
 
+  // Double-progression target computed from last session's working sets.
+  const target = exercise.lastWorkout?.sets.length
+    ? suggestOverload(exercise.lastWorkout.sets, {
+        category: exercise.category,
+        unit: unit as 'lb' | 'kg',
+        repRange: exercise.repRange,
+      })
+    : null
+
+  // Fill every empty working set with the target (append one if all are full).
+  const fillTarget = () => {
+    if (!target) return
+    hapticTap()
+    let changed = false
+    const newSets = exercise.sets.map((s) => {
+      if (s.isWarmup || !isEmpty(s)) return s
+      changed = true
+      return { ...s, weight: target.weight, reps: target.reps }
+    })
+    if (changed) {
+      onUpdate({ ...exercise, sets: newSets })
+    } else {
+      onUpdate({
+        ...exercise,
+        sets: [...newSets, { weight: target.weight, reps: target.reps, isWarmup: false, isCompleted: false }],
+      })
+    }
+  }
+
   const removeSet = (index: number) => {
     const newSets = exercise.sets.filter((_, i) => i !== index)
     onUpdate({ ...exercise, sets: newSets })
@@ -517,24 +550,43 @@ function ExerciseCard({
             <div className="px-2 pb-3 pt-1 space-y-3">
               {/* Last Workout Reference — inline strip, no box */}
               {exercise.lastWorkout && exercise.lastWorkout.sets.length > 0 ? (
-                <div className="flex items-center gap-2 flex-wrap pl-1">
-                  <span className="flex items-center gap-1 text-[11px] uppercase tracking-wider text-zinc-500 font-semibold">
-                    <TrendingUp className="w-3 h-3" />
-                    Last
-                  </span>
-                  {exercise.lastWorkout.sets.slice(0, 5).map((s, i) => (
-                    <button
-                      key={i}
-                      onClick={() => fillFromHistory(s.weight, s.reps)}
-                      className="px-2 py-1 bg-surface-elevated/60 hover:bg-surface-elevated active:scale-95 rounded-lg text-xs text-zinc-300 font-medium transition-all"
-                    >
-                      {s.weight}{unit} × {s.reps}
-                    </button>
-                  ))}
-                  {exercise.lastWorkout.sets.length > 5 && (
-                    <span className="text-xs text-zinc-600">
-                      +{exercise.lastWorkout.sets.length - 5}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap pl-1">
+                    <span className="flex items-center gap-1 text-[11px] uppercase tracking-wider text-zinc-500 font-semibold">
+                      <TrendingUp className="w-3 h-3" />
+                      Last
                     </span>
+                    {exercise.lastWorkout.sets.slice(0, 5).map((s, i) => (
+                      <button
+                        key={i}
+                        onClick={() => fillFromHistory(s.weight, s.reps)}
+                        className="px-2 py-1 bg-surface-elevated/60 hover:bg-surface-elevated active:scale-95 rounded-lg text-xs text-zinc-300 font-medium transition-all"
+                      >
+                        {s.weight}{unit} × {s.reps}
+                      </button>
+                    ))}
+                    {exercise.lastWorkout.sets.length > 5 && (
+                      <span className="text-xs text-zinc-600">
+                        +{exercise.lastWorkout.sets.length - 5}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Overload target — the one number to chase this session */}
+                  {target && (
+                    <div className="flex items-center gap-2 flex-wrap pl-1">
+                      <span className="flex items-center gap-1 text-[11px] uppercase tracking-wider text-brand-red font-semibold">
+                        <Target className="w-3 h-3" />
+                        Target
+                      </span>
+                      <button
+                        onClick={fillTarget}
+                        className="px-2 py-1 rounded-lg text-xs font-semibold bg-brand-red/10 border border-brand-red/25 text-brand-red hover:bg-brand-red/20 active:scale-95 transition-all"
+                      >
+                        {target.weight > 0 ? `${target.weight}${unit} × ${target.reps}` : `${target.reps} reps`}
+                      </button>
+                      <span className="text-[11px] text-zinc-500">{target.reason}</span>
+                    </div>
                   )}
                 </div>
               ) : (
@@ -786,6 +838,8 @@ export default function NewWorkoutPage() {
       exerciseId: item.id,
       name: item.name,
       lastWorkout: item.lastWorkout,
+      category: item.category,
+      repRange: item.repRange,
       sets: item.sets.map((s: any) => ({
         weight: s.weight,
         reps: s.reps,
@@ -922,6 +976,8 @@ export default function NewWorkoutPage() {
           id: ex.exerciseId,
           name: ex.name,
           lastWorkout: ex.lastWorkout,
+          category: ex.category,
+          repRange: ex.repRange,
           sets: ex.sets.map((s) => ({
             weight: s.weight,
             reps: s.reps,
@@ -949,10 +1005,12 @@ export default function NewWorkoutPage() {
       id: crypto.randomUUID(),
       exerciseId: ex.id,
       name: ex.name,
+      category: ex.category,
       sets: [{ weight: 0, reps: 0, isWarmup: false, isCompleted: false }],
     }
 
-    // Fetch last workout data for recommendation display (don't pre-fill)
+    // Fetch last workout data for recommendation display (don't pre-fill).
+    // Working sets only — warmups aren't targets.
     if (userIdRef.current) {
       try {
         const suggestions = await getLastWorkoutSetsForExercises(
@@ -960,8 +1018,8 @@ export default function NewWorkoutPage() {
           [ex.id],
           location
         )
-        const lastSets = suggestions.get(ex.id)
-        if (lastSets && lastSets.length > 0) {
+        const lastSets = (suggestions.get(ex.id) ?? []).filter((s) => s.set_type !== 'warmup')
+        if (lastSets.length > 0) {
           newExercise.lastWorkout = {
             date: new Date().toISOString(),
             sets: lastSets.map((s) => ({ weight: s.weight, reps: s.reps })),
@@ -1130,7 +1188,7 @@ export default function NewWorkoutPage() {
     try {
       const { data: templateExercises, error: exercisesError } = await supabase
         .from('template_exercises')
-        .select('exercise_id, display_name, default_sets, default_reps')
+        .select('exercise_id, display_name, default_sets, default_reps, exercises(category)')
         .eq('program_day_id', dayId)
         .order('order_index')
 
@@ -1145,7 +1203,7 @@ export default function NewWorkoutPage() {
       }
 
       const exerciseIds = templateExercises.map((te) => te.exercise_id)
-      let lastWorkoutMap = new Map<string, { weight: number; reps: number }[]>()
+      let lastWorkoutMap = new Map<string, LastWorkoutSet[]>()
       if (userIdRef.current && exerciseIds.length > 0) {
         try {
           lastWorkoutMap = await getLastWorkoutSetsForExercises(userIdRef.current, exerciseIds, location)
@@ -1157,11 +1215,15 @@ export default function NewWorkoutPage() {
       const newExercises: WorkoutExercise[] = []
       for (const te of templateExercises) {
         if (exercises.some((e) => e.exerciseId === te.exercise_id)) continue
-        const lastSets = lastWorkoutMap.get(te.exercise_id)
+        const lastSets = (lastWorkoutMap.get(te.exercise_id) ?? []).filter(
+          (s: any) => s.set_type !== 'warmup'
+        )
         newExercises.push({
           id: crypto.randomUUID(),
           exerciseId: te.exercise_id,
           name: te.display_name,
+          category: (te as any).exercises?.category,
+          repRange: parseRepRange(te.default_reps),
           sets: Array.from({ length: te.default_sets || 3 }, () => ({
             weight: 0,
             reps: 0,
@@ -1169,7 +1231,7 @@ export default function NewWorkoutPage() {
             isCompleted: false,
           })),
           lastWorkout:
-            lastSets && lastSets.length > 0
+            lastSets.length > 0
               ? { date: new Date().toISOString(), sets: lastSets.map((s) => ({ weight: s.weight, reps: s.reps })) }
               : undefined,
         })
