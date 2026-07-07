@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, User, Mail, Scale, Lock, ChevronRight } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { BottomSheet } from '@/components/ui/BottomSheet'
+import { BottomSheet, ConfirmDialog } from '@/components/ui/BottomSheet'
 import { useToast } from '@/components/Toast'
 import { supabase } from '@/lib/supabaseClient'
 import { ensureProfile, upsertProfile } from '@/lib/api'
@@ -25,6 +25,8 @@ export default function AccountPage() {
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [unit, setUnit] = useState<'lb' | 'kg'>('lb')
+  const [loadedUnit, setLoadedUnit] = useState<'lb' | 'kg'>('lb')
+  const [showConvertConfirm, setShowConvertConfirm] = useState(false)
 
   const [showPasswordSheet, setShowPasswordSheet] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
@@ -43,6 +45,7 @@ export default function AccountPage() {
         if (p) {
           setDisplayName(p.display_name ?? '')
           setUnit((p.unit ?? 'lb') as 'lb' | 'kg')
+          setLoadedUnit((p.unit ?? 'lb') as 'lb' | 'kg')
         }
       } catch (err) {
         console.error('Error loading account:', err)
@@ -54,12 +57,31 @@ export default function AccountPage() {
 
   async function save() {
     if (await isDemoVisitor()) { toast.warning('Sign in to edit your account'); return }
+    // Changing the weight unit converts stored data — confirm first.
+    if (unit !== loadedUnit) {
+      setShowConvertConfirm(true)
+      return
+    }
+    await persist(false)
+  }
+
+  async function persist(convert: boolean) {
     const userId = await getActiveUserId()
     if (!userId) { toast.error('Please sign in again'); return }
     setSaving(true)
     try {
-      await upsertProfile(userId, { display_name: displayName.trim() || null, unit })
-      toast.success('Account saved')
+      if (convert) {
+        // Transactional server-side conversion of every set + PR, then the
+        // profile unit — history stays numerically accurate.
+        const { error } = await supabase.rpc('convert_weight_unit', { p_to: unit })
+        if (error) throw error
+        await upsertProfile(userId, { display_name: displayName.trim() || null })
+        setLoadedUnit(unit)
+        toast.success(`Converted all weights to ${unit}`)
+      } else {
+        await upsertProfile(userId, { display_name: displayName.trim() || null, unit })
+        toast.success('Account saved')
+      }
       setTimeout(() => router.push('/settings'), 400)
     } catch {
       toast.error('Failed to save')
@@ -218,6 +240,16 @@ export default function AccountPage() {
           </Button>
         </div>
       </motion.div>
+
+      {/* Unit conversion confirm */}
+      <ConfirmDialog
+        isOpen={showConvertConfirm}
+        onClose={() => setShowConvertConfirm(false)}
+        onConfirm={() => { persist(true) }}
+        title={`Convert weights to ${unit}?`}
+        message={`Your logged weights are stored in ${loadedUnit}. Every set and record will be converted to ${unit} so your history and charts stay accurate.`}
+        confirmText="Convert"
+      />
 
       {/* Password Change Sheet */}
       <BottomSheet

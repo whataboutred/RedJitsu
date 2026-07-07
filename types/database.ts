@@ -191,6 +191,38 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_prefs: {
+        Row: {
+          exercise_id: string
+          rep_range_max: number
+          rep_range_min: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          exercise_id: string
+          rep_range_max: number
+          rep_range_min: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          exercise_id?: string
+          rep_range_max?: number
+          rep_range_min?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_prefs_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercises: {
         Row: {
           body_part: string | null
@@ -622,6 +654,7 @@ export type Database = {
     }
     Functions: {
       claim_ai_generation: { Args: { p_limit?: number }; Returns: boolean }
+      convert_weight_unit: { Args: { p_to: string }; Returns: undefined }
       delete_my_data: { Args: never; Returns: undefined }
       reseed_demo: { Args: never; Returns: undefined }
       reseed_demo_full: { Args: never; Returns: undefined }
