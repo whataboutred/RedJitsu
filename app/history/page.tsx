@@ -468,6 +468,32 @@ function HistoryClient() {
     }
   }
 
+  // PostgREST caps a response at 1000 rows, which a heavy logger can exceed
+  // in a 90-day window — chunk the workout-id list so nothing silently
+  // truncates (100 workouts × ~8 exercises stays well under the cap).
+  async function fetchExerciseSetsChunked(workoutIds: string[], exerciseIds?: string[]) {
+    const CHUNK = 100
+    const chunks: string[][] = []
+    for (let i = 0; i < workoutIds.length; i += CHUNK) chunks.push(workoutIds.slice(i, i + CHUNK))
+    const results = await Promise.all(
+      chunks.map(async (ids) => {
+        let q = supabase
+          .from('workout_exercises')
+          .select(`
+            exercise_id,
+            display_name,
+            workout_id,
+            sets(weight, reps, set_type, completed)
+          `)
+          .in('workout_id', ids)
+        if (exerciseIds) q = q.in('exercise_id', exerciseIds)
+        const { data } = await q
+        return data ?? []
+      })
+    )
+    return results.flat()
+  }
+
   async function loadProgressionData(userId: string) {
     // First get workouts for this user in the date range
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
@@ -487,15 +513,7 @@ function HistoryClient() {
     const workoutDateMap = new Map(workouts.map(w => [w.id, w.performed_at]))
 
     // Then get workout_exercises and sets for those workouts
-    const { data: exerciseData } = await supabase
-      .from('workout_exercises')
-      .select(`
-        exercise_id,
-        display_name,
-        workout_id,
-        sets(weight, reps, set_type, completed)
-      `)
-      .in('workout_id', workoutIds)
+    const exerciseData = await fetchExerciseSetsChunked(workoutIds)
 
     if (exerciseData) {
       const exerciseMap = new Map<string, {
@@ -630,16 +648,7 @@ function HistoryClient() {
     const workoutDateMap = new Map(workouts.map(w => [w.id, w.performed_at]))
 
     // Then get workout_exercises and sets for those workouts, filtered by exercise IDs
-    const { data: exerciseData } = await supabase
-      .from('workout_exercises')
-      .select(`
-        exercise_id,
-        display_name,
-        workout_id,
-        sets(weight, reps, set_type, completed)
-      `)
-      .in('workout_id', workoutIds)
-      .in('exercise_id', Array.from(activeExerciseIds))
+    const exerciseData = await fetchExerciseSetsChunked(workoutIds, Array.from(activeExerciseIds))
 
     if (!exerciseData || exerciseData.length === 0) {
       setExerciseProgress([])
@@ -753,15 +762,7 @@ function HistoryClient() {
     const workoutDateMap = new Map(workouts.map(w => [w.id, w.performed_at]))
 
     // Then get workout_exercises and sets for those workouts
-    const { data: exerciseData } = await supabase
-      .from('workout_exercises')
-      .select(`
-        exercise_id,
-        display_name,
-        workout_id,
-        sets(weight, reps, set_type, completed)
-      `)
-      .in('workout_id', workoutIds)
+    const exerciseData = await fetchExerciseSetsChunked(workoutIds)
 
     if (!exerciseData || exerciseData.length === 0) {
       setExerciseProgress([])
@@ -866,26 +867,28 @@ function HistoryClient() {
     const bjjGoal = prof?.bjj_weekly_goal ?? 2
     const cardioGoal = prof?.cardio_weekly_goal ?? 3
 
-    // Fetch recent sessions
+    // Date-bound to the full streak horizon (120 weeks + the current partial
+    // week) — a row-count limit undercounts long streaks for frequent loggers.
+    const streakSince = new Date(Date.now() - 121 * 7 * 24 * 60 * 60 * 1000).toISOString()
     const [workoutsRes, bjjRes, cardioRes] = await Promise.all([
       supabase
         .from('workouts')
         .select('performed_at')
         .eq('user_id', userId)
-        .order('performed_at', { ascending: false })
-        .limit(500),
+        .gte('performed_at', streakSince)
+        .order('performed_at', { ascending: false }),
       supabase
         .from('bjj_sessions')
         .select('performed_at')
         .eq('user_id', userId)
-        .order('performed_at', { ascending: false })
-        .limit(500),
+        .gte('performed_at', streakSince)
+        .order('performed_at', { ascending: false }),
       supabase
         .from('cardio_sessions')
         .select('performed_at')
         .eq('user_id', userId)
+        .gte('performed_at', streakSince)
         .order('performed_at', { ascending: false })
-        .limit(500)
     ])
 
     const now = new Date()

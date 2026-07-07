@@ -101,7 +101,7 @@ export default function ActivityHeatmap({ activities, streakWeeks = 0 }: Activit
             <span className="flex items-baseline gap-1 text-amber-400">
               <Flame className="w-4 h-4 self-center" />
               <span className="font-display text-xl leading-none">{streakWeeks}</span>
-              <span className="text-xs text-zinc-500">wk streak</span>
+              <span className="text-xs text-zinc-500">wk lift streak</span>
             </span>
           )}
           <p className="text-xs text-zinc-500">
