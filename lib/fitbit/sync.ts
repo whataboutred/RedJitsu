@@ -120,7 +120,15 @@ async function linkStrengthSessions(
   const importedIds = new Set((existingRes.data ?? []).map((m) => m.external_id))
 
   const rows: Array<Record<string, unknown>> = []
-  for (const s of sessions) {
+  // Deterministic claim order that favors tight matches: the session with the
+  // smallest gap to any workout claims first, so two nearby sessions can't
+  // have API return-order hand a workout to the wrong one.
+  const gapTo = (s: MappedWorkoutMetrics) =>
+    workouts.length === 0
+      ? Number.POSITIVE_INFINITY
+      : Math.min(...workouts.map((w) => Math.abs(new Date(w.performed_at).getTime() - s.start_ms)))
+  const ordered = [...sessions].sort((a, b) => gapTo(a) - gapTo(b))
+  for (const s of ordered) {
     if (importedIds.has(s.external_id)) continue
     const candidates = workouts.filter((w) => {
       if (linkedWorkouts.has(w.id)) return false

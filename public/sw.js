@@ -1,22 +1,31 @@
 /* public/sw.js */
 // Bump this to force clients to fetch the latest assets
-const CACHE = 'rjt-v28';
+const CACHE = 'rjt-v29';
+
+// Only real, direct responses may enter the cache: a logged-out visit
+// returns a redirect to /login, and caching that under an app-shell URL
+// bricks offline launch until the next cache bump.
+function cacheable(res) {
+  return res && res.ok && !res.redirected;
+}
 
 self.addEventListener('install', (event) => {
   // Take control immediately
   self.skipWaiting();
-  
-  // Pre-cache critical resources
+
+  // Pre-cache critical resources — individually, and only good copies.
   event.waitUntil(
-    caches.open(CACHE).then(cache => {
-      return cache.addAll([
-        '/',
-        '/dashboard',
-        '/workouts/new',
-        '/history'
-      ]).catch(() => {
-        // Ignore cache failures, they're not critical
-      });
+    caches.open(CACHE).then(async (cache) => {
+      await Promise.all(
+        ['/', '/dashboard', '/workouts/new', '/history'].map(async (url) => {
+          try {
+            const res = await fetch(url);
+            if (cacheable(res)) await cache.put(url, res);
+          } catch (e) {
+            // Not critical — runtime caching fills these in on first visit.
+          }
+        })
+      );
     })
   );
 });
@@ -90,14 +99,21 @@ self.addEventListener('fetch', (event) => {
   // Let the browser handle Next's hashed assets completely (safer, no staleness)
   if (url.pathname.startsWith('/_next/')) return;
 
+  // Next's client-navigation payloads (RSC/flight) must stay fresh: a cached
+  // payload can reference chunks a new deploy no longer serves, breaking
+  // in-app navigation until a cache bump. Let the browser fetch them.
+  if (url.searchParams.has('_rsc') || accept.includes('text/x-component')) return;
+
   // HTML/doc requests: network-first, fallback to cache if offline
   if (accept.includes('text/html')) {
     event.respondWith((async () => {
       try {
         const fresh = await fetch(req);
-        const copy = fresh.clone();
-        const cache = await caches.open(CACHE);
-        cache.put(req, copy);
+        if (cacheable(fresh)) {
+          const copy = fresh.clone();
+          const cache = await caches.open(CACHE);
+          cache.put(req, copy);
+        }
         return fresh;
       } catch (err) {
         console.log('Network failed, trying cache:', err);
@@ -130,9 +146,11 @@ self.addEventListener('fetch', (event) => {
     const cached = await caches.match(req);
     const fetchAndUpdate = fetch(req).then(async (res) => {
       try {
-        const copy = res.clone();
-        const cache = await caches.open(CACHE);
-        cache.put(req, copy);
+        if (cacheable(res)) {
+          const copy = res.clone();
+          const cache = await caches.open(CACHE);
+          cache.put(req, copy);
+        }
       } catch {}
       return res;
     }).catch(() => cached);
