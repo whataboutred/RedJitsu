@@ -5,6 +5,7 @@ import { ArrowLeft, Trash2, ShieldCheck } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/Card'
 import DeleteAllData from '@/components/DeleteAllData'
 import DataExport from '@/components/DataExport'
+import FailedSyncs from '@/components/FailedSyncs'
 import BackgroundLogo from '@/components/BackgroundLogo'
 
 export default function PrivacyPage() {
@@ -34,6 +35,9 @@ export default function PrivacyPage() {
           <ShieldCheck className="w-4 h-4" />
           Your data is yours. Download a copy anytime, or wipe it for good.
         </div>
+
+        {/* Workouts the server rejected — only renders when there are any */}
+        <FailedSyncs />
 
         {/* Data Export */}
         <DataExport />

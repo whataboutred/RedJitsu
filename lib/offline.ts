@@ -20,6 +20,50 @@ export type PendingWorkout = WorkoutSavePayload & {
 }
 
 export const pendingKey = 'pending_workouts_v2'
+export const failedKey = 'failed_workouts_v1'
+
+/** A queue item that failed with a non-retryable error, parked so it stops
+ *  burning retries but the data is never silently discarded. */
+export type FailedWorkout = PendingWorkout & {
+  failed_at: string
+  error: string
+}
+
+// Retryable failures are network-shaped; permanent ones are the server
+// rejecting the payload itself (constraint/validation) — retrying those
+// forever just wedges the queue.
+function isPermanentError(err: any): boolean {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) return false
+  const code = String(err?.code ?? '')
+  if (/^(23|22|42)\d{3}$/.test(code) || code === 'P0001') return true
+  const msg = String(err?.message ?? err)
+  return /violates|constraint|foreign key|invalid input|not allowed|permission denied|row-level security/i.test(msg)
+}
+
+export async function getFailedWorkouts(): Promise<FailedWorkout[]> {
+  return (await localforage.getItem<FailedWorkout[]>(failedKey)) || []
+}
+
+export async function discardFailedWorkout(clientId: string): Promise<void> {
+  const items = await getFailedWorkouts()
+  await localforage.setItem(failedKey, items.filter((i) => i.client_id !== clientId))
+}
+
+/** Move a parked item back into the pending queue for another attempt. */
+export async function retryFailedWorkout(clientId: string): Promise<void> {
+  const items = await getFailedWorkouts()
+  const item = items.find((i) => i.client_id === clientId)
+  if (!item) return
+  const { failed_at, error, ...pending } = item
+  await enqueueWorkout(pending)
+  await discardFailedWorkout(clientId)
+}
+
+/** Sign-out hygiene: this device should hold no other account's queue. */
+export async function clearOfflineQueues(): Promise<void> {
+  await localforage.removeItem(pendingKey)
+  await localforage.removeItem(failedKey)
+}
 
 /** The pre-v2 queue key. Items there were never migrated when the key
  *  changed — convert any survivors so they finally sync. */
@@ -91,6 +135,7 @@ export async function trySyncPending(): Promise<{ synced: number; failed: number
       const currentUser = await getActiveUserId()
 
       const syncedIds = new Set<string>()
+      const parkedIds = new Set<string>()
       for (const item of items) {
         // Never drain another account's queued workout into this session.
         if (item.user_id && currentUser && item.user_id !== currentUser) continue
@@ -120,19 +165,32 @@ export async function trySyncPending(): Promise<{ synced: number; failed: number
               console.error('PR detection for synced workout failed:', e)
             }
           }
-        } catch {
-          // Keep the whole item for the next attempt — the transactional RPC
-          // guarantees nothing partial was written, and client_id makes the
-          // retry duplicate-safe.
+        } catch (err) {
+          // Transient (network) errors: keep the item for the next attempt —
+          // the transactional RPC guarantees nothing partial was written, and
+          // client_id makes the retry duplicate-safe. Permanent rejections
+          // (constraint/validation) get parked so they stop wedging the queue.
+          if (isPermanentError(err)) {
+            const failed = await getFailedWorkouts()
+            if (!failed.some((f) => f.client_id === item.client_id)) {
+              failed.push({
+                ...item,
+                failed_at: new Date().toISOString(),
+                error: String((err as any)?.message ?? err).slice(0, 300),
+              })
+              await localforage.setItem(failedKey, failed)
+            }
+            parkedIds.add(item.client_id)
+          }
         }
       }
 
       // Re-read before writing: anything enqueued while the network calls were
-      // in flight must survive. Only remove what actually synced.
+      // in flight must survive. Only remove what actually synced (or parked).
       const current = await getPendingWorkouts()
-      const remaining = current.filter((i) => !syncedIds.has(i.client_id))
+      const remaining = current.filter((i) => !syncedIds.has(i.client_id) && !parkedIds.has(i.client_id))
       await localforage.setItem(pendingKey, remaining)
-      return { synced: syncedIds.size, failed: remaining.length }
+      return { synced: syncedIds.size, failed: remaining.length + parkedIds.size }
     } finally {
       syncInFlight = null
     }

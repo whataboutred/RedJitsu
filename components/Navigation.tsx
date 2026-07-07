@@ -361,6 +361,9 @@ export default function Navigation({ children }: { children: React.ReactNode }) 
   const isWorkoutMode = workoutModeRoutes.some(route => pathname?.startsWith(route))
 
   async function signOut() {
+    // This device should hold no queued data for the next account
+    const { clearOfflineQueues } = await import('@/lib/offline')
+    await clearOfflineQueues().catch(() => {})
     await supabase.auth.signOut()
     if (!DEMO) {
       router.push('/login')
