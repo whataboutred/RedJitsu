@@ -217,6 +217,8 @@ function HistoryClient() {
 
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(true)
+  const [bjjHasMore, setBjjHasMore] = useState(false)
+  const [cardioHasMore, setCardioHasMore] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [visibleCount, setVisibleCount] = useState(30)
   const PAGE_SIZE = 50
@@ -319,8 +321,9 @@ function HistoryClient() {
     if (prof?.bjj_belt) setBelt(prof.bjj_belt)
     if (prof?.unit === 'kg' || prof?.unit === 'lb') setUnit(prof.unit)
 
-    // Accurate 8-week window for Training Load, regardless of list pagination.
-    const since = new Date(Date.now() - 63 * 24 * 60 * 60 * 1000).toISOString()
+    // Date-bounded window covering Training Load (8 wk) AND the heatmap
+    // (12 wk), so neither depends on how deep the list is paginated.
+    const since = new Date(Date.now() - 85 * 24 * 60 * 60 * 1000).toISOString()
     const [twk, tbjj, tcar] = await Promise.all([
       supabase.from('workouts').select('performed_at').eq('user_id', userId).gte('performed_at', since),
       supabase.from('bjj_sessions').select('performed_at,duration_min,intensity').eq('user_id', userId).gte('performed_at', since),
@@ -356,23 +359,23 @@ function HistoryClient() {
     setPage(0)
     setHasMore(initialWorkouts.length === PAGE_SIZE)
 
-    // BJJ/cardio aren't cursor-paged yet — a generous window keeps the
-    // interleaved timeline and heatmap honest for a year+ of logging.
     const { data: bj } = await supabase
       .from('bjj_sessions')
       .select('id,performed_at,duration_min,kind,intensity,notes')
       .eq('user_id', userId)
       .order('performed_at', { ascending: false })
-      .limit(200)
+      .limit(PAGE_SIZE)
     setBjj((bj || []) as BJJ[])
+    setBjjHasMore((bj || []).length === PAGE_SIZE)
 
     const { data: cardioData } = await supabase
       .from('cardio_sessions')
       .select('id,performed_at,activity,duration_minutes,distance,distance_unit,intensity,notes,source')
       .eq('user_id', userId)
       .order('performed_at', { ascending: false })
-      .limit(200)
+      .limit(PAGE_SIZE)
     setCardio((cardioData || []) as Cardio[])
+    setCardioHasMore((cardioData || []).length === PAGE_SIZE)
 
     await loadProgressionData(userId)
     await loadActiveProgramExercises(userId)
@@ -392,42 +395,72 @@ function HistoryClient() {
   useDataRefresh(loadHistoryData)
 
   const loadMore = async () => {
-    if (loadingMore || !hasMore) return
+    if (loadingMore || (!hasMore && !bjjHasMore && !cardioHasMore)) return
 
     setLoadingMore(true)
     try {
       const userId = await getActiveUserId()
       if (!userId) return
 
-      const nextPage = page + 1
-      const offset = nextPage * PAGE_SIZE
+      if (hasMore) {
+        const nextPage = page + 1
+        const offset = nextPage * PAGE_SIZE
 
-      const { data: w } = await supabase
-        .from('workouts')
-        .select('id,performed_at,title,workout_metrics(avg_hr,calories,active_minutes)')
-        .eq('user_id', userId)
-        .order('performed_at', { ascending: false })
-        .range(offset, offset + PAGE_SIZE - 1)
+        const { data: w } = await supabase
+          .from('workouts')
+          .select('id,performed_at,title,workout_metrics(avg_hr,calories,active_minutes)')
+          .eq('user_id', userId)
+          .order('performed_at', { ascending: false })
+          .range(offset, offset + PAGE_SIZE - 1)
 
-      // Get exercise counts for these workouts
-      const workoutIds = (w || []).map(workout => workout.id)
-      const { data: exerciseCounts } = await supabase
-        .from('workout_exercises')
-        .select('workout_id')
-        .in('workout_id', workoutIds)
+        // Get exercise counts for these workouts
+        const workoutIds = (w || []).map(workout => workout.id)
+        const { data: exerciseCounts } = await supabase
+          .from('workout_exercises')
+          .select('workout_id')
+          .in('workout_id', workoutIds)
 
-      const countMap = new Map<string, number>()
-      exerciseCounts?.forEach(ex => {
-        countMap.set(ex.workout_id, (countMap.get(ex.workout_id) || 0) + 1)
-      })
+        const countMap = new Map<string, number>()
+        exerciseCounts?.forEach(ex => {
+          countMap.set(ex.workout_id, (countMap.get(ex.workout_id) || 0) + 1)
+        })
 
-      const newWorkouts = (w || []).map(workout => ({
-        ...workout,
-        exercise_count: countMap.get(workout.id) || 0
-      })) as Workout[]
-      setWorkouts(prev => [...prev, ...newWorkouts])
-      setPage(nextPage)
-      setHasMore(newWorkouts.length === PAGE_SIZE)
+        const newWorkouts = (w || []).map(workout => ({
+          ...workout,
+          exercise_count: countMap.get(workout.id) || 0
+        })) as Workout[]
+        setWorkouts(prev => [...prev, ...newWorkouts])
+        setPage(nextPage)
+        setHasMore(newWorkouts.length === PAGE_SIZE)
+      }
+
+      // BJJ and cardio page by date cursor so the interleaved timeline keeps
+      // its order no matter how deep each type goes.
+      if (bjjHasMore && bjj.length > 0) {
+        const oldest = bjj[bjj.length - 1].performed_at
+        const { data: moreBjj } = await supabase
+          .from('bjj_sessions')
+          .select('id,performed_at,duration_min,kind,intensity,notes')
+          .eq('user_id', userId)
+          .lt('performed_at', oldest)
+          .order('performed_at', { ascending: false })
+          .limit(PAGE_SIZE)
+        setBjj(prev => [...prev, ...((moreBjj || []) as BJJ[])])
+        setBjjHasMore((moreBjj || []).length === PAGE_SIZE)
+      }
+
+      if (cardioHasMore && cardio.length > 0) {
+        const oldest = cardio[cardio.length - 1].performed_at
+        const { data: moreCardio } = await supabase
+          .from('cardio_sessions')
+          .select('id,performed_at,activity,duration_minutes,distance,distance_unit,intensity,notes,source')
+          .eq('user_id', userId)
+          .lt('performed_at', oldest)
+          .order('performed_at', { ascending: false })
+          .limit(PAGE_SIZE)
+        setCardio(prev => [...prev, ...((moreCardio || []) as Cardio[])])
+        setCardioHasMore((moreCardio || []).length === PAGE_SIZE)
+      }
     } catch (error) {
       console.error('Error loading more workouts:', error)
     } finally {
@@ -1132,9 +1165,9 @@ function HistoryClient() {
             <ActivityHeatmap
               streakWeeks={streakData?.strength.current ?? 0}
               activities={[
-                ...workouts.map((w) => ({ date: w.performed_at, type: 'strength' as const })),
-                ...bjj.map((b) => ({ date: b.performed_at, type: 'bjj' as const })),
-                ...cardio.map((c) => ({ date: c.performed_at, type: 'cardio' as const })),
+                ...trendInputs.workouts.map((w) => ({ date: w.performed_at, type: 'strength' as const })),
+                ...trendInputs.bjj.map((b) => ({ date: b.performed_at, type: 'bjj' as const })),
+                ...trendInputs.cardio.map((c) => ({ date: c.performed_at, type: 'cardio' as const })),
               ]}
             />
           </>
@@ -1288,15 +1321,15 @@ function HistoryClient() {
                 })
               )}
 
-              {(allActivities.length > visibleCount || hasMore) && (
+              {(allActivities.length > visibleCount || hasMore || bjjHasMore || cardioHasMore) && (
                 <div className="text-center pt-4">
                   <Button
                     variant="secondary"
                     onClick={() => {
-                      // Reveal more of what's loaded, and pull the next strength
-                      // page so the well doesn't run dry.
+                      // Reveal more of what's loaded, and pull the next page of
+                      // each type so the well doesn't run dry.
                       setVisibleCount((c) => c + 30)
-                      if (hasMore) loadMore()
+                      if (hasMore || bjjHasMore || cardioHasMore) loadMore()
                     }}
                     loading={loadingMore}
                   >
