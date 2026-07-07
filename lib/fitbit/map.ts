@@ -146,8 +146,17 @@ export function mapExerciseToCardio(
   if (!start) return null
   if (isStrengthSession(ex)) return null
   if (matchesActivity(ex, excluded)) return null
-  if (isWalk(ex) && moderatePlusMinutes(ex.metricsSummary?.heartRateZoneDurations) < walkMinModerateMinutes) {
-    return null // just steps — the walk never earned moderate-zone time
+  if (isWalk(ex)) {
+    const zones = ex.metricsSummary?.heartRateZoneDurations
+    if (zones) {
+      if (moderatePlusMinutes(zones) < walkMinModerateMinutes) {
+        return null // just steps — the walk never earned moderate-zone time
+      }
+    } else if (exerciseMinutes(ex) < 45) {
+      // No HR-zone data (phone-tracked, loose watch): fall back to duration
+      // so a deliberate long walk isn't silently dropped.
+      return null
+    }
   }
 
   const minutes = exerciseMinutes(ex)

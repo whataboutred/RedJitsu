@@ -39,7 +39,8 @@ import { toDatetimeLocal, datetimeLocalToISO } from '@/lib/dateUtils'
 import { useDraftAutoSave, getTimeAgo } from '@/hooks/useDraftAutoSave'
 import { hapticTap, hapticSuccess } from '@/lib/haptics'
 import { detectAndSaveNewPRs } from '@/lib/api/personalRecords'
-import { getLastWorkoutSetsForExercises, WorkoutSet as LastWorkoutSet } from '@/lib/workoutSuggestions'
+import { getExerciseHistories } from '@/lib/workoutSuggestions'
+import { getExercisePrefs } from '@/lib/api/exercisePrefs'
 import { suggestOverload, parseRepRange } from '@/lib/overload'
 import { searchByName } from '@/lib/exerciseSearch'
 import { Button, IconButton } from '@/components/ui/Button'
@@ -57,7 +58,8 @@ type WorkoutExercise = {
   sets: SetData[]
   lastWorkout?: { date: string; sets: { weight: number; reps: number }[] }
   category?: string // equipment type, drives the overload weight increment
-  repRange?: { min: number; max: number } | null // from the program template, if any
+  repRange?: { min: number; max: number } | null // pref > template > default
+  recentE1rms?: number[] // per-session best e1RM, newest first (deload signal)
 }
 
 // Rest Timer Component
@@ -451,14 +453,17 @@ function ExerciseCard({
     onUpdate({ ...exercise, sets: newSets })
   }
 
-  // Double-progression target computed from last session's working sets.
+  // Double-progression target computed from last session's working sets;
+  // three stalled sessions flips it to a deload suggestion.
   const target = exercise.lastWorkout?.sets.length
     ? suggestOverload(exercise.lastWorkout.sets, {
         category: exercise.category,
         unit: unit as 'lb' | 'kg',
         repRange: exercise.repRange,
+        recentBestE1rms: exercise.recentE1rms,
       })
     : null
+  const isDeload = target?.kind === 'deload'
 
   // Fill every empty working set with the target (append one if all are full).
   const fillTarget = () => {
@@ -572,16 +577,21 @@ function ExerciseCard({
                     )}
                   </div>
 
-                  {/* Overload target — the one number to chase this session */}
+                  {/* Overload target — the one number to chase this session.
+                      Deloads go amber: back off on purpose, not a PR chase. */}
                   {target && (
                     <div className="flex items-center gap-2 flex-wrap pl-1">
-                      <span className="flex items-center gap-1 text-[11px] uppercase tracking-wider text-brand-red font-semibold">
+                      <span className={`flex items-center gap-1 text-[11px] uppercase tracking-wider font-semibold ${isDeload ? 'text-amber-400' : 'text-brand-red'}`}>
                         <Target className="w-3 h-3" />
-                        Target
+                        {isDeload ? 'Deload' : 'Target'}
                       </span>
                       <button
                         onClick={fillTarget}
-                        className="px-2 py-1 rounded-lg text-xs font-semibold bg-brand-red/10 border border-brand-red/25 text-brand-red hover:bg-brand-red/20 active:scale-95 transition-all"
+                        className={`px-2 py-1 rounded-lg text-xs font-semibold active:scale-95 transition-all border ${
+                          isDeload
+                            ? 'bg-amber-500/10 border-amber-500/25 text-amber-400 hover:bg-amber-500/20'
+                            : 'bg-brand-red/10 border-brand-red/25 text-brand-red hover:bg-brand-red/20'
+                        }`}
                       >
                         {target.weight > 0 ? `${target.weight}${unit} × ${target.reps}` : `${target.reps} reps`}
                       </button>
@@ -840,6 +850,7 @@ export default function NewWorkoutPage() {
       lastWorkout: item.lastWorkout,
       category: item.category,
       repRange: item.repRange,
+      recentE1rms: item.recentE1rms,
       sets: item.sets.map((s: any) => ({
         weight: s.weight,
         reps: s.reps,
@@ -904,6 +915,7 @@ export default function NewWorkoutPage() {
         // Clean up any stale repeat data if not coming from repeat flow
         sessionStorage.removeItem('repeat-workout')
       }
+      let repeatedIds: string[] = []
       if (repeatParam === 'true') {
         try {
           const repeatData = sessionStorage.getItem('repeat-workout')
@@ -921,6 +933,7 @@ export default function NewWorkoutPage() {
                 isCompleted: false,
               })),
             }))
+            repeatedIds = repeatedExercises.map((e) => e.exerciseId)
             setExercises(repeatedExercises)
             setTitle(parsed.title || '')
             if (repeatedExercises.length > 0) setExpandedId(repeatedExercises[0].id)
@@ -936,6 +949,37 @@ export default function NewWorkoutPage() {
       // Load exercises
       const { data: ex } = await supabase.from('exercises').select('id,name,category,body_part').order('name')
       setAllExercises((ex || []) as Exercise[])
+
+      // Repeated exercises skip addExercise, so give them coach context here:
+      // category (increments), history (Last strip + deload), rep-range prefs.
+      if (repeatedIds.length > 0) {
+        try {
+          const catMap = new Map((ex || []).map((e: any) => [e.id as string, e.category as string]))
+          const [histories, prefs] = await Promise.all([
+            getExerciseHistories(userId, repeatedIds),
+            getExercisePrefs(userId, repeatedIds),
+          ])
+          setExercises((prev) =>
+            prev.map((we) => {
+              if (!repeatedIds.includes(we.exerciseId)) return we
+              const h = histories.get(we.exerciseId)
+              return {
+                ...we,
+                category: we.category ?? catMap.get(we.exerciseId),
+                repRange: we.repRange ?? prefs.get(we.exerciseId) ?? null,
+                recentE1rms: h?.recentBestE1rms,
+                lastWorkout:
+                  we.lastWorkout ??
+                  (h && h.lastSets.length > 0
+                    ? { date: h.lastDate ?? new Date().toISOString(), sets: h.lastSets.map((s) => ({ weight: s.weight, reps: s.reps })) }
+                    : undefined),
+              }
+            })
+          )
+        } catch (e) {
+          console.error('Error enriching repeated exercises:', e)
+        }
+      }
 
       // Load programs — must scope to this user. Without the user_id filter the
       // demo-public read policy leaks the demo account's programs into real ones.
@@ -963,7 +1007,9 @@ export default function NewWorkoutPage() {
         // Location column might not exist
       }
 
-      await trySyncPending()
+      // Fire-and-forget: a stuck queue item must never hold the logging
+      // screen hostage — SyncStatus runs the same drain independently.
+      void trySyncPending()
       setLoading(false)
     })()
   }, [])
@@ -978,6 +1024,7 @@ export default function NewWorkoutPage() {
           lastWorkout: ex.lastWorkout,
           category: ex.category,
           repRange: ex.repRange,
+          recentE1rms: ex.recentE1rms,
           sets: ex.sets.map((s) => ({
             weight: s.weight,
             reps: s.reps,
@@ -1009,23 +1056,25 @@ export default function NewWorkoutPage() {
       sets: [{ weight: 0, reps: 0, isWarmup: false, isCompleted: false }],
     }
 
-    // Fetch last workout data for recommendation display (don't pre-fill).
-    // Working sets only — warmups aren't targets.
+    // Fetch coach context (don't pre-fill): last session's working sets,
+    // recent session bests for deload detection, and any rep-range pref.
     if (userIdRef.current) {
       try {
-        const suggestions = await getLastWorkoutSetsForExercises(
-          userIdRef.current,
-          [ex.id],
-          location
-        )
-        const lastSets = (suggestions.get(ex.id) ?? []).filter((s) => s.set_type !== 'warmup')
-        if (lastSets.length > 0) {
+        const [histories, prefs] = await Promise.all([
+          getExerciseHistories(userIdRef.current, [ex.id], location),
+          getExercisePrefs(userIdRef.current, [ex.id]),
+        ])
+        const h = histories.get(ex.id)
+        if (h && h.lastSets.length > 0) {
           newExercise.lastWorkout = {
-            date: new Date().toISOString(),
-            sets: lastSets.map((s) => ({ weight: s.weight, reps: s.reps })),
+            date: h.lastDate ?? new Date().toISOString(),
+            sets: h.lastSets.map((s) => ({ weight: s.weight, reps: s.reps })),
           }
           // Don't pre-fill - let user see recommendation and enter manually
         }
+        newExercise.recentE1rms = h?.recentBestE1rms
+        const pref = prefs.get(ex.id)
+        if (pref) newExercise.repRange = pref
       } catch (e) {
         console.error('Error fetching suggestions:', e)
       }
@@ -1143,8 +1192,17 @@ export default function NewWorkoutPage() {
       } catch (error: any) {
         const message = String(error?.message || error)
         const offline = typeof navigator !== 'undefined' && !navigator.onLine
+        // A PostgREST/Postgres rejection carries a code — the request reached
+        // the server and was refused, so queueing can't help. Anything else
+        // (WebKit's codeless "Load failed", timeouts, plain fetch failures)
+        // defaults to the queue: replay is idempotent, and over-queueing is
+        // the safe side of "never lose a logged set".
+        const serverRejected = !offline && Boolean((error as { code?: string })?.code)
         const networkError =
-          offline || error instanceof TypeError || /fetch|network|timeout/i.test(message)
+          offline ||
+          !serverRejected ||
+          error instanceof TypeError ||
+          /fetch|network|load failed|timeout/i.test(message)
         if (!networkError) throw error
 
         // Couldn't reach the server — keep the workout locally; SyncStatus and
@@ -1204,10 +1262,14 @@ export default function NewWorkoutPage() {
       }
 
       const exerciseIds = templateExercises.map((te) => te.exercise_id)
-      let lastWorkoutMap = new Map<string, LastWorkoutSet[]>()
+      let historyMap = new Map<string, import('@/lib/workoutSuggestions').ExerciseHistory>()
+      let prefMap = new Map<string, { min: number; max: number }>()
       if (userIdRef.current && exerciseIds.length > 0) {
         try {
-          lastWorkoutMap = await getLastWorkoutSetsForExercises(userIdRef.current, exerciseIds, location)
+          ;[historyMap, prefMap] = await Promise.all([
+            getExerciseHistories(userIdRef.current, exerciseIds, location),
+            getExercisePrefs(userIdRef.current, exerciseIds),
+          ])
         } catch (e) {
           console.error('Error fetching suggestions:', e)
         }
@@ -1216,15 +1278,15 @@ export default function NewWorkoutPage() {
       const newExercises: WorkoutExercise[] = []
       for (const te of templateExercises) {
         if (exercises.some((e) => e.exerciseId === te.exercise_id)) continue
-        const lastSets = (lastWorkoutMap.get(te.exercise_id) ?? []).filter(
-          (s: any) => s.set_type !== 'warmup'
-        )
+        const h = historyMap.get(te.exercise_id)
         newExercises.push({
           id: crypto.randomUUID(),
           exerciseId: te.exercise_id,
           name: te.display_name,
           category: (te as any).exercises?.category,
-          repRange: parseRepRange(te.default_reps),
+          // Rep range priority: user pref > template scheme > coach default
+          repRange: prefMap.get(te.exercise_id) ?? parseRepRange(te.default_reps),
+          recentE1rms: h?.recentBestE1rms,
           sets: Array.from({ length: te.default_sets || 3 }, () => ({
             weight: 0,
             reps: 0,
@@ -1232,8 +1294,8 @@ export default function NewWorkoutPage() {
             isCompleted: false,
           })),
           lastWorkout:
-            lastSets.length > 0
-              ? { date: new Date().toISOString(), sets: lastSets.map((s) => ({ weight: s.weight, reps: s.reps })) }
+            h && h.lastSets.length > 0
+              ? { date: h.lastDate ?? new Date().toISOString(), sets: h.lastSets.map((s) => ({ weight: s.weight, reps: s.reps })) }
               : undefined,
         })
       }

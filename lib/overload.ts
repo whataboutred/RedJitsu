@@ -6,7 +6,7 @@ export type PrevSet = { weight: number; reps: number }
 export type RepRange = { min: number; max: number }
 
 export type OverloadTarget = {
-  kind: 'add-weight' | 'add-reps' | 'bodyweight-reps'
+  kind: 'add-weight' | 'add-reps' | 'bodyweight-reps' | 'deload'
   weight: number // 0 for bodyweight
   reps: number
   reason: string
@@ -36,11 +36,15 @@ export function parseRepRange(defaultReps?: string | number | null): RepRange | 
 }
 
 // Smallest practical jump by equipment. Barbells/dumbbells move in full
-// plates/handles; cables, machines, and unknowns get the micro step.
+// plates/handles (kg dumbbell racks commonly step 2.0); cables, machines,
+// and unknowns get the micro step.
 export function weightIncrement(category: string | undefined, unit: 'lb' | 'kg'): number {
-  const fullStep = category === 'barbell' || category === 'dumbbell'
-  if (unit === 'kg') return fullStep ? 2.5 : 1.25
-  return fullStep ? 5 : 2.5
+  if (unit === 'kg') {
+    if (category === 'barbell') return 2.5
+    if (category === 'dumbbell') return 2
+    return 1.25
+  }
+  return category === 'barbell' || category === 'dumbbell' ? 5 : 2.5
 }
 
 /**
@@ -48,6 +52,8 @@ export function weightIncrement(category: string | undefined, unit: 'lb' | 'kg')
  * working sets (warmups excluded by the caller).
  *
  * - Bodyweight (every set at weight 0): +1 rep over the best set.
+ * - Three sessions without a new best e1RM (recentBestE1rms, newest first):
+ *   deload ~10% and rebuild from the top of the range.
  * - All sets at the top weight reached the range max: add one increment,
  *   reset to the range bottom.
  * - Otherwise: same weight, one more rep than the weakest top-weight set
@@ -55,7 +61,12 @@ export function weightIncrement(category: string | undefined, unit: 'lb' | 'kg')
  */
 export function suggestOverload(
   prevSets: PrevSet[],
-  opts: { category?: string; unit: 'lb' | 'kg'; repRange?: RepRange | null }
+  opts: {
+    category?: string
+    unit: 'lb' | 'kg'
+    repRange?: RepRange | null
+    recentBestE1rms?: number[] // per-session best e1RM, newest first
+  }
 ): OverloadTarget | null {
   const working = prevSets.filter((s) => s.reps > 0)
   if (working.length === 0) return null
@@ -72,6 +83,20 @@ export function suggestOverload(
   }
 
   const top = Math.max(...working.map((s) => s.weight))
+
+  // Stalled three sessions running? Back off ~10% and rebuild — grinding the
+  // same weight a fourth time is how plateaus calcify.
+  const bests = opts.recentBestE1rms
+  if (bests && bests.length >= 3 && bests[0] > 0 && bests[0] <= bests[1] && bests[0] <= bests[2]) {
+    const inc = weightIncrement(opts.category, opts.unit)
+    const deloadWeight = Math.max(inc, Math.round((top * 0.9) / inc) * inc)
+    return {
+      kind: 'deload',
+      weight: deloadWeight,
+      reps: range.max,
+      reason: `3 sessions without a new best — deload, own ${range.max}s, rebuild`,
+    }
+  }
   const topSets = working.filter((s) => s.weight === top)
   const weakestTopReps = Math.min(...topSets.map((s) => s.reps))
 

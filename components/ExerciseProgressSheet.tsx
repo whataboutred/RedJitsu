@@ -1,13 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { TrendingUp, TrendingDown, Minus, Trophy, AlertTriangle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Trophy, AlertTriangle, Target } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { MetricChart } from '@/components/ui/MetricChart'
 import { supabase } from '@/lib/supabaseClient'
-import { getActiveUserId } from '@/lib/activeUser'
+import { getActiveUserId, isDemoVisitor } from '@/lib/activeUser'
 import { estimated1RM } from '@/lib/formulas'
 import { localWeekStartKey } from '@/lib/dateUtils'
+import { getExercisePrefs, upsertExercisePref, deleteExercisePref, type RepRangePref } from '@/lib/api/exercisePrefs'
+import { DEFAULT_REP_RANGE } from '@/lib/overload'
+import { useToast } from '@/components/Toast'
 
 export type ExercisePoint = { date: string; oneRepMax: number; maxWeight: number }
 
@@ -125,6 +128,8 @@ export default function ExerciseProgressSheet({
           ) : (
             <p className="py-8 text-center text-sm text-zinc-500">No progression data in this window.</p>
           )}
+
+          {exerciseId && <RepRangeEditor exerciseId={exerciseId} />}
         </div>
       ) : (
         <p className="py-8 text-center text-sm text-zinc-500">No progression data yet for this lift.</p>

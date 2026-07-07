@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient'
 import { querySupabase, QueryRateLimiter } from './queryUtils'
+import { estimated1RM } from './formulas'
 
 export interface WorkoutSet {
   weight: number
@@ -164,6 +165,95 @@ export async function getLastWorkoutSetsForExercises(
     console.error('[workoutSuggestions] Error fetching workout suggestions:', error)
     // Return empty map on error instead of throwing
     return new Map()
+  }
+}
+
+export type ExerciseHistory = {
+  lastSets: WorkoutSet[] // most recent session's working sets (location-preferred)
+  lastDate: string | null
+  recentBestE1rms: number[] // per-session best e1RM, newest first, up to 3
+}
+
+/**
+ * One scan, two answers: the most recent session's sets (for the "Last"
+ * reference, preferring the current location) AND the best e1RM of each of
+ * the last 3 sessions at any location (for deload detection).
+ */
+export async function getExerciseHistories(
+  userId: string,
+  exerciseIds: string[],
+  location?: string
+): Promise<Map<string, ExerciseHistory>> {
+  const result = new Map<string, ExerciseHistory>()
+  if (exerciseIds.length === 0) return result
+
+  try {
+    const query = supabase
+      .from('workouts')
+      .select(`
+        id,
+        performed_at,
+        location,
+        workout_exercises!inner(
+          exercise_id,
+          sets(weight, reps, set_type, set_index, completed)
+        )
+      `)
+      .eq('user_id', userId)
+      .order('performed_at', { ascending: false })
+      .limit(50)
+
+    const data = await querySupabase<any>(query, { timeout: 8000, maxRetries: 2 })
+
+    const wanted = new Set(exerciseIds)
+    const locationLast = new Map<string, { date: string; sets: WorkoutSet[] }>()
+    const anyLast = new Map<string, { date: string; sets: WorkoutSet[] }>()
+    const bests = new Map<string, number[]>()
+
+    for (const workout of data ?? []) {
+      for (const wex of workout.workout_exercises ?? []) {
+        const exerciseId = wex.exercise_id
+        if (!wanted.has(exerciseId)) continue
+
+        const working: WorkoutSet[] = (wex.sets ?? [])
+          .filter((s: any) => s.completed !== false && s.set_type !== 'warmup' && s.reps > 0)
+          .sort((a: any, b: any) => (a.set_index || 0) - (b.set_index || 0))
+          .map((s: any) => ({
+            weight: Number(s.weight),
+            reps: Number(s.reps),
+            set_type: s.set_type as 'warmup' | 'working',
+            set_index: s.set_index,
+          }))
+        if (working.length === 0) continue
+
+        if (location && workout.location === location && !locationLast.has(exerciseId)) {
+          locationLast.set(exerciseId, { date: workout.performed_at, sets: working })
+        }
+        if (!anyLast.has(exerciseId)) {
+          anyLast.set(exerciseId, { date: workout.performed_at, sets: working })
+        }
+
+        const list = bests.get(exerciseId) ?? []
+        if (list.length < 3) {
+          list.push(Math.max(...working.map((s) => estimated1RM(s.weight, s.reps))))
+          bests.set(exerciseId, list)
+        }
+      }
+    }
+
+    for (const id of exerciseIds) {
+      const last = locationLast.get(id) ?? anyLast.get(id)
+      if (!last && !bests.has(id)) continue
+      result.set(id, {
+        lastSets: last?.sets ?? [],
+        lastDate: last?.date ?? null,
+        recentBestE1rms: bests.get(id) ?? [],
+      })
+    }
+    return result
+  } catch (error) {
+    console.error('[workoutSuggestions] Error fetching exercise histories:', error)
+    return result
   }
 }
 
