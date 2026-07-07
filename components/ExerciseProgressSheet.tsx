@@ -225,6 +225,106 @@ function ExerciseBody({ unit, points, weekly }: { unit: string; points: Exercise
   )
 }
 
+// Coach setting: the rep range double progression works inside for this lift.
+// Saved per exercise; falls back to the program scheme / 8-12 default.
+function RepRangeEditor({ exerciseId }: { exerciseId: string }) {
+  const toast = useToast()
+  const [pref, setPref] = useState<RepRangePref | null>(null)
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setPref(null)
+    setLoaded(false)
+    ;(async () => {
+      const userId = await getActiveUserId()
+      if (!userId || cancelled) return
+      const prefs = await getExercisePrefs(userId, [exerciseId])
+      if (cancelled) return
+      setPref(prefs.get(exerciseId) ?? null)
+      setLoaded(true)
+    })()
+    return () => { cancelled = true }
+  }, [exerciseId])
+
+  async function save(next: RepRangePref | null) {
+    if (await isDemoVisitor()) { toast.warning('Sign in to set a rep range'); return }
+    const userId = await getActiveUserId()
+    if (!userId) return
+    const prev = pref
+    setPref(next)
+    try {
+      if (next) await upsertExercisePref(userId, exerciseId, next)
+      else await deleteExercisePref(userId, exerciseId)
+    } catch {
+      setPref(prev)
+      toast.error('Failed to save rep range')
+    }
+  }
+
+  if (!loaded) return null
+  const shown = pref ?? DEFAULT_REP_RANGE
+
+  return (
+    <div className="rounded-xl bg-white/[0.02] border border-white/[0.06] p-3.5">
+      <div className="flex items-center justify-between mb-2.5">
+        <span className="flex items-center gap-1.5 text-xs font-display uppercase tracking-wider text-zinc-400">
+          <Target className="w-3.5 h-3.5 text-brand-red" />
+          Coach rep range
+        </span>
+        {pref ? (
+          <button onClick={() => save(null)} className="text-[11px] text-zinc-500 hover:text-white transition-colors">
+            Reset to default
+          </button>
+        ) : (
+          <span className="text-[11px] text-zinc-600">Default</span>
+        )}
+      </div>
+      <div className="flex items-center gap-3">
+        <RangeStepper
+          label="Min"
+          value={shown.min}
+          onChange={(v) => save({ min: v, max: Math.max(v, shown.max) })}
+        />
+        <span className="text-zinc-600">–</span>
+        <RangeStepper
+          label="Max"
+          value={shown.max}
+          onChange={(v) => save({ min: Math.min(v, shown.min), max: v })}
+        />
+      </div>
+      <p className="mt-2 text-[11px] text-zinc-600">
+        Targets add reps to the top of this range, then add weight and rebuild.
+      </p>
+    </div>
+  )
+}
+
+function RangeStepper({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="flex-1 flex items-center justify-between rounded-lg bg-surface-elevated border border-white/[0.06] px-2 py-1.5">
+      <button
+        onClick={() => value > 1 && onChange(value - 1)}
+        className="w-8 h-8 rounded-md text-zinc-400 hover:text-white hover:bg-white/5 active:scale-95 transition-all"
+        aria-label={`Decrease ${label}`}
+      >
+        −
+      </button>
+      <div className="text-center">
+        <div className="font-display text-lg text-white leading-none">{value}</div>
+        <div className="text-[9px] uppercase tracking-wide text-zinc-600">{label}</div>
+      </div>
+      <button
+        onClick={() => value < 30 && onChange(value + 1)}
+        className="w-8 h-8 rounded-md text-zinc-400 hover:text-white hover:bg-white/5 active:scale-95 transition-all"
+        aria-label={`Increase ${label}`}
+      >
+        +
+      </button>
+    </div>
+  )
+}
+
 function Stat({ label, value, unit, accent = 'text-white' }: { label: string; value: string; unit: string; accent?: string }) {
   return (
     <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 text-center">
