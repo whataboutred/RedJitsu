@@ -1355,6 +1355,7 @@ function HistoryClient() {
           isOpen={detailExerciseId !== null}
           onClose={() => setDetailExerciseId(null)}
           exercise={detailExercise}
+          exerciseId={detailExerciseId}
         />
       </div>
     </div>

@@ -1,8 +1,13 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { TrendingUp, TrendingDown, Minus, Trophy, AlertTriangle } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { MetricChart } from '@/components/ui/MetricChart'
+import { supabase } from '@/lib/supabaseClient'
+import { getActiveUserId } from '@/lib/activeUser'
+import { estimated1RM } from '@/lib/formulas'
+import { localWeekStartKey } from '@/lib/dateUtils'
 
 export type ExercisePoint = { date: string; oneRepMax: number; maxWeight: number }
 
@@ -12,19 +17,115 @@ export type ExerciseDetail = {
   points: ExercisePoint[]
 }
 
+type WindowKey = '90d' | '1y' | 'all'
+const WINDOWS: { key: WindowKey; label: string }[] = [
+  { key: '90d', label: '90d' },
+  { key: '1y', label: '1y' },
+  { key: 'all', label: 'All' },
+]
+
+// Session points for one exercise over a window. 'all' buckets by week
+// (best e1RM per week) so multi-year charts stay readable and bounded.
+async function fetchPoints(exerciseId: string, win: WindowKey): Promise<ExercisePoint[]> {
+  const userId = await getActiveUserId()
+  if (!userId) return []
+
+  let q = supabase
+    .from('workout_exercises')
+    .select('workout_id, workouts!inner(user_id, performed_at), sets(weight, reps, set_type, completed)')
+    .eq('exercise_id', exerciseId)
+    .eq('workouts.user_id', userId)
+  if (win === '1y') {
+    q = q.gte('workouts.performed_at', new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString())
+  }
+  const { data } = await q
+
+  const byKey = new Map<string, ExercisePoint>()
+  for (const row of (data ?? []) as any[]) {
+    const performedAt = row.workouts?.performed_at
+    if (!performedAt) continue
+    const working = (row.sets ?? []).filter(
+      (s: any) => s.set_type === 'working' && s.completed !== false && s.weight > 0
+    )
+    if (working.length === 0) continue
+    const maxWeight = Math.max(...working.map((s: any) => s.weight))
+    const e1 = Math.max(...working.map((s: any) => estimated1RM(s.weight, s.reps)))
+    const key = win === 'all' ? localWeekStartKey(performedAt) : String(performedAt).slice(0, 10)
+    const prev = byKey.get(key)
+    if (prev) {
+      prev.maxWeight = Math.max(prev.maxWeight, maxWeight)
+      prev.oneRepMax = Math.max(prev.oneRepMax, e1)
+    } else {
+      byKey.set(key, { date: key, maxWeight, oneRepMax: e1 })
+    }
+  }
+  return [...byKey.values()].sort((a, b) => a.date.localeCompare(b.date))
+}
+
 export default function ExerciseProgressSheet({
   isOpen,
   onClose,
   exercise,
+  exerciseId,
 }: {
   isOpen: boolean
   onClose: () => void
   exercise: ExerciseDetail | null
+  exerciseId?: string | null
 }) {
+  const [win, setWin] = useState<WindowKey>('90d')
+  const [cache, setCache] = useState<Partial<Record<WindowKey, ExercisePoint[]>>>({})
+  const [loading, setLoading] = useState(false)
+
+  // Fresh exercise = fresh state
+  useEffect(() => {
+    setWin('90d')
+    setCache({})
+  }, [exerciseId])
+
+  useEffect(() => {
+    if (win === '90d' || !exerciseId || cache[win]) return
+    let cancelled = false
+    setLoading(true)
+    fetchPoints(exerciseId, win).then((pts) => {
+      if (cancelled) return
+      setCache((c) => ({ ...c, [win]: pts }))
+      setLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [win, exerciseId, cache])
+
+  const points = win === '90d' ? exercise?.points ?? [] : cache[win] ?? []
+
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title={exercise?.name ?? 'Exercise'}>
-      {exercise && exercise.points.length > 0 ? (
-        <ExerciseBody exercise={exercise} />
+      {exercise ? (
+        <div className="space-y-5 pb-2">
+          {/* Window tabs — only useful once there's history beyond 90 days */}
+          {exerciseId && (
+            <div className="flex gap-1 -ml-1 -mt-1">
+              {WINDOWS.map((w) => (
+                <button
+                  key={w.key}
+                  onClick={() => setWin(w.key)}
+                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                    win === w.key ? 'bg-white/[0.06] text-white' : 'text-zinc-500 hover:text-white'
+                  }`}
+                >
+                  {w.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {loading ? (
+            <p className="py-8 text-center text-sm text-zinc-500">Loading…</p>
+          ) : points.length > 0 ? (
+            <ExerciseBody unit={exercise.unit} points={points} weekly={win === 'all'} />
+          ) : (
+            <p className="py-8 text-center text-sm text-zinc-500">No progression data in this window.</p>
+          )}
+        </div>
       ) : (
         <p className="py-8 text-center text-sm text-zinc-500">No progression data yet for this lift.</p>
       )}
@@ -32,8 +133,7 @@ export default function ExerciseProgressSheet({
   )
 }
 
-function ExerciseBody({ exercise }: { exercise: ExerciseDetail }) {
-  const { unit, points } = exercise
+function ExerciseBody({ unit, points, weekly }: { unit: string; points: ExercisePoint[]; weekly: boolean }) {
   const oneRMs = points.map((p) => p.oneRepMax)
   const current = oneRMs[oneRMs.length - 1]
   const best = Math.max(...oneRMs)
@@ -53,7 +153,7 @@ function ExerciseBody({ exercise }: { exercise: ExerciseDetail }) {
   const recent = [...points].slice(-8).reverse()
 
   return (
-    <div className="space-y-5 pb-2">
+    <div className="space-y-5">
       {/* Headline stats */}
       <div className="grid grid-cols-3 gap-2">
         <Stat label="Current e1RM" value={`${current}`} unit={unit} />
@@ -63,7 +163,7 @@ function ExerciseBody({ exercise }: { exercise: ExerciseDetail }) {
             <TrendIcon className="w-4 h-4" />
             {pct > 0 ? '+' : ''}{pct}%
           </div>
-          <div className="mt-1.5 text-[10px] uppercase tracking-wide text-zinc-500">All-time</div>
+          <div className="mt-1.5 text-[10px] uppercase tracking-wide text-zinc-500">Change</div>
         </div>
       </div>
 
@@ -71,7 +171,7 @@ function ExerciseBody({ exercise }: { exercise: ExerciseDetail }) {
       <div>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-xs font-display uppercase tracking-wider text-zinc-400">Estimated 1RM</h4>
-          <span className="text-[11px] text-zinc-600">{points.length} sessions</span>
+          <span className="text-[11px] text-zinc-600">{points.length} {weekly ? 'weeks' : 'sessions'}</span>
         </div>
         <MetricChart data={oneRMs} stroke={trendUp ? '#34D399' : trendFlat ? '#A1A1AA' : '#F87171'} />
       </div>
@@ -92,7 +192,9 @@ function ExerciseBody({ exercise }: { exercise: ExerciseDetail }) {
 
       {/* Recent sessions */}
       <div>
-        <h4 className="text-xs font-display uppercase tracking-wider text-zinc-400 mb-2">Recent sessions</h4>
+        <h4 className="text-xs font-display uppercase tracking-wider text-zinc-400 mb-2">
+          {weekly ? 'Recent weeks (best set)' : 'Recent sessions'}
+        </h4>
         <div className="rounded-xl bg-white/[0.02] border border-white/[0.06] overflow-hidden">
           {recent.map((p, i) => (
             <div
@@ -100,7 +202,11 @@ function ExerciseBody({ exercise }: { exercise: ExerciseDetail }) {
               className="flex items-center justify-between px-3 py-2.5 border-b border-white/[0.04] last:border-0"
             >
               <span className="text-sm text-zinc-400">
-                {new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                {new Date(`${p.date.slice(0, 10)}T12:00:00`).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  ...(weekly ? { year: '2-digit' } : {}),
+                })}
               </span>
               <div className="flex items-center gap-4">
                 <span className="text-sm text-white">{p.maxWeight} {unit}</span>
