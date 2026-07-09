@@ -20,10 +20,11 @@ import {
   TrendingUp,
   Users,
   Award,
+  Trash2,
 } from 'lucide-react'
 import { AnimatedCard } from '@/components/ui/Card'
 import { Button, IconButton } from '@/components/ui/Button'
-import { BottomSheet } from '@/components/ui/BottomSheet'
+import { BottomSheet, ConfirmDialog } from '@/components/ui/BottomSheet'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { useToast } from '@/components/Toast'
 import { supabase } from '@/lib/supabaseClient'
@@ -213,7 +214,8 @@ export default function BJJPage() {
   const [partners, setPartners] = useState<string[]>([])
   const [partnerInput, setPartnerInput] = useState('')
   const [knownPartners, setKnownPartners] = useState<string[]>([])
-  const [promotions, setPromotions] = useState<{ belt: string; stripes: number; promoted_at: string }[]>([])
+  const [promotions, setPromotions] = useState<{ id: string; belt: string; stripes: number; promoted_at: string }[]>([])
+  const [deletePromotion, setDeletePromotion] = useState<{ id: string; label: string } | null>(null)
 
   // Modal state
   const [showNotesSheet, setShowNotesSheet] = useState(false)
@@ -268,7 +270,7 @@ export default function BJJPage() {
       // Promotion timeline (newest first) + known partners for autocomplete
       const { data: proms } = await supabase
         .from('bjj_promotions')
-        .select('belt, stripes, promoted_at')
+        .select('id, belt, stripes, promoted_at')
         .eq('user_id', userId)
         .order('promoted_at', { ascending: false })
       setPromotions(proms ?? [])
@@ -524,7 +526,7 @@ export default function BJJPage() {
               {promotions.map((p, i) => {
                 const ps = beltStyle(p.belt)
                 return (
-                  <div key={i} className="flex items-center gap-3">
+                  <div key={p.id} className="flex items-center gap-3 group">
                     <BeltBar belt={p.belt} stripes={p.stripes} className="w-20 flex-shrink-0" height={20} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium" style={{ color: ps.hex }}>{beltLabel(p.belt, p.stripes)}</p>
@@ -533,6 +535,13 @@ export default function BJJPage() {
                       </p>
                     </div>
                     {i === 0 && <span className="text-[10px] uppercase tracking-wide text-zinc-600">Current</span>}
+                    <button
+                      onClick={() => setDeletePromotion({ id: p.id, label: beltLabel(p.belt, p.stripes) })}
+                      className="p-2 rounded-lg text-zinc-600 hover:text-red-400 hover:bg-red-500/10 active:scale-95 transition-all"
+                      aria-label={`Remove ${beltLabel(p.belt, p.stripes)} from timeline`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 )
               })}
@@ -1052,6 +1061,33 @@ export default function BJJPage() {
           ))}
         </div>
       </BottomSheet>
+
+      {/* Remove a mistaken timeline entry (the belt itself lives in Account) */}
+      <ConfirmDialog
+        isOpen={deletePromotion !== null}
+        onClose={() => setDeletePromotion(null)}
+        onConfirm={async () => {
+          if (!deletePromotion) return
+          if (await isDemoVisitor()) { toast.warning('Sign in to edit your timeline'); return }
+          const userId = await getActiveUserId()
+          if (!userId) return
+          const { error } = await supabase
+            .from('bjj_promotions')
+            .delete()
+            .eq('id', deletePromotion.id)
+            .eq('user_id', userId)
+          if (error) {
+            toast.error('Failed to remove entry')
+          } else {
+            setPromotions((prev) => prev.filter((p) => p.id !== deletePromotion.id))
+            toast.success('Removed from timeline')
+          }
+        }}
+        title="Remove timeline entry?"
+        message={`Remove "${deletePromotion?.label ?? ''}" from your belt journey? This doesn't change your current belt.`}
+        confirmText="Remove"
+        variant="danger"
+      />
     </div>
   )
 }

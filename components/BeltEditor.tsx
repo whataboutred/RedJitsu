@@ -32,6 +32,10 @@ export function BeltEditor({ delay = 0 }: { delay?: number }) {
 
   const bs = beltStyle(belt)
 
+  // A change within this window is a fat-finger correction, not a promotion —
+  // it replaces the freshly-logged timeline entry instead of stacking on it.
+  const CORRECTION_WINDOW_MS = 15 * 60 * 1000
+
   async function save(newBelt: string, newStripes: number) {
     if (demo) { toast.warning('Sign in to set your belt'); return }
     const userId = await getActiveUserId()
@@ -43,7 +47,25 @@ export function BeltEditor({ delay = 0 }: { delay?: number }) {
       const { error } = await supabase.from('profiles').update({ bjj_belt: newBelt, bjj_stripes: newStripes }).eq('id', userId)
       if (error) throw error
       if (changed) {
-        await supabase.from('bjj_promotions').insert({ user_id: userId, belt: newBelt, stripes: newStripes })
+        const { data: recent } = await supabase
+          .from('bjj_promotions')
+          .select('id,belt,stripes,promoted_at')
+          .eq('user_id', userId)
+          .order('promoted_at', { ascending: false })
+          .limit(2)
+        const [latest, prev] = recent ?? []
+        const isCorrection =
+          latest && Date.now() - new Date(latest.promoted_at).getTime() < CORRECTION_WINDOW_MS
+
+        if (isCorrection) {
+          await supabase.from('bjj_promotions').delete().eq('id', latest.id)
+        }
+        // If the correction lands back on what the timeline already shows,
+        // there's nothing new to log.
+        const timelineHead = isCorrection ? prev : latest
+        if (!(timelineHead && timelineHead.belt === newBelt && timelineHead.stripes === newStripes)) {
+          await supabase.from('bjj_promotions').insert({ user_id: userId, belt: newBelt, stripes: newStripes })
+        }
         toast.success(`Set to ${beltLabel(newBelt, newStripes)}`)
       }
     } catch {
