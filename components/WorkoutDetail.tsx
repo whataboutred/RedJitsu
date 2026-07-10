@@ -302,7 +302,12 @@ export default function WorkoutDetail({ workoutId, onClose }: { workoutId: strin
                           <span className="w-4 text-xs text-zinc-600">{set.set_index}</span>
                           {hasData ? (
                             <>
-                              {set.weight !== null && <span className="text-white font-medium">{set.weight} {unit}</span>}
+                              {/* Weight 0 with reps = bodyweight, not "0 lb" */}
+                              {set.weight !== null && (
+                                <span className="text-white font-medium">
+                                  {set.weight === 0 && (set.reps ?? 0) > 0 ? 'BW' : `${set.weight} ${unit}`}
+                                </span>
+                              )}
                               {set.weight !== null && set.reps !== null && <span className="text-zinc-600">×</span>}
                               {set.reps !== null && <span className="text-zinc-300">{set.reps} reps</span>}
                             </>

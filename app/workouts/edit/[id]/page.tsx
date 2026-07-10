@@ -45,7 +45,9 @@ import { AnimatedCard } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
 
 type Exercise = { id: string; name: string; category: string }
-type SetData = { weight: number; reps: number; isWarmup: boolean; isCompleted: boolean }
+// isBodyweight is a UI-level flag: the set saves as weight 0 (the app's
+// bodyweight convention) but the editor hides the weight input.
+type SetData = { weight: number; reps: number; isWarmup: boolean; isCompleted: boolean; isBodyweight?: boolean }
 type WorkoutExercise = {
   id: string
   exerciseId: string
@@ -221,6 +223,18 @@ function SetRow({
           >
             Warmup
           </button>
+          <button
+            onClick={() => onUpdate({ ...set, isBodyweight: !set.isBodyweight, weight: 0 })}
+            className={`
+              px-2.5 py-1 rounded-lg text-xs font-medium transition-all
+              ${set.isBodyweight
+                ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+                : 'bg-transparent text-zinc-500 border border-transparent hover:text-zinc-400'
+              }
+            `}
+          >
+            BW
+          </button>
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -274,29 +288,35 @@ function SetRow({
           <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1 block">
             Weight ({unit})
           </label>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => onUpdate({ ...set, weight: Math.max(0, set.weight - weightStep) })}
-              className="w-11 h-11 rounded-xl bg-surface-pressed text-white font-bold hover:bg-zinc-500/30 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
-            >
-              <Minus className="w-4 h-4" />
-            </button>
-            <input
-              type="number"
-              inputMode="decimal"
-              value={set.weight || ''}
-              onChange={(e) => onUpdate({ ...set, weight: parseFloat(e.target.value) || 0 })}
-              onFocus={(e) => e.target.select()}
-              className="flex-1 min-w-0 h-11 bg-surface border border-white/10 rounded-xl text-center text-lg font-semibold focus:border-brand-red focus:ring-1 focus:ring-brand-red/25 focus:outline-none transition-all"
-              placeholder="0"
-            />
-            <button
-              onClick={() => onUpdate({ ...set, weight: set.weight + weightStep })}
-              className="w-11 h-11 rounded-xl bg-surface-pressed text-white font-bold hover:bg-zinc-500/30 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
+          {set.isBodyweight ? (
+            <div className="h-11 rounded-xl bg-surface border border-sky-500/20 flex items-center justify-center text-sm font-semibold text-sky-400/90">
+              Bodyweight
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => onUpdate({ ...set, weight: Math.max(0, set.weight - weightStep) })}
+                className="w-11 h-11 rounded-xl bg-surface-pressed text-white font-bold hover:bg-zinc-500/30 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={set.weight || ''}
+                onChange={(e) => onUpdate({ ...set, weight: parseFloat(e.target.value) || 0 })}
+                onFocus={(e) => e.target.select()}
+                className="flex-1 min-w-0 h-11 bg-surface border border-white/10 rounded-xl text-center text-lg font-semibold focus:border-brand-red focus:ring-1 focus:ring-brand-red/25 focus:outline-none transition-all"
+                placeholder="0"
+              />
+              <button
+                onClick={() => onUpdate({ ...set, weight: set.weight + weightStep })}
+                className="w-11 h-11 rounded-xl bg-surface-pressed text-white font-bold hover:bg-zinc-500/30 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Reps */}
@@ -452,7 +472,7 @@ function ExerciseCard({
                   <div className="flex flex-wrap gap-1.5">
                     {exercise.lastWorkout.sets.slice(0, 5).map((s, i) => (
                       <span key={i} className="px-2.5 py-1 bg-surface-elevated rounded-lg text-xs text-zinc-200 font-medium">
-                        {s.weight}{unit} x {s.reps}
+                        {s.weight > 0 ? `${s.weight}${unit}` : 'BW'} x {s.reps}
                       </span>
                     ))}
                     {exercise.lastWorkout.sets.length > 5 && (
@@ -813,6 +833,8 @@ export default function EditWorkoutPage() {
               reps: s.reps || 0,
               isWarmup: s.set_type === 'warmup',
               isCompleted: s.completed ?? false,
+              // Weight 0 with reps recorded is the bodyweight convention
+              isBodyweight: (s.weight || 0) === 0 && (s.reps || 0) > 0,
             })),
           lastWorkout: lastSets && lastSets.length > 0 ? {
             date: new Date().toISOString(),

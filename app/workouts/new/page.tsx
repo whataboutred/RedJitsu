@@ -50,7 +50,10 @@ import { AnimatedCard } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
 
 type Exercise = { id: string; name: string; category: string; body_part?: string | null }
-type SetData = { weight: number; reps: number; isWarmup: boolean; isCompleted: boolean }
+// isBodyweight is a UI-level flag: the set saves as weight 0 (the app's
+// bodyweight convention) but the logger hides the weight input and displays
+// tags it "BW" instead of a confusing "0 lb".
+type SetData = { weight: number; reps: number; isWarmup: boolean; isCompleted: boolean; isBodyweight?: boolean }
 type WorkoutExercise = {
   id: string
   exerciseId: string
@@ -229,6 +232,18 @@ function SetRow({
           >
             Warmup
           </button>
+          <button
+            onClick={() => onUpdate({ ...set, isBodyweight: !set.isBodyweight, weight: 0 })}
+            className={`
+              px-2.5 py-1 rounded-lg text-xs font-medium transition-all
+              ${set.isBodyweight
+                ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+                : 'bg-transparent text-zinc-500 border border-transparent hover:text-zinc-400'
+              }
+            `}
+          >
+            BW
+          </button>
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -282,29 +297,35 @@ function SetRow({
           <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1 block">
             Weight ({unit})
           </label>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => onUpdate({ ...set, weight: Math.max(0, set.weight - weightStep) })}
-              className="w-11 h-11 rounded-xl bg-surface-pressed text-white font-bold hover:bg-zinc-500/30 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
-            >
-              <Minus className="w-4 h-4" />
-            </button>
-            <input
-              type="number"
-              inputMode="decimal"
-              value={set.weight || ''}
-              onChange={(e) => onUpdate({ ...set, weight: parseFloat(e.target.value) || 0 })}
-              onFocus={(e) => e.target.select()}
-              className="flex-1 min-w-0 h-11 bg-surface border border-white/10 rounded-xl text-center text-lg font-semibold focus:border-brand-red focus:ring-1 focus:ring-brand-red/25 focus:outline-none transition-all"
-              placeholder="0"
-            />
-            <button
-              onClick={() => onUpdate({ ...set, weight: set.weight + weightStep })}
-              className="w-11 h-11 rounded-xl bg-surface-pressed text-white font-bold hover:bg-zinc-500/30 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
+          {set.isBodyweight ? (
+            <div className="h-11 rounded-xl bg-surface border border-sky-500/20 flex items-center justify-center text-sm font-semibold text-sky-400/90">
+              Bodyweight
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => onUpdate({ ...set, weight: Math.max(0, set.weight - weightStep) })}
+                className="w-11 h-11 rounded-xl bg-surface-pressed text-white font-bold hover:bg-zinc-500/30 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={set.weight || ''}
+                onChange={(e) => onUpdate({ ...set, weight: parseFloat(e.target.value) || 0 })}
+                onFocus={(e) => e.target.select()}
+                className="flex-1 min-w-0 h-11 bg-surface border border-white/10 rounded-xl text-center text-lg font-semibold focus:border-brand-red focus:ring-1 focus:ring-brand-red/25 focus:outline-none transition-all"
+                placeholder="0"
+              />
+              <button
+                onClick={() => onUpdate({ ...set, weight: set.weight + weightStep })}
+                className="w-11 h-11 rounded-xl bg-surface-pressed text-white font-bold hover:bg-zinc-500/30 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Reps */}
@@ -387,16 +408,17 @@ function ExerciseCard({
   // working set (or append a new set if every set is already filled).
   const fillFromHistory = (weight: number, reps: number) => {
     hapticTap()
+    const bw = weight === 0 && reps > 0
     const idx = exercise.sets.findIndex((s) => !s.isWarmup && isEmpty(s))
     if (idx >= 0) {
       const newSets = exercise.sets.map((s, i) =>
-        i === idx ? { ...s, weight, reps } : s
+        i === idx ? { ...s, weight, reps, isBodyweight: bw } : s
       )
       onUpdate({ ...exercise, sets: newSets })
     } else {
       onUpdate({
         ...exercise,
-        sets: [...exercise.sets, { weight, reps, isWarmup: false, isCompleted: false }],
+        sets: [...exercise.sets, { weight, reps, isWarmup: false, isCompleted: false, isBodyweight: bw }],
       })
     }
   }
@@ -427,7 +449,7 @@ function ExerciseCard({
         ? { weight: historyFallback.weight, reps: historyFallback.reps }
         : undefined)
       if (!source) continue
-      newSets[i] = { ...s, weight: source.weight, reps: source.reps }
+      newSets[i] = { ...s, weight: source.weight, reps: source.reps, isBodyweight: source.weight === 0 && source.reps > 0 }
       lastFilled = source
       changed = true
     }
@@ -470,17 +492,18 @@ function ExerciseCard({
     if (!target) return
     hapticTap()
     let changed = false
+    const bw = target.weight === 0
     const newSets = exercise.sets.map((s) => {
       if (s.isWarmup || !isEmpty(s)) return s
       changed = true
-      return { ...s, weight: target.weight, reps: target.reps }
+      return { ...s, weight: target.weight, reps: target.reps, isBodyweight: bw }
     })
     if (changed) {
       onUpdate({ ...exercise, sets: newSets })
     } else {
       onUpdate({
         ...exercise,
-        sets: [...newSets, { weight: target.weight, reps: target.reps, isWarmup: false, isCompleted: false }],
+        sets: [...newSets, { weight: target.weight, reps: target.reps, isWarmup: false, isCompleted: false, isBodyweight: bw }],
       })
     }
   }
@@ -567,7 +590,7 @@ function ExerciseCard({
                         onClick={() => fillFromHistory(s.weight, s.reps)}
                         className="px-2 py-1 bg-surface-elevated/60 hover:bg-surface-elevated active:scale-95 rounded-lg text-xs text-zinc-300 font-medium transition-all"
                       >
-                        {s.weight}{unit} × {s.reps}
+                        {s.weight > 0 ? `${s.weight}${unit}` : 'BW'} × {s.reps}
                       </button>
                     ))}
                     {exercise.lastWorkout.sets.length > 5 && (
@@ -856,6 +879,7 @@ export default function NewWorkoutPage() {
         reps: s.reps,
         isWarmup: s.set_type === 'warmup',
         isCompleted: !!s.completed,
+        isBodyweight: s.bodyweight ?? (s.weight === 0 && s.reps > 0),
       })),
     }))
     setExercises(restoredExercises)
@@ -931,6 +955,7 @@ export default function NewWorkoutPage() {
                 reps: s.reps,
                 isWarmup: false,
                 isCompleted: false,
+                isBodyweight: s.weight === 0 && s.reps > 0,
               })),
             }))
             repeatedIds = repeatedExercises.map((e) => e.exerciseId)
@@ -1030,6 +1055,7 @@ export default function NewWorkoutPage() {
             reps: s.reps,
             set_type: s.isWarmup ? ('warmup' as const) : ('working' as const),
             completed: s.isCompleted,
+            bodyweight: s.isBodyweight,
           })),
         })),
         note: notes,
@@ -1343,7 +1369,7 @@ export default function NewWorkoutPage() {
 
     exercises.forEach((ex) => {
       ex.sets.forEach((s) => {
-        if (!s.isWarmup && (s.isCompleted || s.weight > 0)) {
+        if (!s.isWarmup && (s.isCompleted || s.weight > 0 || s.reps > 0)) {
           volume += s.weight * s.reps
           totalSets++
         }
