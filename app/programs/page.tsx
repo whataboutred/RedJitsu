@@ -466,13 +466,17 @@ export default function ProgramsPage() {
     ))
   }
 
+  // Store the raw value while typing (0 == "field is empty"). We deliberately
+  // don't force a minimum here — clamping mid-keystroke is what caused the
+  // "backspace to clear, get 1, type 3, end up with 13" bug. The floor of 1 is
+  // applied on blur instead (see the Sets input's onBlur).
   function updateExerciseSets(dayIndex: number, exerciseIndex: number, sets: number) {
-    setDays(prev => prev.map((day, idx) => 
-      idx === dayIndex 
+    setDays(prev => prev.map((day, idx) =>
+      idx === dayIndex
         ? {
             ...day,
-            items: day.items.map((item, eIdx) => 
-              eIdx === exerciseIndex ? { ...item, default_sets: Math.max(1, sets) } : item
+            items: day.items.map((item, eIdx) =>
+              eIdx === exerciseIndex ? { ...item, default_sets: sets } : item
             )
           }
         : day
@@ -1237,8 +1241,9 @@ export default function ProgramsPage() {
                                             min={1}
                                             max={20}
                                             className="input w-full text-center text-sm"
-                                            value={item.default_sets}
-                                            onChange={e => updateExerciseSets(dayIdx, itemIdx, Number(e.target.value) || 1)}
+                                            value={item.default_sets === 0 ? '' : item.default_sets}
+                                            onChange={e => updateExerciseSets(dayIdx, itemIdx, e.target.value === '' ? 0 : Number(e.target.value))}
+                                            onBlur={() => { if (item.default_sets < 1) updateExerciseSets(dayIdx, itemIdx, 1) }}
                                           />
                                         </label>
                                       </div>
