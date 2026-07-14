@@ -23,7 +23,7 @@ if the weekly reconnect nudge gets old.
 ---
 
 *Context: Next.js 14 App Router + Supabase (project vfoyihuggxdfkbepgccd).
-Design system in ~/RedLabs/DESIGN_SYSTEM.md (Anton display font, red accent,
+Design system in ~/RedLabs/docs/DESIGN_SYSTEM.md (Anton display font, red accent,
 belt-driven BJJ theming via --belt CSS vars, no emoji, lucide icons only).
 Demo account is wiped weekly by reseed_demo_full(); never write migrations
 that touch real user rows without a WHERE user_id filter.*
