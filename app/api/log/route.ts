@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
           index: 'main',
           event: {
             ...sanitized,
-            app: 'red-jitsu-training',
+            app: 'redjitsu',
             environment: process.env.NODE_ENV || 'development',
           },
         }),
